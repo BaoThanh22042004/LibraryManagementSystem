@@ -1,6 +1,6 @@
 namespace Application.Interfaces;
 
-public interface IUnitOfWork : IDisposable
+public interface IUnitOfWork : IDisposable, IAsyncDisposable
 {
     IRepository<T> Repository<T>() where T : class;
 

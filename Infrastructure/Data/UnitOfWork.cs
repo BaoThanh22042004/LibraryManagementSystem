@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Application.Interfaces;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -7,7 +8,7 @@ namespace Infrastructure.Data;
 public class UnitOfWork : IUnitOfWork
 {
     private readonly LibraryDbContext _context;
-    private readonly Dictionary<Type, object> _repositories = new();
+    private readonly ConcurrentDictionary<Type, object> _repositories = new();
     private IDbContextTransaction? _transaction;
 
     public UnitOfWork(LibraryDbContext context)
@@ -18,15 +19,7 @@ public class UnitOfWork : IUnitOfWork
     public IRepository<T> Repository<T>() where T : class
     {
         var type = typeof(T);
-
-        if (!_repositories.TryGetValue(type, out object? value))
-        {
-            var repoInstance = new Repository<T>(_context);
-            value = repoInstance;
-            _repositories[type] = value;
-        }
-
-        return (IRepository<T>)value;
+        return (IRepository<T>)_repositories.GetOrAdd(type, _ => new Repository<T>(_context));
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -63,8 +56,20 @@ public class UnitOfWork : IUnitOfWork
         _transaction = null;
     }
 
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_transaction != null)
+        {
+            await _transaction.DisposeAsync();
+            _transaction = null;
+        }
+        await _context.DisposeAsync();
+    }
+
     public void Dispose()
     {
+        _transaction?.Dispose();
         _context.Dispose();
     }
 }
