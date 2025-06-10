@@ -23,6 +23,7 @@ public interface IRepository<T> where T : class
     void Delete(T entity);
     Task<int> SaveChangesAsync();
     Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
+	Task<T?> GetAsync(Expression<Func<T, bool>> predicate);
 
-    IQueryable<T> Query(); // Expose IQueryable when needed
+	IQueryable<T> Query(); // Expose IQueryable when needed
 }
