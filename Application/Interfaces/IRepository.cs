@@ -5,7 +5,6 @@ namespace Application.Interfaces;
 
 public interface IRepository<T> where T : class
 {
-    Task<T?> GetByIdAsync(object id);
     Task<IReadOnlyList<T>> ListAsync(
         Expression<Func<T, bool>>? predicate = null,
         Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
@@ -23,7 +22,7 @@ public interface IRepository<T> where T : class
     void Delete(T entity);
     Task<int> SaveChangesAsync();
     Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
-	Task<T?> GetAsync(Expression<Func<T, bool>> predicate);
+	Task<T?> GetAsync(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includes);
 
 	IQueryable<T> Query(); // Expose IQueryable when needed
 }

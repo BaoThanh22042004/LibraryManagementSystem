@@ -17,11 +17,6 @@ public class Repository<T> : IRepository<T> where T : class
         _dbSet = context.Set<T>();
     }
 
-    public virtual async Task<T?> GetByIdAsync(object id)
-    {
-        return await _dbSet.FindAsync(id);
-    }
-
     public virtual async Task<IReadOnlyList<T>> ListAsync(
         Expression<Func<T, bool>>? predicate = null,
         Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
@@ -106,9 +101,16 @@ public class Repository<T> : IRepository<T> where T : class
         return await _dbSet.AnyAsync(predicate);
     }
 
-    public virtual async Task<T?> GetAsync(Expression<Func<T, bool>> predicate)
+    public virtual async Task<T?> GetAsync(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includes)
     {
-        return await _dbSet.FirstOrDefaultAsync(predicate);
+		IQueryable<T> query = _dbSet;
+
+        foreach (var include in includes)
+        {
+            query = query.Include(include);
+		}
+
+		return await query.FirstOrDefaultAsync(predicate);
 	}
 
 	public virtual IQueryable<T> Query()
