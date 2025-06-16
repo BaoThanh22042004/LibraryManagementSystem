@@ -35,7 +35,6 @@ public class LibraryDbContext : DbContext
 
         // Additional global configurations
         ConfigureGlobalFilters(modelBuilder);
-        SeedData(modelBuilder);
     }
 
     private static void ConfigureGlobalFilters(ModelBuilder modelBuilder)
@@ -86,79 +85,6 @@ public class LibraryDbContext : DbContext
                 }
             }
         }
-    }
-
-    private void SeedData(ModelBuilder modelBuilder)
-    {
-        // Seed default categories
-        modelBuilder.Entity<Category>().HasData(
-            new Category { Id = 1, Name = "Fiction", Description = "Fiction books and novels", CreatedAt = DateTime.UtcNow },
-            new Category { Id = 2, Name = "Non-Fiction", Description = "Non-fiction books", CreatedAt = DateTime.UtcNow },
-            new Category { Id = 3, Name = "Reference", Description = "Reference materials", CreatedAt = DateTime.UtcNow },
-            new Category { Id = 4, Name = "Science Fiction", Description = "Science fiction novels", ParentCategoryId = 1, CreatedAt = DateTime.UtcNow }
-        );
-
-        // Seed system configurations
-        modelBuilder.Entity<SystemConfiguration>().HasData(
-            new SystemConfiguration
-            {
-                Id = 1,
-                Key = "MaxLoansPerMember",
-                Value = "5",
-                Description = "Maximum number of books a member can borrow",
-                Type = ConfigurationType.Integer,
-                IsSystemConfig = true,
-                CreatedAt = DateTime.UtcNow
-            },
-            new SystemConfiguration
-            {
-                Id = 2,
-                Key = "LoanPeriodDays",
-                Value = "14",
-                Description = "Standard loan period in days",
-                Type = ConfigurationType.Integer,
-                IsSystemConfig = true,
-                CreatedAt = DateTime.UtcNow
-            },
-            new SystemConfiguration
-            {
-                Id = 3,
-                Key = "OverdueFinePerDay",
-                Value = "0.50",
-                Description = "Overdue fine amount per day",
-                Type = ConfigurationType.Decimal,
-                IsSystemConfig = true,
-                CreatedAt = DateTime.UtcNow
-            }
-        );
-
-        // Add default admin account
-        modelBuilder.Entity<User>().HasData(
-            new User
-            {
-                Id = 1,
-                FullName = "System Administrator",
-                Email = "admin@library.com",
-                PasswordHash = "AQAAAAIAAYagAAAAECYqKtDIl8xRT1fs/L+m/LpPaWNnlcFZN8IKdnITEOChQ/AKKWYnOHZQkGj9zz04iw==", // Hashed password for "Admin@123"
-                Role = UserRole.Admin,
-                Status = UserStatus.Active,
-                IsEmailVerified = true,
-                CreatedAt = DateTime.UtcNow
-            }
-        );
-
-        modelBuilder.Entity<Librarian>().HasData(
-            new Librarian
-            {
-                Id = 1,
-                UserId = 1,
-                EmployeeId = "LIB001",
-                Department = "Admin",
-                HireDate = DateTime.UtcNow,
-                Privileges = LibrarianPrivileges.All,
-                CreatedAt = DateTime.UtcNow
-            }
-        );
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

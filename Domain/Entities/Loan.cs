@@ -13,8 +13,9 @@ public class Loan : BaseEntity
     public LoanStatus Status { get; set; }
     public int RenewalCount { get; set; }
 	public decimal? OverdueFine { get; set; }
-    public bool IsOverdue { get; init; }
-    public string? Notes { get; set; }
+	[NotMapped]
+	public bool IsOverdue => ReturnDate == null && DueDate < DateTime.UtcNow;
+	public string? Notes { get; set; }
     
     // Navigation properties
     public Member Member { get; set; } = null!;
