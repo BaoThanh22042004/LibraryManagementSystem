@@ -20,5 +20,7 @@ public class LoanConfiguration : IEntityTypeConfiguration<Loan>
         // Replace stored IsOverdue with computed column
         builder.Property(l => l.IsOverdue)
             .HasComputedColumnSql("CASE WHEN [ReturnDate] IS NULL AND [DueDate] < GETUTCDATE() THEN 1 ELSE 0 END", stored: true);
+
+        builder.HasQueryFilter(l => !l.BookCopy.IsDeleted);
     }
 }
