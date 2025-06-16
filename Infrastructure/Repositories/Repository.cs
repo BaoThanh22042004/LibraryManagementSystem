@@ -1,16 +1,17 @@
 using System.Linq.Expressions;
 using Application.Common;
 using Application.Interfaces;
+using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
 
 public class Repository<T> : IRepository<T> where T : class
 {
-    protected readonly DbContext _context;
+    protected readonly LibraryDbContext _context;
     protected readonly DbSet<T> _dbSet;
 
-    public Repository(DbContext context)
+    public Repository(LibraryDbContext context)
     {
         _context = context;
         _dbSet = context.Set<T>();

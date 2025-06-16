@@ -18,7 +18,6 @@ public class LibraryDbContext : DbContext
     public DbSet<Book> Books { get; set; }
     public DbSet<BookCopy> BookCopies { get; set; }
     public DbSet<Category> Categories { get; set; }
-    public DbSet<BookCategory> BookCategories { get; set; }
 
     public DbSet<Loan> Loans { get; set; }
     public DbSet<Reservation> Reservations { get; set; }
@@ -39,10 +38,12 @@ public class LibraryDbContext : DbContext
         SeedData(modelBuilder);
     }
 
-    private void ConfigureGlobalFilters(ModelBuilder modelBuilder)
+    private static void ConfigureGlobalFilters(ModelBuilder modelBuilder)
     {
+        var entityTypes = modelBuilder.Model.GetEntityTypes();
+
         // Configure decimal precision globally
-        foreach (var property in modelBuilder.Model.GetEntityTypes()
+        foreach (var property in entityTypes
             .SelectMany(t => t.GetProperties())
             .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?)))
         {
@@ -50,13 +51,39 @@ public class LibraryDbContext : DbContext
         }
 
         // Configure string length limits globally
-        foreach (var property in modelBuilder.Model.GetEntityTypes()
+        foreach (var property in entityTypes
             .SelectMany(t => t.GetProperties())
             .Where(p => p.ClrType == typeof(string)))
         {
             if (property.GetMaxLength() == null)
             {
                 property.SetMaxLength(255);
+            }
+        }
+
+        // Store enum values as strings for better readability in the database
+        foreach (var entityType in entityTypes)
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType.IsEnum)
+                {
+                    modelBuilder
+                        .Entity(entityType.ClrType)
+                        .Property(property.Name)
+                        .HasConversion<string>();
+                }
+            }
+        }
+
+        foreach (var entityType in entityTypes)
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                {
+                    property.SetColumnType("datetime2");
+                }
             }
         }
     }
@@ -101,6 +128,34 @@ public class LibraryDbContext : DbContext
                 Description = "Overdue fine amount per day",
                 Type = ConfigurationType.Decimal,
                 IsSystemConfig = true,
+                CreatedAt = DateTime.UtcNow
+            }
+        );
+
+        // Add default admin account
+        modelBuilder.Entity<User>().HasData(
+            new User
+            {
+                Id = 1,
+                FullName = "System Administrator",
+                Email = "admin@library.com",
+                PasswordHash = "AQAAAAIAAYagAAAAECYqKtDIl8xRT1fs/L+m/LpPaWNnlcFZN8IKdnITEOChQ/AKKWYnOHZQkGj9zz04iw==", // Hashed password for "Admin@123"
+                Role = UserRole.Admin,
+                Status = UserStatus.Active,
+                IsEmailVerified = true,
+                CreatedAt = DateTime.UtcNow
+            }
+        );
+
+        modelBuilder.Entity<Librarian>().HasData(
+            new Librarian
+            {
+                Id = 1,
+                UserId = 1,
+                EmployeeId = "LIB001",
+                Department = "Admin",
+                HireDate = DateTime.UtcNow,
+                Privileges = LibrarianPrivileges.All,
                 CreatedAt = DateTime.UtcNow
             }
         );

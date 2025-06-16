@@ -14,25 +14,7 @@ public class ReservationConfiguration : IEntityTypeConfiguration<Reservation>
             t.HasCheckConstraint("CK_Reservation_QueuePosition", "[QueuePosition] > 0");
         });
 
-        builder.HasKey(r => r.Id);
-
-        builder.Property(r => r.Status)
-            .HasConversion<int>();
-
-        // Indexes
-        builder.HasIndex(r => new { r.BookId, r.QueuePosition });
-        builder.HasIndex(r => new { r.MemberId, r.Status });
-        builder.HasIndex(r => r.ReservationDate);
-
-        // Relationships
-        builder.HasOne(r => r.Member)
-            .WithMany(m => m.Reservations)
-            .HasForeignKey(r => r.MemberId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(r => r.Book)
-            .WithMany(b => b.Reservations)
-            .HasForeignKey(r => r.BookId)
-            .OnDelete(DeleteBehavior.Restrict);
+        // Add matching query filter to align with Book's soft delete filter
+        builder.HasQueryFilter(r => !r.Book.IsDeleted && !r.Member.User.IsDeleted);
     }
 }
