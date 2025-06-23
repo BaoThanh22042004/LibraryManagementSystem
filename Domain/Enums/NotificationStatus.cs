@@ -2,9 +2,7 @@ namespace Domain.Enums;
 
 public enum NotificationStatus
 {
-    Pending = 1,
-    Sent = 2,
-    Delivered = 3,
-    Failed = 4,
-    Read = 5
+	Pending = 1,
+	Sent = 2,
+	Failed = 3
 }

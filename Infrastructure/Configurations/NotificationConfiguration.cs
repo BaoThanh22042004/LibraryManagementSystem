@@ -6,10 +6,8 @@ namespace Infrastructure.Configurations;
 
 public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
 {
-    public void Configure(EntityTypeBuilder<Notification> builder)
-    {
-        builder.ToTable("Notifications");
-
-        builder.HasQueryFilter(n => n.UserId == null || (n.User != null && !n.User.IsDeleted));
-    }
+	public void Configure(EntityTypeBuilder<Notification> builder)
+	{
+		builder.ToTable("Notifications");
+	}
 }

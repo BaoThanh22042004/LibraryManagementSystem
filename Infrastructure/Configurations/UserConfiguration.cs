@@ -6,16 +6,12 @@ namespace Infrastructure.Configurations;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {
-    public void Configure(EntityTypeBuilder<User> builder)
-    {
-        builder.ToTable("Users");
+	public void Configure(EntityTypeBuilder<User> builder)
+	{
+		builder.ToTable("Users");
 
-        // Indexes
-        builder.HasIndex(u => u.Email)
-            .IsUnique()
-            .HasFilter("[IsDeleted] = 0");
-
-        // Query filter for soft delete
-        builder.HasQueryFilter(u => !u.IsDeleted);
-    }
+		// Indexes
+		builder.HasIndex(u => u.Email)
+			.IsUnique();
+	}
 }
