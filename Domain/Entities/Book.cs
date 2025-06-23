@@ -10,6 +10,8 @@ public class Book : BaseEntity
 	[MaxLength(20)]
 	public string ISBN { get; set; } = string.Empty;
 	public string? Publisher { get; set; }
+	public string? Description { get; set; }
+	public string? CoverImageUrl { get; set; }
 	public DateTime? PublicationDate { get; set; }
 	public BookStatus Status { get; set; }
 

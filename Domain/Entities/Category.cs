@@ -8,6 +8,7 @@ public class Category : BaseEntity
 	public string Name { get; set; } = string.Empty;
 	[MaxLength(500)]
 	public string? Description { get; set; }
+	public string? CoverImageUrl { get; set; }
 
 	// Navigation properties
 	public ICollection<Book> Books { get; set; } = [];
