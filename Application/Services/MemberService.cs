@@ -96,4 +96,9 @@ public class MemberService : IMemberService
             
         return true;
     }
+
+    public async Task<Result<int>> SignUpMemberAsync(MemberSignUpDto signUpDto)
+    {
+        return await _mediator.Send(new SignUpMemberCommand(signUpDto));
+    }
 }

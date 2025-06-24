@@ -1,0 +1,43 @@
+@model Application.DTOs.UpdateCategoryDto
+@{
+    ViewData["Title"] = "Edit Category";
+}
+
+<div class="container mx-auto">
+    <div class="bg-surface-alt dark:bg-surface-dark-alt border border-outline dark:border-outline-dark rounded-radius shadow-md overflow-hidden">
+        <div class="bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark p-4">
+            <h1 class="text-xl font-bold">Edit Category</h1>
+        </div>
+        <div class="p-6">
+            <form asp-action="Edit" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-4"></div>
+                  <div class="mb-4">
+                    <label asp-for="Name" class="block text-on-surface-strong dark:text-on-surface-dark-strong font-medium mb-1">Name</label>
+                    <input asp-for="Name" class="w-full rounded-radius border border-outline dark:border-outline-dark px-4 py-2 focus:border-primary dark:focus:border-primary-dark focus:outline-none bg-surface dark:bg-surface-dark text-on-surface-strong dark:text-on-surface-dark-strong" />
+                    <span asp-validation-for="Name" class="text-danger text-sm"></span>
+                </div>
+                
+                <div class="mb-4">
+                    <label asp-for="Description" class="block text-on-surface-strong dark:text-on-surface-dark-strong font-medium mb-1">Description</label>
+                    <textarea asp-for="Description" class="w-full rounded-radius border border-outline dark:border-outline-dark px-4 py-2 focus:border-primary dark:focus:border-primary-dark focus:outline-none bg-surface dark:bg-surface-dark text-on-surface-strong dark:text-on-surface-dark-strong" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger text-sm"></span>
+                </div>
+                
+                <div class="mb-6">
+                    <label asp-for="CoverImageUrl" class="block text-on-surface-strong dark:text-on-surface-dark-strong font-medium mb-1">Cover Image URL</label>
+                    <input asp-for="CoverImageUrl" class="w-full rounded-radius border border-outline dark:border-outline-dark px-4 py-2 focus:border-primary dark:focus:border-primary-dark focus:outline-none bg-surface dark:bg-surface-dark text-on-surface-strong dark:text-on-surface-dark-strong" />
+                    <span asp-validation-for="CoverImageUrl" class="text-danger text-sm"></span>
+                    <p class="mt-1 text-on-surface dark:text-on-surface-dark text-sm">Enter a URL for the category cover image.</p>
+                </div>
+                  <div class="flex justify-between">
+                    <a asp-action="Index" class="rounded-radius border border-outline dark:border-outline-dark px-4 py-2 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt text-on-surface-strong dark:text-on-surface-dark-strong">Back to List</a>
+                    <button type="submit" class="rounded-radius bg-primary dark:bg-primary-dark border border-primary dark:border-primary-dark px-4 py-2 text-center text-sm font-medium tracking-wide text-on-primary dark:text-on-primary-dark hover:opacity-75">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
