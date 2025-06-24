@@ -1,7 +1,17 @@
+using Application;
 using Application.Interfaces;
+using Application.Services;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Application.Mappings;
+using Application.Behaviors;
+using System.Reflection;
+using FluentValidation;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +25,31 @@ builder.Services.AddDbContext<LibraryDbContext>(options =>
 // Register repositories and services
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Configure JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"] ?? "YourSuperSecretKey1234567890!@#$%^&*()")
+        )
+    };
+});
+
+// Register Application layer with configuration
+builder.Services.AddApplication(builder.Configuration);
 
 var app = builder.Build();
 
@@ -30,6 +65,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
+// Add Authentication and Authorization middleware
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

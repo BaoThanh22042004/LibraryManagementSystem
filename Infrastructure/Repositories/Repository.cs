@@ -103,17 +103,27 @@ public class Repository<T> : IRepository<T> where T : class
 
     public virtual async Task<T?> GetAsync(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includes)
     {
-		IQueryable<T> query = _dbSet;
+        IQueryable<T> query = _dbSet;
 
         foreach (var include in includes)
         {
             query = query.Include(include);
-		}
+        }
 
-		return await query.FirstOrDefaultAsync(predicate);
-	}
+        return await query.FirstOrDefaultAsync(predicate);
+    }
 
-	public virtual IQueryable<T> Query()
+    public virtual async Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null)
+    {
+        IQueryable<T> query = _dbSet;
+        
+        if (predicate != null)
+            query = query.Where(predicate);
+            
+        return await query.CountAsync();
+    }
+
+    public virtual IQueryable<T> Query()
     {
         return _dbSet.AsQueryable();
     }
