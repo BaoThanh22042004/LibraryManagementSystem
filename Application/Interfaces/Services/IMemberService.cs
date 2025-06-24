@@ -16,4 +16,11 @@ public interface IMemberService
     Task<bool> MembershipNumberExistsAsync(string membershipNumber);
     Task<decimal> GetOutstandingFinesAsync(int memberId);
     Task<bool> UpdateMembershipStatusAsync(int memberId, Domain.Enums.MembershipStatus status);
+    
+    /// <summary>
+    /// Sign up a new member by creating both a user and member profile
+    /// </summary>
+    /// <param name="signUpDto">The signup information containing user and member details</param>
+    /// <returns>The new member's ID if successful</returns>
+    Task<Result<int>> SignUpMemberAsync(MemberSignUpDto signUpDto);
 }

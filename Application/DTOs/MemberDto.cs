@@ -30,3 +30,15 @@ public class UpdateMemberDto
     public MembershipStatus MembershipStatus { get; set; }
     public DateTime? MembershipStartDate { get; set; }
 }
+
+public class MemberSignUpDto
+{
+    // User information
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string ConfirmPassword { get; set; } = string.Empty;
+    
+    // Member information (optional fields that can be auto-generated if not provided)
+    public string? MembershipNumber { get; set; }
+}

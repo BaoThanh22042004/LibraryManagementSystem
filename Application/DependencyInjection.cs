@@ -54,8 +54,6 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IMemberService, MemberService>();
         services.AddScoped<ILoanService, LoanService>();
-        
-        // Register new services (implementations to be created)
         services.AddScoped<IBookCopyService, BookCopyService>();
         services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<IFineService, FineService>();
