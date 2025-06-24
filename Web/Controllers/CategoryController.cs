@@ -2,17 +2,20 @@ using Application.Common;
 using Application.DTOs;
 using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
+using Web.Extensions;
 
 namespace Web.Controllers;
 
 public class CategoryController : Controller
 {
     private readonly ICategoryService _categoryService;
+    private readonly IFileUploadService _fileUploadService;
     private readonly ILogger<CategoryController> _logger;
 
-    public CategoryController(ICategoryService categoryService, ILogger<CategoryController> logger)
+    public CategoryController(ICategoryService categoryService, IFileUploadService fileUploadService, ILogger<CategoryController> logger)
     {
         _categoryService = categoryService;
+        _fileUploadService = fileUploadService;
         _logger = logger;
     }
 
@@ -67,7 +70,7 @@ public class CategoryController : Controller
     // POST: Category/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CreateCategoryDto categoryDto)
+    public async Task<IActionResult> Create(CreateCategoryDto categoryDto, IFormFile? coverImageFile)
     {
         if (!ModelState.IsValid)
         {
@@ -76,6 +79,20 @@ public class CategoryController : Controller
 
         try
         {
+            // Handle file upload if provided
+            var uploadResult = await this.HandleCoverImageUploadAsync(_fileUploadService, coverImageFile, "categories");
+            
+            if (!uploadResult.Success)
+            {
+                ModelState.AddModelError("coverImageFile", uploadResult.ErrorMessage!);
+                return View(categoryDto);
+            }
+
+            if (!string.IsNullOrEmpty(uploadResult.UploadedUrl))
+            {
+                categoryDto.CoverImageUrl = uploadResult.UploadedUrl;
+            }
+
             await _categoryService.CreateCategoryAsync(categoryDto);
             TempData["Success"] = "Category created successfully.";
             return RedirectToAction(nameof(Index));
@@ -119,7 +136,7 @@ public class CategoryController : Controller
     // POST: Category/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, UpdateCategoryDto categoryDto)
+    public async Task<IActionResult> Edit(int id, UpdateCategoryDto categoryDto, IFormFile? coverImageFile)
     {
         if (!ModelState.IsValid)
         {
@@ -128,6 +145,20 @@ public class CategoryController : Controller
 
         try
         {
+            // Handle file upload if provided
+            var uploadResult = await this.HandleCoverImageUploadAsync(_fileUploadService, coverImageFile, "categories", categoryDto.CoverImageUrl);
+            
+            if (!uploadResult.Success)
+            {
+                ModelState.AddModelError("coverImageFile", uploadResult.ErrorMessage!);
+                return View(categoryDto);
+            }
+
+            if (!string.IsNullOrEmpty(uploadResult.UploadedUrl))
+            {
+                categoryDto.CoverImageUrl = uploadResult.UploadedUrl;
+            }
+
             await _categoryService.UpdateCategoryAsync(id, categoryDto);
             TempData["Success"] = "Category updated successfully.";
             return RedirectToAction(nameof(Index));
@@ -176,6 +207,42 @@ public class CategoryController : Controller
             _logger.LogError(ex, "Error occurred while deleting category ID: {CategoryId}", id);
             TempData["Error"] = "An error occurred while deleting the category: " + ex.Message;
             return RedirectToAction(nameof(Index));
+        }
+    }
+
+    // POST: Category/RemoveCoverImage/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveCoverImage(int id)
+    {
+        try
+        {
+            var category = await _categoryService.GetCategoryByIdAsync(id);
+            if (category == null)
+            {
+                return NotFound();
+            }            if (!string.IsNullOrEmpty(category.CoverImageUrl) && !category.CoverImageUrl.StartsWith("http"))
+            {
+                await this.SafelyRemoveCoverImageAsync(_fileUploadService, category.CoverImageUrl);
+            }
+
+            var updateDto = new UpdateCategoryDto
+            {
+                Name = category.Name,
+                Description = category.Description,
+                CoverImageUrl = null // Remove the cover image
+            };
+
+            await _categoryService.UpdateCategoryAsync(id, updateDto);
+            TempData["Success"] = "Cover image removed successfully.";
+            
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while removing cover image for category ID: {CategoryId}", id);
+            TempData["Error"] = "An error occurred while removing the cover image.";
+            return RedirectToAction(nameof(Edit), new { id });
         }
     }
 }

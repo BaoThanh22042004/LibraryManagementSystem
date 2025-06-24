@@ -12,6 +12,8 @@ using Application.Behaviors;
 using System.Reflection;
 using FluentValidation;
 using MediatR;
+using Application.Interfaces.Services;
+using Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +27,12 @@ builder.Services.AddDbContext<LibraryDbContext>(options =>
 // Register repositories and services
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Register file upload service
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+
+// Register directory setup service
+builder.Services.AddHostedService<DirectorySetupService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication(options =>
