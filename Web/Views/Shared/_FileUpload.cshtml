@@ -40,7 +40,7 @@
             <form asp-action="@removeAction" asp-route-id="@entityId" method="post" class="inline">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="absolute top-2 right-2 bg-danger text-on-danger rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-danger-dark" title="Remove current image">
-                    x
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                 </button>
             </form>
         </div>
@@ -75,7 +75,7 @@
     <div class="relative inline-block">
         <img id="previewImg-@fieldName" src="" alt="Preview" class="max-w-xs max-h-48 rounded-radius border border-outline dark:border-outline-dark">
         <button type="button" id="removePreview-@fieldName" class="absolute top-2 right-2 bg-danger text-on-danger rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-danger-dark">
-            x
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
     </div>
 </div>
