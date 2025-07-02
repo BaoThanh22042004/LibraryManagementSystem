@@ -49,6 +49,7 @@ public class UpdateCategoryCommandHandler : IRequestHandler<UpdateCategoryComman
 		category.Name = request.CategoryDto.Name;
         category.Description = request.CategoryDto.Description;
         category.CoverImageUrl = request.CategoryDto.CoverImageUrl;
+        category.LastModifiedAt = DateTime.UtcNow;
         
         categoryRepository.Update(category);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
