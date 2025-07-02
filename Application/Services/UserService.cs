@@ -73,7 +73,7 @@ public class UserService : IUserService
     public async Task<bool> EmailExistsAsync(string email)
     {
         var userRepository = _unitOfWork.Repository<User>();
-        return await userRepository.ExistsAsync(u => u.Email.ToLower() == email.ToLower());
+        return await userRepository.ExistsAsync(u => u.Email.Equals(email, StringComparison.CurrentCultureIgnoreCase));
     }
 
     public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto changePasswordDto)
@@ -89,5 +89,40 @@ public class UserService : IUserService
     public async Task<LoginResponseDto> LoginAsync(LoginDto loginDto)
     {
         return await _mediator.Send(new LoginCommand(loginDto));
+    }
+    
+    public async Task<Result<bool>> UpdateProfileAsync(int userId, UpdateProfileDto profileDto)
+    {
+        return await _mediator.Send(new UpdateProfileCommand(userId, profileDto));
+    }
+    
+    public async Task<Result<bool>> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto)
+    {
+        return await _mediator.Send(new ForgotPasswordCommand(forgotPasswordDto));
+    }
+    
+    public async Task<Result<bool>> ResetPasswordAsync(ResetPasswordDto resetPasswordDto)
+    {
+        return await _mediator.Send(new ResetPasswordCommand(resetPasswordDto));
+    }
+    
+    public async Task<Result<bool>> ValidateResetTokenAsync(string email, string token)
+    {
+        return await _mediator.Send(new ValidateResetTokenCommand(email, token));
+    }
+    
+    public async Task<Result<bool>> AdminUpdateUserAsync(int id, AdminUpdateUserDto userDto, int currentUserId)
+    {
+        return await _mediator.Send(new AdminUpdateUserCommand(id, userDto, currentUserId));
+    }
+    
+    public async Task<UserDetailsDto?> GetUserDetailsAsync(int id)
+    {
+        return await _mediator.Send(new GetUserDetailsQuery(id));
+    }
+    
+    public async Task<Result<bool>> ValidateUserDeletionAsync(int id)
+    {
+        return await _mediator.Send(new ValidateUserDeletionCommand(id));
     }
 }

@@ -48,7 +48,12 @@ public class UpdateLibrarianCommandHandler : IRequestHandler<UpdateLibrarianComm
             
             // Update properties
             librarian.EmployeeId = request.LibrarianDto.EmployeeId;
-            librarian.HireDate = request.LibrarianDto.HireDate;
+            
+            // Update HireDate if provided
+            if (request.LibrarianDto.HireDate.HasValue)
+            {
+                librarian.HireDate = request.LibrarianDto.HireDate.Value;
+            }
             
             librarianRepository.Update(librarian);
             await _unitOfWork.SaveChangesAsync(cancellationToken);

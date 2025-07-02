@@ -15,4 +15,11 @@ public interface IUserService
     Task<bool> EmailExistsAsync(string email);
     Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto changePasswordDto);
     Task<LoginResponseDto> LoginAsync(LoginDto loginDto);
+    Task<Result<bool>> UpdateProfileAsync(int userId, UpdateProfileDto profileDto);
+    Task<Result<bool>> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto);
+    Task<Result<bool>> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
+    Task<Result<bool>> ValidateResetTokenAsync(string email, string token);
+    Task<Result<bool>> AdminUpdateUserAsync(int id, AdminUpdateUserDto userDto, int currentUserId);
+    Task<UserDetailsDto?> GetUserDetailsAsync(int id);
+    Task<Result<bool>> ValidateUserDeletionAsync(int id);
 }

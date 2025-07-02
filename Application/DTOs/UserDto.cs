@@ -46,3 +46,39 @@ public class LoginResponseDto
     public bool IsSuccess { get; set; }
     public string Message { get; set; } = string.Empty;
 }
+
+public class ForgotPasswordDto
+{
+    public string Email { get; set; } = string.Empty;
+}
+
+public class ResetPasswordDto
+{
+    public string Email { get; set; } = string.Empty;
+    public string ResetToken { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
+    public string ConfirmPassword { get; set; } = string.Empty;
+}
+
+public class UpdateProfileDto
+{
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    // Additional profile information can be added here
+}
+
+public class AdminUpdateUserDto
+{
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public UserRole Role { get; set; }
+    public string? StatusChangeReason { get; set; }
+}
+
+public class UserDetailsDto : UserDto
+{
+    public DateTime CreatedAt { get; set; }
+    public DateTime? LastModifiedAt { get; set; }
+    public MemberDto? Member { get; set; }
+    public LibrarianDto? Librarian { get; set; }
+}

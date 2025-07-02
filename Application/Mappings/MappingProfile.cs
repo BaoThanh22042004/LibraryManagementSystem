@@ -11,8 +11,11 @@ public class MappingProfile : Profile
     {
         // User mappings
         CreateMap<User, UserDto>();
+        CreateMap<User, UserDetailsDto>();
         CreateMap<CreateUserDto, User>();
         CreateMap<UpdateUserDto, User>();
+        CreateMap<UpdateProfileDto, User>();
+        CreateMap<AdminUpdateUserDto, User>();
 
         // Book mappings
         CreateMap<Book, BookDto>()
@@ -101,7 +104,11 @@ public class MappingProfile : Profile
 
         // Librarian mappings
         CreateMap<Librarian, LibrarianDto>();
+        CreateMap<Librarian, LibrarianDetailsDto>();
         CreateMap<CreateLibrarianDto, Librarian>();
         CreateMap<UpdateLibrarianDto, Librarian>();
+        
+        // Password Reset Token mappings
+        CreateMap<PasswordResetToken, PasswordResetTokenDto>();
     }
 }

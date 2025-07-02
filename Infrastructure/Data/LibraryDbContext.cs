@@ -24,6 +24,8 @@ public class LibraryDbContext : DbContext
 
 	public DbSet<Notification> Notifications { get; set; }
 
+	public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		base.OnModelCreating(modelBuilder);
@@ -48,15 +50,10 @@ public class LibraryDbContext : DbContext
 		}
 
 		// Configure string length limits globally
-		foreach (var property in entityTypes
-			.SelectMany(t => t.GetProperties())
-			.Where(p => p.ClrType == typeof(string)))
-		{
-			if (property.GetMaxLength() == null)
-			{
-				property.SetMaxLength(255);
-			}
-		}
+		entityTypes.SelectMany(t => t.GetProperties())
+				   .Where(p => p.ClrType == typeof(string) && p.GetMaxLength() == null)
+				   .ToList()
+				   .ForEach(p => p.SetMaxLength(255));
 
 		// Store enum values as strings for better readability in the database
 		foreach (var entityType in entityTypes)
