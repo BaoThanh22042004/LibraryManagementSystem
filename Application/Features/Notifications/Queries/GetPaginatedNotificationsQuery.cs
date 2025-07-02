@@ -8,6 +8,9 @@ using System.Linq.Expressions;
 
 namespace Application.Features.Notifications.Queries;
 
+/// <summary>
+/// Query to get a paginated list of notifications with optional search functionality.
+/// </summary>
 public record GetPaginatedNotificationsQuery(PagedRequest PagedRequest, string? SearchTerm = null) : IRequest<PagedResult<NotificationDto>>;
 
 public class GetPaginatedNotificationsQueryHandler : IRequestHandler<GetPaginatedNotificationsQuery, PagedResult<NotificationDto>>
@@ -40,7 +43,7 @@ public class GetPaginatedNotificationsQueryHandler : IRequestHandler<GetPaginate
         var pagedNotifications = await notificationRepository.PagedListAsync(
             pagedRequest: request.PagedRequest,
             predicate: predicate,
-            orderBy: q => q.OrderByDescending(n => n.SentAt ?? DateTime.Now),
+            orderBy: q => q.OrderByDescending(n => n.SentAt ?? n.CreatedAt),
             asNoTracking: true,
             n => n.User!
         );

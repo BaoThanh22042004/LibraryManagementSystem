@@ -6,6 +6,9 @@ using MediatR;
 
 namespace Application.Features.Notifications.Queries;
 
+/// <summary>
+/// Query to get detailed information for a specific notification.
+/// </summary>
 public record GetNotificationByIdQuery(int Id) : IRequest<NotificationDto?>;
 
 public class GetNotificationByIdQueryHandler : IRequestHandler<GetNotificationByIdQuery, NotificationDto?>
@@ -30,6 +33,11 @@ public class GetNotificationByIdQueryHandler : IRequestHandler<GetNotificationBy
         
         if (notification == null)
             return null;
+        
+        // Record the access for audit purposes
+        notification.LastModifiedAt = DateTime.UtcNow;
+        notificationRepository.Update(notification);
+        await notificationRepository.SaveChangesAsync();
         
         var notificationDto = _mapper.Map<NotificationDto>(notification);
         

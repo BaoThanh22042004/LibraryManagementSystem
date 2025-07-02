@@ -1,10 +1,14 @@
 using Application.Common;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 
 namespace Application.Features.Notifications.Commands;
 
+/// <summary>
+/// Command to mark all notifications for a user as read.
+/// </summary>
 public record MarkAllAsReadCommand(int UserId) : IRequest<Result>;
 
 public class MarkAllAsReadCommandHandler : IRequestHandler<MarkAllAsReadCommand, Result>
@@ -24,19 +28,20 @@ public class MarkAllAsReadCommandHandler : IRequestHandler<MarkAllAsReadCommand,
         {
             var notificationRepository = _unitOfWork.Repository<Notification>();
             
-            // Get all user's notifications
+            // Get all user's unread notifications (those with Sent status)
             var notifications = await notificationRepository.ListAsync(
-                predicate: n => n.UserId == request.UserId && n.Status == Domain.Enums.NotificationStatus.Sent
+                predicate: n => n.UserId == request.UserId && n.Status == NotificationStatus.Sent
             );
             
             if (notifications.Count == 0)
                 return Result.Success(); // No notifications to mark as read
             
-            // Since we're using a delete approach for "marking as read", we'll delete them all
-            // An alternative approach could be to update them all to a 'Read' status
+            // Mark all as read by updating their status
             foreach (var notification in notifications)
             {
-                notificationRepository.Delete(notification);
+                notification.Status = NotificationStatus.Read;
+                notification.LastModifiedAt = DateTime.UtcNow;
+                notificationRepository.Update(notification);
             }
             
             await _unitOfWork.SaveChangesAsync(cancellationToken);

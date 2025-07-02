@@ -6,6 +6,9 @@ using MediatR;
 
 namespace Application.Features.Notifications.Queries;
 
+/// <summary>
+/// Query to get all notifications for a specific user.
+/// </summary>
 public record GetNotificationsByUserIdQuery(int UserId) : IRequest<List<NotificationDto>>;
 
 public class GetNotificationsByUserIdQueryHandler : IRequestHandler<GetNotificationsByUserIdQuery, List<NotificationDto>>
@@ -25,7 +28,7 @@ public class GetNotificationsByUserIdQueryHandler : IRequestHandler<GetNotificat
         
         var notifications = await notificationRepository.ListAsync(
             predicate: n => n.UserId == request.UserId,
-            orderBy: q => q.OrderByDescending(n => n.SentAt ?? DateTime.Now),
+            orderBy: q => q.OrderByDescending(n => n.SentAt ?? n.CreatedAt),
             asNoTracking: true,
             n => n.User!
         );
@@ -36,6 +39,16 @@ public class GetNotificationsByUserIdQueryHandler : IRequestHandler<GetNotificat
         for (int i = 0; i < notifications.Count; i++)
         {
             notificationDtos[i].UserName = notifications[i].User?.FullName;
+        }
+        
+        // Record the access for audit purposes
+        var userRepository = _unitOfWork.Repository<User>();
+        var user = await userRepository.GetAsync(u => u.Id == request.UserId);
+        if (user != null)
+        {
+            user.LastModifiedAt = DateTime.UtcNow;
+            userRepository.Update(user);
+            await userRepository.SaveChangesAsync();
         }
         
         return notificationDtos;

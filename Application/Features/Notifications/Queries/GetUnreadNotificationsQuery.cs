@@ -7,6 +7,9 @@ using MediatR;
 
 namespace Application.Features.Notifications.Queries;
 
+/// <summary>
+/// Query to get all unread notifications for a specific user.
+/// </summary>
 public record GetUnreadNotificationsQuery(int UserId) : IRequest<List<NotificationDto>>;
 
 public class GetUnreadNotificationsQueryHandler : IRequestHandler<GetUnreadNotificationsQuery, List<NotificationDto>>
@@ -26,7 +29,7 @@ public class GetUnreadNotificationsQueryHandler : IRequestHandler<GetUnreadNotif
         
         var unreadNotifications = await notificationRepository.ListAsync(
             predicate: n => n.UserId == request.UserId && n.Status == NotificationStatus.Sent,
-            orderBy: q => q.OrderByDescending(n => n.SentAt ?? DateTime.Now),
+            orderBy: q => q.OrderByDescending(n => n.SentAt ?? n.CreatedAt),
             asNoTracking: true,
             n => n.User!
         );

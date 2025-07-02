@@ -6,6 +6,9 @@ using MediatR;
 
 namespace Application.Features.Notifications.Commands;
 
+/// <summary>
+/// Command to mark a notification as read.
+/// </summary>
 public record MarkAsReadCommand(int Id) : IRequest<Result>;
 
 public class MarkAsReadCommandHandler : IRequestHandler<MarkAsReadCommand, Result>
@@ -30,9 +33,16 @@ public class MarkAsReadCommandHandler : IRequestHandler<MarkAsReadCommand, Resul
             if (notification == null)
                 return Result.Failure($"Notification with ID {request.Id} not found.");
             
-            // Mark as read - in this case, we'll delete the notification
-            // Another approach could be to add a 'Read' status or a 'IsRead' flag to the entity
-            notificationRepository.Delete(notification);
+            // Check if notification is already read (we can add a ReadStatus enum if needed)
+            // For now, we'll check if the status is already marked as Read
+            if (notification.Status == NotificationStatus.Read)
+                return Result.Success(); // Already read, nothing to do
+            
+            // Mark as read, we should update status not delete
+            notification.Status = NotificationStatus.Read;
+            notification.LastModifiedAt = DateTime.UtcNow;
+            
+            notificationRepository.Update(notification);
             
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await _unitOfWork.CommitTransactionAsync();

@@ -2,10 +2,14 @@ using Application.Common;
 using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 
 namespace Application.Features.Notifications.Commands;
 
+/// <summary>
+/// Command to update a notification's status.
+/// </summary>
 public record UpdateNotificationCommand(int Id, UpdateNotificationDto NotificationDto) : IRequest<Result>;
 
 public class UpdateNotificationCommandHandler : IRequestHandler<UpdateNotificationCommand, Result>
@@ -30,13 +34,18 @@ public class UpdateNotificationCommandHandler : IRequestHandler<UpdateNotificati
             if (notification == null)
                 return Result.Failure($"Notification with ID {request.Id} not found.");
             
+            // Validate status transition
+            if (notification.Status == NotificationStatus.Sent && request.NotificationDto.Status == NotificationStatus.Pending)
+                return Result.Failure("Cannot change status from Sent back to Pending.");
+            
             // Update notification status
             notification.Status = request.NotificationDto.Status;
+            notification.LastModifiedAt = DateTime.UtcNow;
             
             // If status is changed to Sent, update the SentAt timestamp
-            if (notification.Status == Domain.Enums.NotificationStatus.Sent && notification.SentAt == null)
+            if (notification.Status == NotificationStatus.Sent && notification.SentAt == null)
             {
-                notification.SentAt = DateTime.Now;
+                notification.SentAt = DateTime.UtcNow;
             }
             
             notificationRepository.Update(notification);
