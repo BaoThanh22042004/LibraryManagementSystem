@@ -1,3 +1,4 @@
+using Application.DTOs;
 using Application.Features.Loans.Commands;
 using FluentValidation;
 
@@ -13,15 +14,27 @@ public class CreateLoanCommandValidator : AbstractValidator<CreateLoanCommand>
         RuleFor(x => x.LoanDto.BookCopyId)
             .GreaterThan(0).WithMessage("Book Copy ID must be greater than 0");
 
-        RuleFor(x => x.LoanDto.LoanDate)
-            .NotEmpty().WithMessage("Loan date is required")
-            .LessThanOrEqualTo(DateTime.Now).WithMessage("Loan date cannot be in the future");
+        // CustomDueDate is optional but must be in the future if provided
+        RuleFor(x => x.LoanDto.CustomDueDate)
+            .Must(dueDate => dueDate == null || dueDate > DateTime.Now)
+            .WithMessage("Due date must be in the future");
+    }
+}
 
-        RuleFor(x => x.LoanDto.DueDate)
-            .NotEmpty().WithMessage("Due date is required")
-            .GreaterThan(x => x.LoanDto.LoanDate).WithMessage("Due date must be after loan date")
-            .Must((dto, dueDate) => (dueDate - dto.LoanDto.LoanDate).TotalDays <= 30)
-            .WithMessage("Maximum loan period is 30 days");
+public class CreateLoanDtoValidator : AbstractValidator<CreateLoanDto>
+{
+    public CreateLoanDtoValidator() 
+    {
+        RuleFor(x => x.MemberId)
+            .GreaterThan(0).WithMessage("Member ID must be greater than 0");
+
+        RuleFor(x => x.BookCopyId)
+            .GreaterThan(0).WithMessage("Book Copy ID must be greater than 0");
+
+        // CustomDueDate is optional but must be in the future if provided
+        RuleFor(x => x.CustomDueDate)
+            .Must(dueDate => dueDate == null || dueDate > DateTime.Now)
+            .WithMessage("Due date must be in the future");
     }
 }
 

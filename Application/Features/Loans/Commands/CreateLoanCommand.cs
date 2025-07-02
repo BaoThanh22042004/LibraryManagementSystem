@@ -14,6 +14,7 @@ public class CreateLoanCommandHandler : IRequestHandler<CreateLoanCommand, Resul
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private const int DefaultLoanDays = 14;
 
     public CreateLoanCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
     {
@@ -53,13 +54,19 @@ public class CreateLoanCommandHandler : IRequestHandler<CreateLoanCommand, Resul
             if (bookCopy.Status != CopyStatus.Available)
                 return Result.Failure<int>($"Book copy is not available. Current status: {bookCopy.Status}.");
             
-            // Check if due date is valid
-            if (request.LoanDto.DueDate <= request.LoanDto.LoanDate)
-                return Result.Failure<int>("Due date must be after loan date.");
-            
             // Create loan
-            var loan = _mapper.Map<Loan>(request.LoanDto);
-            loan.Status = LoanStatus.Active;
+            var loan = new Loan
+            {
+                MemberId = request.LoanDto.MemberId,
+                BookCopyId = request.LoanDto.BookCopyId,
+                LoanDate = DateTime.Now,
+                DueDate = request.LoanDto.CustomDueDate ?? DateTime.Now.AddDays(DefaultLoanDays),
+                Status = LoanStatus.Active
+            };
+            
+            // Check if due date is valid
+            if (loan.DueDate <= loan.LoanDate)
+                return Result.Failure<int>("Due date must be after loan date.");
             
             await loanRepository.AddAsync(loan);
             

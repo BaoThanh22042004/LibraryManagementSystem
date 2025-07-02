@@ -69,14 +69,12 @@ public class MappingProfile : Profile
         CreateMap<UpdateMemberDto, Member>();
 
         // Loan mappings
-        CreateMap<Loan, LoanDto>()
-            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => 
-                src.Member.User.FullName))
-            .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => 
-                src.BookCopy.Book.Title))
-            .ForMember(dest => dest.CopyNumber, opt => opt.MapFrom(src => 
-                src.BookCopy.CopyNumber));
-        CreateMap<CreateLoanDto, Loan>();
+        CreateMap<Loan, LoanDto>();
+        CreateMap<CreateLoanDto, Loan>()
+            .ForMember(dest => dest.LoanDate, opt => opt.MapFrom(src => DateTime.Now))
+            .ForMember(dest => dest.DueDate, opt => opt.MapFrom(src => 
+                src.CustomDueDate ?? DateTime.Now.AddDays(14)))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => LoanStatus.Active));
         CreateMap<UpdateLoanDto, Loan>();
 
         // Reservation mappings

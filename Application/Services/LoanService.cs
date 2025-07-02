@@ -91,4 +91,44 @@ public class LoanService : ILoanService
     {
         return await _mediator.Send(new GetOverdueLoansQuery());
     }
+    
+    public async Task<LoanEligibilityDto> CheckLoanEligibilityAsync(int memberId)
+    {
+        var result = await _mediator.Send(new CheckLoanEligibilityQuery(memberId));
+        
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error);
+            
+        return result.Value;
+    }
+    
+    public async Task<List<int>> BulkCheckoutAsync(BulkCheckoutDto bulkCheckoutDto)
+    {
+        var result = await _mediator.Send(new BulkCheckoutCommand(bulkCheckoutDto));
+        
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error);
+            
+        return result.Value;
+    }
+    
+    public async Task<List<(int LoanId, bool Success, string? ErrorMessage)>> BulkReturnAsync(BulkReturnDto bulkReturnDto)
+    {
+        var result = await _mediator.Send(new BulkReturnCommand(bulkReturnDto));
+        
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error);
+            
+        return result.Value;
+    }
+    
+    public async Task<LoanHistoryDto> GetLoanHistoryAsync(int memberId, int? recentLoansCount = 5)
+    {
+        var result = await _mediator.Send(new GetLoanHistoryQuery(memberId, recentLoansCount));
+        
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error);
+            
+        return result.Value;
+    }
 }

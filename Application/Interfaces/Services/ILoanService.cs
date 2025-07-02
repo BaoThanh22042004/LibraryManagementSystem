@@ -15,4 +15,8 @@ public interface ILoanService
     Task<bool> ReturnBookAsync(int loanId);
     Task<bool> ExistsAsync(int id);
     Task<List<LoanDto>> GetOverdueLoansAsync();
+    Task<LoanEligibilityDto> CheckLoanEligibilityAsync(int memberId);
+    Task<List<int>> BulkCheckoutAsync(BulkCheckoutDto bulkCheckoutDto);
+    Task<List<(int LoanId, bool Success, string? ErrorMessage)>> BulkReturnAsync(BulkReturnDto bulkReturnDto);
+    Task<LoanHistoryDto> GetLoanHistoryAsync(int memberId, int? recentLoansCount = 5);
 }
