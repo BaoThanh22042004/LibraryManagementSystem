@@ -23,4 +23,11 @@ public interface IMemberService
     /// <param name="signUpDto">The signup information containing user and member details</param>
     /// <returns>The new member's ID if successful</returns>
     Task<Result<int>> SignUpMemberAsync(MemberSignUpDto signUpDto);
+    
+    /// <summary>
+    /// Checks if a member account is currently active
+    /// </summary>
+    /// <param name="memberId">The ID of the member to check</param>
+    /// <returns>True if the member's status is Active, otherwise false</returns>
+    Task<bool> IsMemberActiveAsync(int memberId);
 }

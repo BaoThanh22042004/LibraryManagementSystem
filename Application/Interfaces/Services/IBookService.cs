@@ -24,4 +24,8 @@ public interface IBookService
         PagedRequest? request = null);
     Task<List<BookDto>> GetRecentBooksAsync(int count = 10);
     Task<List<BookDto>> GetPopularBooksAsync(int count = 10);
+    Task<bool> ExistsCopyAsync(int copyId);
+    Task<bool> IsCopyAvailableAsync(int copyId);
+    Task<bool> HasAvailableCopiesAsync(int bookId);
+    Task<int> GetAvailableCopyCountAsync(int bookId);
 }

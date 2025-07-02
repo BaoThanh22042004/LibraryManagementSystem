@@ -54,6 +54,7 @@ public class FulfillReservationCommandHandler : IRequestHandler<FulfillReservati
             
             // Update reservation status to fulfilled
             reservation.Status = ReservationStatus.Fulfilled;
+            reservation.BookCopyId = bookCopy.Id;
             
             // Update book copy status to reserved
             bookCopy.Status = CopyStatus.Reserved;

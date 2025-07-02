@@ -46,6 +46,8 @@ public class UpdateReservationCommandHandler : IRequestHandler<UpdateReservation
                 // Ensure book copy is for the correct book
                 if (bookCopy.BookId != reservation.BookId)
                     return Result.Failure($"Book copy with ID {request.ReservationDto.BookCopyId.Value} is not for the reserved book.");
+                
+                reservation.BookCopyId = request.ReservationDto.BookCopyId;
             }
             
             reservationRepository.Update(reservation);

@@ -6,6 +6,7 @@ using Application.Interfaces;
 using Application.Interfaces.Services;
 using AutoMapper;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 using System.Linq.Expressions;
 
@@ -162,5 +163,35 @@ public class BookService : IBookService
             .ToList();
         
         return _mapper.Map<List<BookDto>>(popularBooks);
+    }
+    
+    public async Task<bool> ExistsCopyAsync(int copyId)
+    {
+        var bookCopyRepository = _unitOfWork.Repository<BookCopy>();
+        return await bookCopyRepository.ExistsAsync(bc => bc.Id == copyId);
+    }
+    
+    public async Task<bool> IsCopyAvailableAsync(int copyId)
+    {
+        var bookCopyRepository = _unitOfWork.Repository<BookCopy>();
+        return await bookCopyRepository.ExistsAsync(bc => 
+            bc.Id == copyId && 
+            bc.Status == CopyStatus.Available);
+    }
+    
+    public async Task<bool> HasAvailableCopiesAsync(int bookId)
+    {
+        var bookCopyRepository = _unitOfWork.Repository<BookCopy>();
+        return await bookCopyRepository.ExistsAsync(bc => 
+            bc.BookId == bookId && 
+            bc.Status == CopyStatus.Available);
+    }
+    
+    public async Task<int> GetAvailableCopyCountAsync(int bookId)
+    {
+        var bookCopyRepository = _unitOfWork.Repository<BookCopy>();
+        return await bookCopyRepository.CountAsync(bc => 
+            bc.BookId == bookId && 
+            bc.Status == CopyStatus.Available);
     }
 }

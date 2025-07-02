@@ -1,5 +1,6 @@
 using Application.Common;
 using Application.DTOs;
+using Application.Features.Reservations.Queries;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
@@ -12,10 +13,12 @@ public record CreateReservationCommand(CreateReservationDto ReservationDto) : IR
 public class CreateReservationCommandHandler : IRequestHandler<CreateReservationCommand, Result<int>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _mediator;
 
-    public CreateReservationCommandHandler(IUnitOfWork unitOfWork)
+    public CreateReservationCommandHandler(IUnitOfWork unitOfWork, IMediator mediator)
     {
         _unitOfWork = unitOfWork;
+        _mediator = mediator;
     }
 
     public async Task<Result<int>> Handle(CreateReservationCommand request, CancellationToken cancellationToken)
@@ -59,6 +62,11 @@ public class CreateReservationCommandHandler : IRequestHandler<CreateReservation
             // If there are available copies, we might not need a reservation
             if (availableCopies)
                 return Result.Failure<int>($"There are available copies of this book. A reservation is not needed.");
+            
+            // Check if member has reached their reservation limit
+            var activeReservationCount = await _mediator.Send(new GetReservationCountForMemberQuery(request.ReservationDto.MemberId), cancellationToken);
+            if (activeReservationCount >= 3)
+                return Result.Failure<int>($"Member has reached the maximum number of active reservations (3).");
             
             // Create reservation
             var reservation = new Reservation

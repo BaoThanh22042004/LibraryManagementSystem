@@ -101,4 +101,12 @@ public class MemberService : IMemberService
     {
         return await _mediator.Send(new SignUpMemberCommand(signUpDto));
     }
+    
+    public async Task<bool> IsMemberActiveAsync(int memberId)
+    {
+        var memberRepository = _unitOfWork.Repository<Member>();
+        return await memberRepository.ExistsAsync(m => 
+            m.Id == memberId && 
+            m.MembershipStatus == MembershipStatus.Active);
+    }
 }

@@ -17,4 +17,8 @@ public interface IReservationService
     Task<bool> FulfillReservationAsync(int id, int bookCopyId);
     Task<List<ReservationDto>> GetActiveReservationsAsync();
     Task<bool> HasActiveReservationAsync(int memberId, int bookId);
+    Task<ReservationDto?> GetNextActiveReservationAsync(int bookId);
+    Task<int> ProcessExpiredReservationsAsync();
+    Task<int> GetReservationCountForMemberAsync(int memberId);
+    Task<bool> HasReservationsForBookAsync(int bookId);
 }

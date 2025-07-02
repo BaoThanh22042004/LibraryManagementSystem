@@ -100,4 +100,29 @@ public class ReservationService : IReservationService
             r.BookId == bookId && 
             r.Status == Domain.Enums.ReservationStatus.Active);
     }
+    
+    public async Task<ReservationDto?> GetNextActiveReservationAsync(int bookId)
+    {
+        return await _mediator.Send(new GetNextActiveReservationQuery(bookId));
+    }
+    
+    public async Task<int> ProcessExpiredReservationsAsync()
+    {
+        var result = await _mediator.Send(new ExpireReservationsCommand());
+        
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error);
+            
+        return result.Value;
+    }
+    
+    public async Task<int> GetReservationCountForMemberAsync(int memberId)
+    {
+        return await _mediator.Send(new GetReservationCountForMemberQuery(memberId));
+    }
+    
+    public async Task<bool> HasReservationsForBookAsync(int bookId)
+    {
+        return await _mediator.Send(new HasReservationsForBookQuery(bookId));
+    }
 }
