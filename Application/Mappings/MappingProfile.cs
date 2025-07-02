@@ -85,6 +85,14 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.BookCopy.Book.Title))
             .ForMember(dest => dest.ISBN, opt => opt.MapFrom(src => src.BookCopy.Book.ISBN))
             .ForMember(dest => dest.CopyNumber, opt => opt.MapFrom(src => src.BookCopy.CopyNumber));
+            
+        // Fine Report mappings
+        CreateMap<Fine, FineReportItemDto>()
+            .ForMember(dest => dest.FineId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member.User.FullName))
+            .ForMember(dest => dest.MemberEmail, opt => opt.MapFrom(src => src.Member.User.Email))
+            .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => 
+                src.Loan != null ? src.Loan.BookCopy.Book.Title : null));
 
         // Reservation mappings
         CreateMap<Reservation, ReservationDto>()

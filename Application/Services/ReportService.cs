@@ -3,6 +3,7 @@ using Application.Features.Reports.Queries;
 using Application.Interfaces;
 using Application.Interfaces.Services;
 using AutoMapper;
+using Domain.Enums;
 using MediatR;
 
 namespace Application.Services;
@@ -30,6 +31,66 @@ public class ReportService : IReportService
     public async Task<OverdueReportDto> GetOverdueReportAsync()
     {
         var result = await _mediator.Send(new GetOverdueReportQuery());
+        
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error);
+            
+        return result.Value;
+    }
+    
+    /// <summary>
+    /// Gets a comprehensive report of all fines in the system
+    /// </summary>
+    /// <param name="includeStatus">Optional filter to include specific fine statuses. If null, all statuses are included.</param>
+    /// <returns>A report containing all fines with member and loan details</returns>
+    public async Task<FineReportDto> GetFinesReportAsync(FineStatus[]? includeStatus = null)
+    {
+        var result = await _mediator.Send(new GetFinesReportQuery(includeStatus));
+        
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error);
+            
+        return result.Value;
+    }
+    
+    /// <summary>
+    /// Gets a summary of outstanding fines for a specific member
+    /// </summary>
+    /// <param name="memberId">ID of the member to check</param>
+    /// <returns>A summary of the member's outstanding fines</returns>
+    public async Task<OutstandingFineDto> GetOutstandingFinesAsync(int memberId)
+    {
+        var result = await _mediator.Send(new GetOutstandingFinesQuery(memberId));
+        
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error);
+            
+        return result.Value;
+    }
+    
+    /// <summary>
+    /// Checks if a member has any outstanding fines
+    /// </summary>
+    /// <param name="memberId">ID of the member to check</param>
+    /// <returns>True if the member has outstanding fines, false otherwise</returns>
+    public async Task<bool> HasOutstandingFinesAsync(int memberId)
+    {
+        var result = await _mediator.Send(new HasOutstandingFinesQuery(memberId));
+        
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error);
+            
+        return result.Value;
+    }
+    
+    /// <summary>
+    /// Gets the total amount of outstanding fines for a member
+    /// </summary>
+    /// <param name="memberId">ID of the member to check</param>
+    /// <returns>Total amount of outstanding fines</returns>
+    public async Task<decimal> GetTotalOutstandingFineAmountAsync(int memberId)
+    {
+        var result = await _mediator.Send(new GetTotalOutstandingFineAmountQuery(memberId));
         
         if (result.IsFailure)
             throw new InvalidOperationException(result.Error);
