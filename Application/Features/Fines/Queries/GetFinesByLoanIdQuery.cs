@@ -27,17 +27,20 @@ public class GetFinesByLoanIdQueryHandler : IRequestHandler<GetFinesByLoanIdQuer
         var fines = await fineRepository.ListAsync(
             predicate: f => f.LoanId == request.LoanId,
             orderBy: q => q.OrderByDescending(f => f.FineDate),
-            asNoTracking: true,
-            f => f.Member,
-            f => f.Loan!
+            includes: new Expression<Func<Fine, object>>[] 
+            { 
+                f => f.Member,
+                f => f.Loan
+            }
         );
         
         var fineDtos = _mapper.Map<List<FineDto>>(fines);
         
-        // Add member names to the DTOs
-        for (int i = 0; i < fines.Count; i++)
+        // Set member name for each fine
+        foreach (var fineDto in fineDtos)
         {
-            fineDtos[i].MemberName = fines[i].Member?.User?.FullName ?? "Unknown";
+            var fine = fines.First(f => f.Id == fineDto.Id);
+            fineDto.MemberName = fine.Member?.User?.FullName ?? "Unknown";
         }
         
         return fineDtos;

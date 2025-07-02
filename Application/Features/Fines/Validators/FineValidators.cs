@@ -74,4 +74,14 @@ namespace Application.Features.Fines.Validators
 				.WithMessage("Fine ID is required");
 		}
 	}
+	
+	public class CalculateAndCreateFineCommandValidator : AbstractValidator<CalculateAndCreateFineCommand>
+	{
+		public CalculateAndCreateFineCommandValidator()
+		{
+			RuleFor(x => x.LoanId)
+				.GreaterThan(0)
+				.WithMessage("Loan ID is required");
+		}
+	}
 }

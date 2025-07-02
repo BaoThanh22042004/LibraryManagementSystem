@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 
 namespace Application.Features.Fines.Queries;
 
-public record GetPaginatedFinesQuery(PagedRequest PagedRequest, string? SearchTerm = null) : IRequest<PagedResult<FineDto>>;
+public record GetPaginatedFinesQuery(PagedRequest Request, string? SearchTerm) : IRequest<PagedResult<FineDto>>;
 
 public class GetPaginatedFinesQueryHandler : IRequestHandler<GetPaginatedFinesQuery, PagedResult<FineDto>>
 {
@@ -25,36 +25,35 @@ public class GetPaginatedFinesQueryHandler : IRequestHandler<GetPaginatedFinesQu
     {
         var fineRepository = _unitOfWork.Repository<Fine>();
         
-        // Build search predicate if search term is provided
         Expression<Func<Fine, bool>>? predicate = null;
-        if (!string.IsNullOrEmpty(request.SearchTerm))
+        
+        // Apply search filter if provided
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
             var searchTerm = request.SearchTerm.ToLower();
-            predicate = f => f.Description.ToLower().Contains(searchTerm) ||
-                             f.Member.User.FullName.ToLower().Contains(searchTerm);
+            predicate = f => f.Description.ToLower().Contains(searchTerm) || 
+                            f.Member.User.FullName.ToLower().Contains(searchTerm);
         }
         
-        // Get paginated fines
+        // Get paged fines
         var pagedFines = await fineRepository.PagedListAsync(
-            pagedRequest: request.PagedRequest,
-            predicate: predicate,
-            orderBy: q => q.OrderByDescending(f => f.FineDate),
-            asNoTracking: true,
+            request.Request,
+            predicate,
+            q => q.OrderByDescending(f => f.FineDate),
+            true,
             f => f.Member.User,
-            f => f.Loan!
+            f => f.Loan
         );
         
-        // Map entities to DTOs
-        var fineDtos = _mapper.Map<List<FineDto>>(pagedFines.Items);
-        
-        // Add member names to the DTOs
-        for (int i = 0; i < pagedFines.Items.Count; i++)
-        {
-            fineDtos[i].MemberName = pagedFines.Items[i].Member?.User?.FullName ?? "Unknown";
-        }
+        // Map to DTOs
+        var fineItems = pagedFines.Items.Select(fine => {
+            var fineDto = _mapper.Map<FineDto>(fine);
+            fineDto.MemberName = fine.Member?.User?.FullName ?? "Unknown";
+            return fineDto;
+        }).ToList();
         
         return new PagedResult<FineDto>(
-            fineDtos, 
+            fineItems, 
             pagedFines.TotalCount, 
             pagedFines.PageNumber, 
             pagedFines.PageSize

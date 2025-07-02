@@ -3,7 +3,6 @@ using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
 using MediatR;
-using System.Linq.Expressions;
 
 namespace Application.Features.Fines.Queries;
 
@@ -27,15 +26,13 @@ public class GetFineByIdQueryHandler : IRequestHandler<GetFineByIdQuery, FineDto
         var fine = await fineRepository.GetAsync(
             f => f.Id == request.Id,
             f => f.Member,
-            f => f.Loan!
+            f => f.Loan
         );
         
         if (fine == null)
             return null;
-        
+            
         var fineDto = _mapper.Map<FineDto>(fine);
-        
-        // Add member name to the DTO
         fineDto.MemberName = fine.Member?.User?.FullName ?? "Unknown";
         
         return fineDto;

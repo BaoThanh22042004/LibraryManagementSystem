@@ -6,6 +6,9 @@ using MediatR;
 
 namespace Application.Features.Fines.Commands;
 
+/// <summary>
+/// Command to waive a fine due to special circumstances.
+/// </summary>
 public record WaiveFineCommand(int Id) : IRequest<Result>;
 
 public class WaiveFineCommandHandler : IRequestHandler<WaiveFineCommand, Result>
@@ -41,6 +44,7 @@ public class WaiveFineCommandHandler : IRequestHandler<WaiveFineCommand, Result>
             
             // Update fine status
             fine.Status = FineStatus.Waived;
+            fine.LastModifiedAt = DateTime.Now;
             fineRepository.Update(fine);
             
             // Update member's outstanding fines

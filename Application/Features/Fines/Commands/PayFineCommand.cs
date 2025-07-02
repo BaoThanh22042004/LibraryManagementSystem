@@ -6,6 +6,9 @@ using MediatR;
 
 namespace Application.Features.Fines.Commands;
 
+/// <summary>
+/// Command to process a fine payment.
+/// </summary>
 public record PayFineCommand(int Id) : IRequest<Result>;
 
 public class PayFineCommandHandler : IRequestHandler<PayFineCommand, Result>
@@ -41,6 +44,7 @@ public class PayFineCommandHandler : IRequestHandler<PayFineCommand, Result>
             
             // Update fine status
             fine.Status = FineStatus.Paid;
+            fine.LastModifiedAt = DateTime.Now;
             fineRepository.Update(fine);
             
             // Update member's outstanding fines
