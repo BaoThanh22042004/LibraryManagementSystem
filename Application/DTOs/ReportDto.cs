@@ -16,16 +16,24 @@ public class OverdueReportDto
     /// Total number of overdue loans
     /// </summary>
     public int TotalCount => OverdueLoans.Count;
-    
-    /// <summary>
+
+	/// <summary>
     /// Total potential fine amount based on current overdue status
-    /// </summary>
+	/// </summary>
     public decimal TotalPotentialFineAmount => OverdueLoans.Sum(l => l.CalculatedFine);
     
     /// <summary>
     /// Date when report was generated
     /// </summary>
     public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+
+	/// <summary>
+	/// Average number of days overdue across all loans
+    /// </summary>
+	public double AverageDaysOverdue => 
+        OverdueLoans.Count > 0 
+            ? OverdueLoans.Average(l => l.DaysOverdue) 
+            : 0;
 }
 
 /// <summary>
@@ -148,6 +156,29 @@ public class FineReportDto
     /// Total amount of waived fines
     /// </summary>
     public decimal WaivedAmount => Fines.Where(f => f.Status == FineStatus.Waived).Sum(f => f.Amount);
+
+	/// <summary>
+	/// Total amount of pending fines
+	/// </summary>
+	public decimal TotalPendingAmount => 
+        Fines.Where(f => f.Status == FineStatus.Pending).Sum(f => f.Amount);
+
+	/// <summary>
+	/// Total amount of paid fines
+    /// </summary>
+	public decimal TotalPaidAmount => 
+        Fines.Where(f => f.Status == FineStatus.Paid).Sum(f => f.Amount);
+
+	/// <summary>
+	/// Total amount of waived fines
+	/// </summary>
+	public decimal TotalWaivedAmount => 
+        Fines.Where(f => f.Status == FineStatus.Waived).Sum(f => f.Amount);
+
+    /// <summary>
+    /// Total number of distinct members with fines
+    /// </summary>
+    public int DistinctMembersCount => Fines.Select(f => f.MemberId).Distinct().Count();
 }
 
 /// <summary>
@@ -225,11 +256,16 @@ public class OutstandingFineDto
     /// Member full name
     /// </summary>
     public string MemberName { get; set; } = string.Empty;
-    
-    /// <summary>
-    /// Total outstanding fine amount
-    /// </summary>
-    public decimal OutstandingAmount { get; set; }
+
+	/// <summary>
+	/// Membership status of the member
+	/// </summary>
+	public MembershipStatus MembershipStatus { get; set; }
+
+	/// <summary>
+	/// Total outstanding fine amount
+	/// </summary>
+	public decimal OutstandingAmount { get; set; }
     
     /// <summary>
     /// Number of pending fines
@@ -245,4 +281,97 @@ public class OutstandingFineDto
     /// Date when the data was calculated
     /// </summary>
     public DateTime CalculatedAt { get; set; } = DateTime.UtcNow;
+	
+}
+
+/// <summary>
+/// Data transfer object for generating reports with custom formatting options
+/// </summary>
+public class GenerateReportDto
+{
+	/// <summary>
+	/// Type of report to generate
+	/// </summary>
+	public ReportType ReportType { get; set; }
+
+	/// <summary>
+	/// Output format for the report
+	/// </summary>
+	public ReportFormat Format { get; set; }
+
+	/// <summary>
+	/// Optional date range start
+	/// </summary>
+	public DateTime? StartDate { get; set; }
+
+	/// <summary>
+	/// Optional date range end
+	/// </summary>
+	public DateTime? EndDate { get; set; }
+
+	/// <summary>
+	/// Optional filter criteria for fine status
+	/// </summary>
+	public FineStatus[]? FineStatusFilter { get; set; }
+
+	/// <summary>
+	/// Optional member ID for member-specific reports
+	/// </summary>
+	public int? MemberId { get; set; }
+
+	/// <summary>
+	/// Optional parameters for customizing report output
+	/// </summary>
+	public Dictionary<string, string> AdditionalParameters { get; set; } = new();
+}
+
+/// <summary>
+/// Represents the output of a report generation operation
+/// </summary>
+public class ReportResultDto
+{
+	/// <summary>
+	/// Type of report that was generated
+	/// </summary>
+	public ReportType ReportType { get; set; }
+
+	/// <summary>
+	/// Format of the generated report
+	/// </summary>
+	public ReportFormat Format { get; set; }
+
+	/// <summary>
+	/// Content of the report (could be file path or raw content)
+	/// </summary>
+	public string Content { get; set; } = string.Empty;
+
+	/// <summary>
+	/// Filename for the generated report
+	/// </summary>
+	public string Filename { get; set; } = string.Empty;
+
+	/// <summary>
+	/// MIME type of the report content
+	/// </summary>
+	public string ContentType { get; set; } = string.Empty;
+
+	/// <summary>
+	/// Timestamp when the report was generated
+	/// </summary>
+	public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
+
+	/// <summary>
+	/// Size of the report in bytes
+	/// </summary>
+	public long Size { get; set; }
+
+	/// <summary>
+	/// Flag indicating if report generation was successful
+	/// </summary>
+	public bool IsSuccess { get; set; }
+
+	/// <summary>
+	/// Error message if report generation failed
+	/// </summary>
+	public string? ErrorMessage { get; set; }
 }

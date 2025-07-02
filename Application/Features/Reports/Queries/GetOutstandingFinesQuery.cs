@@ -5,7 +5,6 @@ using AutoMapper;
 using Domain.Entities;
 using Domain.Enums;
 using MediatR;
-using System.Linq.Expressions;
 
 namespace Application.Features.Reports.Queries;
 
@@ -30,74 +29,61 @@ public class GetOutstandingFinesQueryHandler : IRequestHandler<GetOutstandingFin
 
     public async Task<Result<OutstandingFineDto>> Handle(GetOutstandingFinesQuery request, CancellationToken cancellationToken)
     {
-        try
+        // Get member information first
+        var memberRepository = _unitOfWork.Repository<Member>();
+        var member = await memberRepository.GetAsync(
+            predicate: m => m.Id == request.MemberId,
+            includes: m => m.User
+        );
+        
+        if (member == null)
         {
-            var memberRepository = _unitOfWork.Repository<Member>();
-            var fineRepository = _unitOfWork.Repository<Fine>();
-            
-            // Verify member exists
-            var member = await memberRepository.GetAsync(
-                m => m.Id == request.MemberId,
-                m => m.User
-            );
-            
-            if (member == null)
-                return Result.Failure<OutstandingFineDto>($"Member with ID {request.MemberId} not found.");
-            
-            // Get pending fines for the member
-            var pendingFines = await fineRepository.ListAsync(
-                predicate: f => f.MemberId == request.MemberId && f.Status == FineStatus.Pending,
-                orderBy: q => q.OrderByDescending(f => f.FineDate),
-                includes: new Expression<Func<Fine, object>>[] 
-                { 
-                    f => f.Loan.BookCopy.Book
-                }
-            );
-            
-            // Transform fines to report items
-            var fineItems = new List<FineReportItemDto>();
-            
-            foreach (var fine in pendingFines)
+            return Result.Failure<OutstandingFineDto>($"Member with ID {request.MemberId} not found");
+        }
+        
+        // Get outstanding fines for the member
+        var fineRepository = _unitOfWork.Repository<Fine>();
+        var outstandingFines = await fineRepository.ListAsync(
+            predicate: f => f.MemberId == request.MemberId && f.Status == FineStatus.Pending,
+            includes: [
+                f => f.Loan,
+                f => f.Loan.BookCopy,
+                f => f.Loan.BookCopy.Book
+            ]
+        );
+        
+        var report = new OutstandingFineDto
+        {
+            MemberId = member.Id,
+            MemberName = member.User.FullName,
+            MembershipStatus = member.MembershipStatus,
+            CalculatedAt = DateTime.UtcNow,
+            PendingFines = new List<FineReportItemDto>()
+        };
+        
+        foreach (var fine in outstandingFines)
+        {
+            var fineItem = new FineReportItemDto
             {
-                var reportItem = new FineReportItemDto
-                {
-                    FineId = fine.Id,
-                    MemberId = fine.MemberId,
-                    MemberName = member.User?.FullName ?? "Unknown",
-                    MemberEmail = member.User?.Email ?? "Unknown",
-                    Amount = fine.Amount,
-                    FineDate = fine.FineDate,
-                    Status = fine.Status,
-                    Type = fine.Type,
-                    Description = fine.Description,
-                    LoanId = fine.LoanId
-                };
-                
-                // Include book info if this fine is related to a loan
-                if (fine.Loan != null)
-                {
-                    reportItem.BookTitle = fine.Loan.BookCopy?.Book?.Title;
-                }
-                
-                fineItems.Add(reportItem);
-            }
-            
-            // Create the outstanding fines result
-            var outstandingFines = new OutstandingFineDto
-            {
-                MemberId = member.Id,
-                MemberName = member.User?.FullName ?? "Unknown",
-                OutstandingAmount = member.OutstandingFines,
-                PendingFinesCount = pendingFines.Count,
-                PendingFines = fineItems,
-                CalculatedAt = DateTime.UtcNow
+                FineId = fine.Id,
+                MemberId = fine.MemberId,
+                MemberName = member.User.FullName,
+                MemberEmail = member.User.Email,
+                LoanId = fine.LoanId,
+                BookTitle = fine.Loan?.BookCopy?.Book?.Title,
+                Type = fine.Type,
+                Amount = fine.Amount,
+                FineDate = fine.FineDate,
+                Status = fine.Status,
+                Description = fine.Description
             };
             
-            return Result.Success(outstandingFines);
+            report.PendingFines.Add(fineItem);
         }
-        catch (Exception ex)
-        {
-            return Result.Failure<OutstandingFineDto>($"Error retrieving outstanding fines: {ex.Message}");
-        }
+        
+        // Sort by fine date (most recent first)
+        report.PendingFines = report.PendingFines.OrderByDescending(f => f.FineDate).ToList();
+        
+        return Result.Success(report);
     }
 }

@@ -93,6 +93,17 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.MemberEmail, opt => opt.MapFrom(src => src.Member.User.Email))
             .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => 
                 src.Loan != null ? src.Loan.BookCopy.Book.Title : null));
+                
+        CreateMap<Loan, OverdueLoanDto>()
+            .ForMember(dest => dest.LoanId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.MemberId, opt => opt.MapFrom(src => src.MemberId))
+            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member.User.FullName))
+            .ForMember(dest => dest.MemberEmail, opt => opt.MapFrom(src => src.Member.User.Email))
+            .ForMember(dest => dest.CopyNumber, opt => opt.MapFrom(src => src.BookCopy.CopyNumber))
+            .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.BookCopy.Book.Title))
+            .ForMember(dest => dest.DaysOverdue, opt => opt.MapFrom(src => 
+                (int)(DateTime.UtcNow - src.DueDate).TotalDays > 0 ? 
+                    (int)(DateTime.UtcNow - src.DueDate).TotalDays : 0));
 
         // Reservation mappings
         CreateMap<Reservation, ReservationDto>()
