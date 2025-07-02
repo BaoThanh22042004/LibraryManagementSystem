@@ -136,5 +136,13 @@ public class MappingProfile : Profile
         
         // Password Reset Token mappings
         CreateMap<PasswordResetToken, PasswordResetTokenDto>();
+        
+        // Audit Log mappings
+        CreateMap<AuditLog, AuditLogDto>()
+            .ForMember(dest => dest.Timestamp, opt => opt.MapFrom(src => src.CreatedAt))
+            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => 
+                src.User != null ? src.User.FullName : null));
+        CreateMap<CreateAuditLogDto, AuditLog>()
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
     }
 }

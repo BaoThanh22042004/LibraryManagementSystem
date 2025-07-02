@@ -61,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<ILibrarianService, LibrarianService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IAuditService, AuditService>();
         
         return services;
     }

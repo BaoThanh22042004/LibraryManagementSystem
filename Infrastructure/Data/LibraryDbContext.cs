@@ -25,6 +25,8 @@ public class LibraryDbContext : DbContext
 	public DbSet<Notification> Notifications { get; set; }
 
 	public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+	
+	public DbSet<AuditLog> AuditLogs { get; set; }
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
