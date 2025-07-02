@@ -97,4 +97,34 @@ public class ReportService : IReportService
             
         return result.Value;
     }
+
+    /// <summary>
+    /// Gets the current dashboard statistics
+    /// </summary>
+    /// <returns>A summary of the current dashboard statistics</returns>
+    public async Task<DashboardDto> GetDashboardStatisticsAsync()
+    {
+        var result = await _mediator.Send(new GetDashboardStatisticsQuery());
+        
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error);
+            
+        return result.Value;
+    }
+
+    /// <summary>
+    /// Gets the dashboard statistics for a specific date range
+    /// </summary>
+    /// <param name="startDate">Start date of the range</param>
+    /// <param name="endDate">End date of the range</param>
+    /// <returns>A summary of the dashboard statistics for the specified date range</returns>
+    public async Task<DashboardDto> GetDashboardStatisticsAsync(DateTime startDate, DateTime endDate)
+    {
+        var result = await _mediator.Send(new GetDashboardStatisticsQuery(startDate, endDate));
+        
+        if (result.IsFailure)
+            throw new InvalidOperationException(result.Error);
+            
+        return result.Value;
+    }
 }

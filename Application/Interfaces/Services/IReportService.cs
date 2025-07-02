@@ -41,4 +41,18 @@ public interface IReportService
     /// <param name="memberId">ID of the member to check</param>
     /// <returns>Total amount of outstanding fines</returns>
     Task<decimal> GetTotalOutstandingFineAmountAsync(int memberId);
+    
+    /// <summary>
+    /// Gets comprehensive system statistics for the dashboard
+    /// </summary>
+    /// <returns>A dashboard DTO containing all system statistics</returns>
+    Task<DashboardDto> GetDashboardStatisticsAsync();
+    
+    /// <summary>
+    /// Gets statistics for a specific date range
+    /// </summary>
+    /// <param name="startDate">The start date for the statistical period</param>
+    /// <param name="endDate">The end date for the statistical period</param>
+    /// <returns>A dashboard DTO containing filtered statistics for the given period</returns>
+    Task<DashboardDto> GetDashboardStatisticsAsync(DateTime startDate, DateTime endDate);
 }
