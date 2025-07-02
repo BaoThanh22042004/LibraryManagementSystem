@@ -6,9 +6,9 @@ using MediatR;
 
 namespace Application.Features.BookCopies.Commands;
 
-public record DeleteBookCopyCommand(int Id) : IRequest<Result>;
+public record DeleteBookCopyCommand(int Id) : IRequest<Result<bool>>;
 
-public class DeleteBookCopyCommandHandler : IRequestHandler<DeleteBookCopyCommand, Result>
+public class DeleteBookCopyCommandHandler : IRequestHandler<DeleteBookCopyCommand, Result<bool>>
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -17,7 +17,7 @@ public class DeleteBookCopyCommandHandler : IRequestHandler<DeleteBookCopyComman
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result> Handle(DeleteBookCopyCommand request, CancellationToken cancellationToken)
+    public async Task<Result<bool>> Handle(DeleteBookCopyCommand request, CancellationToken cancellationToken)
     {
         await _unitOfWork.BeginTransactionAsync();
         
@@ -27,37 +27,42 @@ public class DeleteBookCopyCommandHandler : IRequestHandler<DeleteBookCopyComman
             var loanRepository = _unitOfWork.Repository<Loan>();
             var reservationRepository = _unitOfWork.Repository<Reservation>();
             
-            // Get book copy with related entities
-            var bookCopy = await bookCopyRepository.GetAsync(
-                bc => bc.Id == request.Id,
-                bc => bc.Loans,
-                bc => bc.Reservations
-            );
+            // Get book copy
+            var bookCopy = await bookCopyRepository.GetAsync(bc => bc.Id == request.Id);
             
             if (bookCopy == null)
-                return Result.Failure($"Book copy with ID {request.Id} not found.");
+                return Result.Failure<bool>($"Book copy with ID {request.Id} not found.");
             
             // Check for active loans
-            var hasActiveLoans = bookCopy.Loans.Any(l => l.Status == LoanStatus.Active);
+            var hasActiveLoans = await loanRepository.ExistsAsync(
+                l => l.BookCopyId == request.Id && 
+                    (l.Status == LoanStatus.Active || l.Status == LoanStatus.Overdue)
+            );
+            
             if (hasActiveLoans)
-                return Result.Failure("Cannot delete book copy with active loans. Please return the book first.");
+                return Result.Failure<bool>("Cannot delete book copy with active loans. Please return the book first.");
             
             // Check for active reservations
-            var hasActiveReservations = bookCopy.Reservations.Any(r => r.Status == ReservationStatus.Active);
+            var hasActiveReservations = await reservationRepository.ExistsAsync(
+                r => r.BookId == bookCopy.BookId && 
+                     r.BookCopyId == request.Id && 
+                     r.Status == ReservationStatus.Active
+            );
+            
             if (hasActiveReservations)
-                return Result.Failure("Cannot delete book copy with active reservations. Please cancel the reservations first.");
+                return Result.Failure<bool>("Cannot delete book copy with active reservations. Please cancel the reservations first.");
             
             // Delete book copy
             bookCopyRepository.Delete(bookCopy);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await _unitOfWork.CommitTransactionAsync();
             
-            return Result.Success();
+            return Result.Success(true);
         }
         catch (Exception ex)
         {
             await _unitOfWork.RollbackTransactionAsync();
-            return Result.Failure($"An error occurred while deleting the book copy: {ex.Message}");
+            return Result.Failure<bool>($"An error occurred while deleting the book copy: {ex.Message}");
         }
     }
 }

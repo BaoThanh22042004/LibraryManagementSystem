@@ -6,9 +6,9 @@ using MediatR;
 
 namespace Application.Features.BookCopies.Commands;
 
-public record UpdateBookCopyStatusCommand(int Id, CopyStatus Status) : IRequest<Result>;
+public record UpdateBookCopyStatusCommand(int Id, CopyStatus Status) : IRequest<Result<bool>>;
 
-public class UpdateBookCopyStatusCommandHandler : IRequestHandler<UpdateBookCopyStatusCommand, Result>
+public class UpdateBookCopyStatusCommandHandler : IRequestHandler<UpdateBookCopyStatusCommand, Result<bool>>
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -17,7 +17,7 @@ public class UpdateBookCopyStatusCommandHandler : IRequestHandler<UpdateBookCopy
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result> Handle(UpdateBookCopyStatusCommand request, CancellationToken cancellationToken)
+    public async Task<Result<bool>> Handle(UpdateBookCopyStatusCommand request, CancellationToken cancellationToken)
     {
         var bookCopyRepository = _unitOfWork.Repository<BookCopy>();
         var loanRepository = _unitOfWork.Repository<Loan>();
@@ -26,7 +26,7 @@ public class UpdateBookCopyStatusCommandHandler : IRequestHandler<UpdateBookCopy
         var bookCopy = await bookCopyRepository.GetAsync(bc => bc.Id == request.Id);
         
         if (bookCopy == null)
-            return Result.Failure($"Book copy with ID {request.Id} not found.");
+            return Result.Failure<bool>($"Book copy with ID {request.Id} not found.");
         
         // If marking as Available, check if there are active loans for this copy
         if (request.Status == CopyStatus.Available)
@@ -36,7 +36,7 @@ public class UpdateBookCopyStatusCommandHandler : IRequestHandler<UpdateBookCopy
             );
             
             if (activeLoans)
-                return Result.Failure($"Cannot mark book copy as Available while it has active loans.");
+                return Result.Failure<bool>($"Cannot mark book copy as Available while it has active loans.");
         }
         
         // If marking as Reserved, check if there are active reservations for this book
@@ -50,15 +50,16 @@ public class UpdateBookCopyStatusCommandHandler : IRequestHandler<UpdateBookCopy
             );
             
             if (!activeReservations)
-                return Result.Failure($"Cannot mark book copy as Reserved without active reservations for this book.");
+                return Result.Failure<bool>($"Cannot mark book copy as Reserved without active reservations for this book.");
         }
         
         // Update status
         bookCopy.Status = request.Status;
+        bookCopy.LastModifiedAt = DateTime.UtcNow;
         
         bookCopyRepository.Update(bookCopy);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         
-        return Result.Success();
+        return Result.Success(true);
     }
 }
