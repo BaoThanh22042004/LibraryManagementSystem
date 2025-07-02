@@ -1,6 +1,7 @@
 using Application;
 using Application.Interfaces;
 using Application.Services;
+using Infrastructure;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,13 +21,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Add DbContext
-builder.Services.AddDbContext<LibraryDbContext>(options => 
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Register repositories and services
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+// Register Infrastructure layer with configuration
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // Register file upload service
 builder.Services.AddScoped<IFileUploadService, FileUploadService>();
