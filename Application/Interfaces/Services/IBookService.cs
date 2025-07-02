@@ -14,6 +14,14 @@ public interface IBookService
     Task<bool> ExistsAsync(int id);
     Task<bool> IsbnExistsAsync(string isbn);
     Task<List<BookDto>> GetBooksByCategoryAsync(int categoryId);
+    Task<PagedResult<BookDto>> GetPaginatedBooksByCategoryAsync(int categoryId, PagedRequest request);
+    Task<PagedResult<BookDto>> SearchBooksAsync(
+        string? searchTerm = null, 
+        string? title = null, 
+        string? author = null, 
+        string? isbn = null,
+        int? categoryId = null,
+        PagedRequest? request = null);
     Task<List<BookDto>> GetRecentBooksAsync(int count = 10);
     Task<List<BookDto>> GetPopularBooksAsync(int count = 10);
 }

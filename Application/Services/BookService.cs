@@ -94,6 +94,33 @@ public class BookService : IBookService
         
         return _mapper.Map<List<BookDto>>(books);
     }
+    
+    public async Task<PagedResult<BookDto>> GetPaginatedBooksByCategoryAsync(int categoryId, PagedRequest request)
+    {
+        return await _mediator.Send(new GetBooksByCategoryQuery(categoryId, request.PageNumber, request.PageSize));
+    }
+    
+    public async Task<PagedResult<BookDto>> SearchBooksAsync(
+        string? searchTerm = null, 
+        string? title = null, 
+        string? author = null, 
+        string? isbn = null,
+        int? categoryId = null,
+        PagedRequest? request = null)
+    {
+        var pageNumber = request?.PageNumber ?? 1;
+        var pageSize = request?.PageSize ?? 10;
+        
+        return await _mediator.Send(new SearchBooksQuery(
+            searchTerm,
+            title,
+            author,
+            isbn,
+            categoryId,
+            pageNumber,
+            pageSize
+        ));
+    }
 
     public async Task<List<BookDto>> GetRecentBooksAsync(int count = 10)
     {
