@@ -76,6 +76,15 @@ public class MappingProfile : Profile
                 src.CustomDueDate ?? DateTime.Now.AddDays(14)))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => LoanStatus.Active));
         CreateMap<UpdateLoanDto, Loan>();
+        
+        // Report mappings
+        CreateMap<Loan, OverdueLoanDto>()
+            .ForMember(dest => dest.LoanId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member.User.FullName))
+            .ForMember(dest => dest.MemberEmail, opt => opt.MapFrom(src => src.Member.User.Email))
+            .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.BookCopy.Book.Title))
+            .ForMember(dest => dest.ISBN, opt => opt.MapFrom(src => src.BookCopy.Book.ISBN))
+            .ForMember(dest => dest.CopyNumber, opt => opt.MapFrom(src => src.BookCopy.CopyNumber));
 
         // Reservation mappings
         CreateMap<Reservation, ReservationDto>()
