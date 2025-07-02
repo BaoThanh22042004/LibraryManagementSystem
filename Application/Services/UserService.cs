@@ -38,9 +38,9 @@ public class UserService : IUserService
         return await _mediator.Send(new GetUserByEmailQuery(email));
     }
 
-    public async Task<int> CreateUserAsync(CreateUserDto userDto)
+    public async Task<int> CreateUserAsync(CreateUserDto userDto, int currentUserId)
     {
-        var result = await _mediator.Send(new CreateUserCommand(userDto));
+        var result = await _mediator.Send(new CreateUserCommand(userDto, currentUserId));
         
         if (result.IsFailure)
             throw new InvalidOperationException(result.Error);
@@ -56,9 +56,9 @@ public class UserService : IUserService
             throw new InvalidOperationException(result.Error);
     }
 
-    public async Task DeleteUserAsync(int id)
+    public async Task DeleteUserAsync(int id, int currentUserId)
     {
-        var result = await _mediator.Send(new DeleteUserCommand(id));
+        var result = await _mediator.Send(new DeleteUserCommand(id, currentUserId));
         
         if (result.IsFailure)
             throw new InvalidOperationException(result.Error);
@@ -116,13 +116,18 @@ public class UserService : IUserService
         return await _mediator.Send(new AdminUpdateUserCommand(id, userDto, currentUserId));
     }
     
-    public async Task<UserDetailsDto?> GetUserDetailsAsync(int id)
-    {
-        return await _mediator.Send(new GetUserDetailsQuery(id));
+    public async Task<UserDetailsDto?> GetUserDetailsAsync(int id, int currentUserId)
+	{
+        return await _mediator.Send(new GetUserDetailsQuery(id, currentUserId));
     }
     
     public async Task<Result<bool>> ValidateUserDeletionAsync(int id)
     {
         return await _mediator.Send(new ValidateUserDeletionCommand(id));
+    }
+    
+    public async Task<Result<int>> RegisterMemberAsync(RegisterMemberDto registerDto)
+    {
+        return await _mediator.Send(new RegisterMemberCommand(registerDto));
     }
 }

@@ -4,10 +4,20 @@ using Application.DTOs;
 using Application.Interfaces;
 using Application.Interfaces.Services;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 
 namespace Application.Features.Users.Commands;
 
+/// <summary>
+/// Command to handle the forgot password request (UC005)
+/// This implements the first part of the password reset functionality:
+/// - Receives email address from user
+/// - Generates a secure reset token
+/// - Sends email with reset link
+/// - Applies rate limiting (max 3 requests per hour)
+/// - Maintains audit trail
+/// </summary>
 public record ForgotPasswordCommand(ForgotPasswordDto ForgotPasswordDto) : IRequest<Result<bool>>;
 
 public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, Result<bool>>
@@ -22,20 +32,37 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
     {
         _unitOfWork = unitOfWork;
         _emailService = emailService;
-        _tokenExpirationMinutes = 60; // Default 60 minutes
+        _tokenExpirationMinutes = 60; // Default 60 minutes expiration (UC005 requirement)
     }
 
     public async Task<Result<bool>> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
         var userRepository = _unitOfWork.Repository<User>();
         var resetTokenRepository = _unitOfWork.Repository<PasswordResetToken>();
+        var auditLogRepository = _unitOfWork.Repository<AuditLog>();
         
         // Get user by email
         var user = await userRepository.GetAsync(u => u.Email.Equals(request.ForgotPasswordDto.Email, StringComparison.CurrentCultureIgnoreCase));
         
         if (user == null)
         {
-            // For security reasons, don't reveal whether the email exists
+            // For security reasons, don't reveal whether the email exists (BR-04)
+            // But log attempted password reset for non-existent account (BR-22)
+            await auditLogRepository.AddAsync(new AuditLog
+            {
+                UserId = null, // No user found
+                ActionType = AuditActionType.PasswordReset,
+                EntityType = "User",
+                EntityId = null,
+                EntityName = null,
+                Details = $"Password reset attempt for non-existent email: {request.ForgotPasswordDto.Email}",
+                Module = "PasswordReset",
+                IsSuccess = false,
+                ErrorMessage = "User not found"
+            });
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            
+            // Return success even though user doesn't exist (for security)
             return Result.Success(true);
         }
         
@@ -47,6 +74,21 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
             
         if (recentRequests >= 3)
         {
+            // Log rate limit exceeded (BR-22)
+            await auditLogRepository.AddAsync(new AuditLog
+            {
+                UserId = user.Id,
+                ActionType = AuditActionType.PasswordReset,
+                EntityType = "User",
+                EntityId = user.Id.ToString(),
+                EntityName = user.FullName,
+                Details = $"Password reset rate limit exceeded for user {user.Email}",
+                Module = "PasswordReset",
+                IsSuccess = false,
+                ErrorMessage = "Rate limit exceeded: Maximum 3 requests per hour"
+            });
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            
             return Result.Failure<bool>("Too many password reset requests. Please try again later.");
         }
 
@@ -55,7 +97,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
             // Begin transaction
             await _unitOfWork.BeginTransactionAsync();
             
-            // Generate token
+            // Generate secure token
             string token = TokenGenerator.GenerateToken();
             
             // Create reset token entry
@@ -68,9 +110,23 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
             };
             
             await resetTokenRepository.AddAsync(resetToken);
+            
+            // Log password reset request (BR-22)
+            await auditLogRepository.AddAsync(new AuditLog
+            {
+                UserId = user.Id,
+                ActionType = AuditActionType.PasswordReset,
+                EntityType = "User",
+                EntityId = user.Id.ToString(),
+                EntityName = user.FullName,
+                Details = $"Password reset token generated for user {user.Email}",
+                Module = "PasswordReset",
+                IsSuccess = true
+            });
+            
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             
-            // Send email with reset link
+            // Send email with reset link (UC005 requirement)
             string resetLink = $"/Account/ResetPassword?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(token)}";
             string emailSubject = "Password Reset Request";
             string emailBody = $@"
@@ -93,6 +149,22 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
         catch (Exception ex)
         {
             await _unitOfWork.RollbackTransactionAsync();
+            
+            // Log failure outside transaction (BR-22)
+            await auditLogRepository.AddAsync(new AuditLog
+            {
+                UserId = user.Id,
+                ActionType = AuditActionType.PasswordReset,
+                EntityType = "User",
+                EntityId = user.Id.ToString(),
+                EntityName = user.FullName,
+                Details = $"Failed to process password reset request for user {user.Email}",
+                Module = "PasswordReset",
+                IsSuccess = false,
+                ErrorMessage = ex.Message
+            });
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            
             return Result.Failure<bool>($"Failed to process password reset request: {ex.Message}");
         }
     }

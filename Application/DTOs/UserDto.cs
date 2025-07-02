@@ -82,3 +82,11 @@ public class UserDetailsDto : UserDto
     public MemberDto? Member { get; set; }
     public LibrarianDto? Librarian { get; set; }
 }
+
+public class RegisterMemberDto
+{
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string? PreferredMembershipNumber { get; set; }
+}
