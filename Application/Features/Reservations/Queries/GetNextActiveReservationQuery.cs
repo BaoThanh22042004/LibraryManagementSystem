@@ -7,6 +7,16 @@ using MediatR;
 
 namespace Application.Features.Reservations.Queries;
 
+/// <summary>
+/// Query to retrieve the next active reservation for a specific book (UC025 - Get Next Reservation).
+/// </summary>
+/// <remarks>
+/// This implementation supports UC025 and UC024 specifications:
+/// - Retrieves the oldest active reservation for a specific book
+/// - Used to determine which member is next in the reservation queue
+/// - Supports the reservation fulfillment process
+/// - Returns null if no active reservations exist for the book
+/// </remarks>
 public record GetNextActiveReservationQuery(int BookId) : IRequest<ReservationDto?>;
 
 public class GetNextActiveReservationQueryHandler : IRequestHandler<GetNextActiveReservationQuery, ReservationDto?>
