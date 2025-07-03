@@ -8,6 +8,18 @@ using System.Linq.Expressions;
 
 namespace Application.Features.Fines.Queries;
 
+/// <summary>
+/// Query to retrieve paginated fine records with search capability (UC029 - View Fine History).
+/// </summary>
+/// <remarks>
+/// This implementation follows UC029 specifications:
+/// - Retrieves fine information according to user permissions
+/// - Displays fine list with descriptions, amounts, dates, and status
+/// - Supports searching across fine descriptions and member names
+/// - Supports pagination for large datasets
+/// - Allows sorting by date, amount, or status
+/// - Includes related member and loan information
+/// </remarks>
 public record GetPaginatedFinesQuery(PagedRequest Request, string? SearchTerm) : IRequest<PagedResult<FineDto>>;
 
 public class GetPaginatedFinesQueryHandler : IRequestHandler<GetPaginatedFinesQuery, PagedResult<FineDto>>
@@ -41,8 +53,9 @@ public class GetPaginatedFinesQueryHandler : IRequestHandler<GetPaginatedFinesQu
             predicate,
             q => q.OrderByDescending(f => f.FineDate),
             true,
-            f => f.Member.User,
-            f => f.Loan
+            f => f.Member,
+            f => f.Member.User
+            // Not including f => f.Loan as it might be null
         );
         
         // Map to DTOs
