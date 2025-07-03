@@ -9,6 +9,7 @@ namespace Application.Features.Notifications.Queries;
 
 /// <summary>
 /// Query to get all unread notifications for a specific user.
+/// Implements UC036: View Unread Notifications
 /// </summary>
 public record GetUnreadNotificationsQuery(int UserId) : IRequest<List<NotificationDto>>;
 

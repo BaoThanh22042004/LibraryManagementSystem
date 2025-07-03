@@ -9,6 +9,7 @@ namespace Application.Features.Notifications.Commands;
 
 /// <summary>
 /// Command to send notifications to users when their reserved books become available.
+/// Implements UC035: Send Reservation Available Notifications
 /// </summary>
 public record SendReservationAvailableNotificationsCommand : IRequest<Result>;
 
@@ -16,13 +17,13 @@ public class SendReservationAvailableNotificationsCommandHandler : IRequestHandl
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
-
+    
     public SendReservationAvailableNotificationsCommandHandler(IUnitOfWork unitOfWork, IMediator mediator)
     {
         _unitOfWork = unitOfWork;
         _mediator = mediator;
     }
-
+    
     public async Task<Result> Handle(SendReservationAvailableNotificationsCommand request, CancellationToken cancellationToken)
     {
         await _unitOfWork.BeginTransactionAsync();
@@ -32,7 +33,7 @@ public class SendReservationAvailableNotificationsCommandHandler : IRequestHandl
             var reservationRepository = _unitOfWork.Repository<Reservation>();
             var bookCopyRepository = _unitOfWork.Repository<BookCopy>();
             
-            // Get all active reservations ordered by reservation date (first come, first served)
+            // Get all active reservations ordered by reservation date (first come, first served)   
             var activeReservations = await reservationRepository.ListAsync(
                 predicate: r => r.Status == ReservationStatus.Active,
                 orderBy: q => q.OrderBy(r => r.ReservationDate),
@@ -62,7 +63,7 @@ public class SendReservationAvailableNotificationsCommandHandler : IRequestHandl
                 
                 // Check if there are available copies of the book
                 var availableCopies = await bookCopyRepository.ListAsync(
-                    predicate: bc => bc.BookId == bookId && bc.Status == CopyStatus.Available,
+                    predicate: bc => bc.BookId == bookId && bc.Status == CopyStatus.Available,      
                     orderBy: null,
                     true
                 );
@@ -82,7 +83,7 @@ public class SendReservationAvailableNotificationsCommandHandler : IRequestHandl
                     var bookTitle = firstReservation.Book?.Title ?? "Unknown Book";
                     
                     // Calculate pickup deadline (3 days from now)
-                    var pickupDeadline = DateTime.UtcNow.AddDays(3).ToString("MMMM d, yyyy");
+                    var pickupDeadline = DateTime.UtcNow.AddDays(3).ToString("MMMM d, yyyy");       
                     
                     var createNotificationDto = new CreateNotificationDto
                     {
