@@ -8,6 +8,18 @@ using System.Linq.Expressions;
 
 namespace Application.Features.Books.Queries;
 
+/// <summary>
+/// Query to retrieve books by category (UC014 - Browse by Category).
+/// </summary>
+/// <remarks>
+/// This implementation follows UC014 specifications:
+/// - Validates the requested category exists
+/// - Returns paginated list of books in the selected category
+/// - Books include availability and copy information
+/// - Results are sorted alphabetically by title
+/// - Empty results are handled gracefully
+/// - Supports paging through category results
+/// </remarks>
 public record GetBooksByCategoryQuery(int CategoryId, int PageNumber = 1, int PageSize = 10) : IRequest<PagedResult<BookDto>>;
 
 public class GetBooksByCategoryQueryHandler : IRequestHandler<GetBooksByCategoryQuery, PagedResult<BookDto>>

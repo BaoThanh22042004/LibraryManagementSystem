@@ -8,6 +8,18 @@ using System.Linq.Expressions;
 
 namespace Application.Features.Books.Queries;
 
+/// <summary>
+/// Query to search for books in the catalog by various criteria (UC013 - Search Books).
+/// </summary>
+/// <remarks>
+/// This implementation follows UC013 specifications:
+/// - Supports searching by title, author, and ISBN
+/// - Supports combined search using a general search term
+/// - Returns paginated results with availability information
+/// - Shows book details including copy counts
+/// - Results are sorted alphabetically by title
+/// - Supports empty search for browsing all books
+/// </remarks>
 public record SearchBooksQuery(
     string? SearchTerm = null, 
     string? Title = null, 

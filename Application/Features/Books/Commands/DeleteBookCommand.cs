@@ -6,6 +6,18 @@ using MediatR;
 
 namespace Application.Features.Books.Commands;
 
+/// <summary>
+/// Command to delete a book from the catalog (UC012 - Delete Book).
+/// </summary>
+/// <remarks>
+/// This implementation follows UC012 specifications:
+/// - Validates book exists before deletion
+/// - Checks for active loans and prevents deletion if found
+/// - Checks for active reservations and prevents deletion if found
+/// - Automatically deletes all associated book copies
+/// - Records deletion in the audit log
+/// - Maintains historical loan records for audit purposes
+/// </remarks>
 public record DeleteBookCommand(int Id) : IRequest<Result>;
 
 public class DeleteBookCommandHandler : IRequestHandler<DeleteBookCommand, Result>
@@ -19,49 +31,87 @@ public class DeleteBookCommandHandler : IRequestHandler<DeleteBookCommand, Resul
 
     public async Task<Result> Handle(DeleteBookCommand request, CancellationToken cancellationToken)
     {
-        var bookRepository = _unitOfWork.Repository<Book>();
-        var loanRepository = _unitOfWork.Repository<Loan>();
-        var reservationRepository = _unitOfWork.Repository<Reservation>();
+        await _unitOfWork.BeginTransactionAsync();
         
-        // Get book with copies
-        var book = await bookRepository.GetAsync(
-            b => b.Id == request.Id,
-            b => b.Copies
-        );
-        
-        if (book == null)
+        try
         {
-            return Result.Failure($"Book with ID {request.Id} not found.");
-        }
-        
-        // Check if book has active loans
-        if (book.Copies.Any())
-        {
-            var copyIds = book.Copies.Select(c => c.Id).ToList();
-            var hasActiveLoans = await loanRepository.ExistsAsync(
-                l => copyIds.Contains(l.BookCopyId) && l.Status == LoanStatus.Active
+            var bookRepository = _unitOfWork.Repository<Book>();
+            var loanRepository = _unitOfWork.Repository<Loan>();
+            var reservationRepository = _unitOfWork.Repository<Reservation>();
+            
+            // Get book with copies (PRE-3: Book must exist in the catalog)
+            var book = await bookRepository.GetAsync(
+                b => b.Id == request.Id,
+                b => b.Copies,
+                b => b.Categories
             );
             
-            if (hasActiveLoans)
+            if (book == null)
             {
-                return Result.Failure("Cannot delete book with active loans.");
+                return Result.Failure($"Book with ID {request.Id} not found."); // UC012.E3: Book Not Found
             }
+            
+            // Check if book has active loans (PRE-4: Book must not have any active loans)
+            if (book.Copies.Any())
+            {
+                var copyIds = book.Copies.Select(c => c.Id).ToList();
+                var hasActiveLoans = await loanRepository.ExistsAsync(
+                    l => copyIds.Contains(l.BookCopyId) && 
+                        (l.Status == LoanStatus.Active || l.Status == LoanStatus.Overdue)
+                );
+                
+                if (hasActiveLoans)
+                {
+                    return Result.Failure("Cannot delete book with active loans."); // UC012.E1: Active Dependencies Found
+                }
+            }
+            
+            // Check if book has active reservations (PRE-5: Book must not have any active reservations)
+            var hasActiveReservations = await reservationRepository.ExistsAsync(
+                r => r.BookId == request.Id && r.Status == ReservationStatus.Active
+            );
+            
+            if (hasActiveReservations)
+            {
+                return Result.Failure("Cannot delete book with active reservations."); // UC012.E2: Active Reservations Found
+            }
+            
+            // Record information for audit log before deletion
+            var bookInfo = new
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Author = book.Author,
+                ISBN = book.ISBN,
+                CopiesCount = book.Copies.Count,
+                CategoriesCount = book.Categories.Count
+            };
+            
+            // Delete book and all its copies (POST-1, POST-2, POST-3)
+            bookRepository.Delete(book); // CASCADE DELETE will handle copies and category associations
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            
+            // Record audit log for deletion (POST-4)
+            var auditRepository = _unitOfWork.Repository<AuditLog>();
+            await auditRepository.AddAsync(new AuditLog
+            {
+                EntityType = "Book",
+                EntityId = bookInfo.Id.ToString(),
+                EntityName = bookInfo.Title,
+                ActionType = AuditActionType.Delete,
+                Details = $"Book '{bookInfo.Title}' with ISBN '{bookInfo.ISBN}' was deleted with {bookInfo.CopiesCount} copies.",
+                BeforeState = System.Text.Json.JsonSerializer.Serialize(bookInfo),
+                IsSuccess = true
+            });
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            
+            await _unitOfWork.CommitTransactionAsync();
+            return Result.Success();
         }
-        
-        // Check if book has active reservations
-        var hasActiveReservations = await reservationRepository.ExistsAsync(
-            r => r.BookId == request.Id && r.Status == ReservationStatus.Active
-        );
-        
-        if (hasActiveReservations)
+        catch (Exception ex)
         {
-            return Result.Failure("Cannot delete book with active reservations.");
+            await _unitOfWork.RollbackTransactionAsync();
+            return Result.Failure($"An error occurred while deleting the book: {ex.Message}"); // UC012.E5: Data Constraint Violation
         }
-        
-        // Delete book
-        bookRepository.Delete(book);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-        
-        return Result.Success();
     }
 }
