@@ -1,0 +1,219 @@
+@model Application.DTOs.BookDetailsDto
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container mx-auto">
+    <div class="bg-surface-alt dark:bg-surface-dark-alt border border-outline dark:border-outline-dark rounded-radius shadow-md overflow-hidden">
+        <div class="bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark p-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-bold">@Model.Title</h1>
+                <div class="flex gap-2">
+                    @if (User.IsInRole("Librarian") || User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="rounded-radius bg-on-primary dark:bg-on-primary-dark text-primary dark:text-primary-dark px-4 py-2 text-sm font-medium hover:opacity-75">
+                            Edit Book
+                        </a>
+                        <a asp-controller="BookCopy" asp-action="Create" asp-route-bookId="@Model.Id" class="rounded-radius bg-on-primary dark:bg-on-primary-dark text-primary dark:text-primary-dark px-4 py-2 text-sm font-medium hover:opacity-75">
+                            Add Copy
+                        </a>
+                    }
+                    <a asp-action="Index" class="rounded-radius border border-on-primary dark:border-on-primary-dark px-4 py-2 text-sm font-medium hover:bg-on-primary/10 dark:hover:bg-on-primary-dark/10 text-on-primary dark:text-on-primary-dark">
+                        Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column - Book Cover and Basic Info -->
+                <div class="lg:col-span-1">
+                    <!-- Book Cover -->
+                    <div class="mb-6">
+                        @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+                        {
+                            <img src="@Model.CoverImageUrl" alt="@Model.Title" class="w-full rounded-radius shadow-md" />
+                        }
+                        else
+                        {
+                            <div class="w-full aspect-[3/4] bg-surface-alt dark:bg-surface-dark-alt rounded-radius flex items-center justify-center">
+                                <svg class="w-24 h-24 text-on-surface dark:text-on-surface-dark opacity-30" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="bg-surface dark:bg-surface-dark border border-outline dark:border-outline-dark rounded-radius p-4 mb-6">
+                        <h3 class="font-semibold text-on-surface-strong dark:text-on-surface-dark-strong mb-3">Availability</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-on-surface dark:text-on-surface-dark">Total Copies:</span>
+                                <span class="font-medium text-on-surface-strong dark:text-on-surface-dark-strong">@Model.CopiesCount</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-on-surface dark:text-on-surface-dark">Available:</span>
+                                <span class="font-medium @(Model.AvailableCopiesCount > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                                    @Model.AvailableCopiesCount
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-on-surface dark:text-on-surface-dark">Status:</span>
+                                <span class="text-xs px-2 py-1 rounded-full @(Model.Status == Domain.Enums.BookStatus.Available ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400" : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400")">
+                                    @Model.Status
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categories -->
+                    @if (Model.CategoryDetails.Any())
+                    {
+                        <div class="bg-surface dark:bg-surface-dark border border-outline dark:border-outline-dark rounded-radius p-4">
+                            <h3 class="font-semibold text-on-surface-strong dark:text-on-surface-dark-strong mb-3">Categories</h3>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach (var category in Model.CategoryDetails)
+                                {
+                                    <span class="text-sm bg-primary/10 dark:bg-primary-dark/10 text-primary dark:text-primary-dark px-3 py-1 rounded-full">
+                                        @category.Name
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Right Column - Detailed Information -->
+                <div class="lg:col-span-2">
+                    <!-- Book Information -->
+                    <div class="bg-surface dark:bg-surface-dark border border-outline dark:border-outline-dark rounded-radius p-6 mb-6">
+                        <h2 class="text-2xl font-bold text-on-surface-strong dark:text-on-surface-dark-strong mb-2">@Model.Title</h2>
+                        <p class="text-lg text-on-surface dark:text-on-surface-dark mb-4">by @Model.Author</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            @if (!string.IsNullOrEmpty(Model.ISBN))
+                            {
+                                <div>
+                                    <span class="text-sm font-medium text-on-surface dark:text-on-surface-dark">ISBN:</span>
+                                    <p class="text-on-surface-strong dark:text-on-surface-dark-strong">@Model.ISBN</p>
+                                </div>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(Model.Publisher))
+                            {
+                                <div>
+                                    <span class="text-sm font-medium text-on-surface dark:text-on-surface-dark">Publisher:</span>
+                                    <p class="text-on-surface-strong dark:text-on-surface-dark-strong">@Model.Publisher</p>
+                                </div>
+                            }
+                            
+                            @if (Model.PublicationDate.HasValue)
+                            {
+                                <div>
+                                    <span class="text-sm font-medium text-on-surface dark:text-on-surface-dark">Publication Date:</span>
+                                    <p class="text-on-surface-strong dark:text-on-surface-dark-strong">@Model.PublicationDate.Value.ToString("MMMM yyyy")</p>
+                                </div>
+                            }
+                            
+                            <div>
+                                <span class="text-sm font-medium text-on-surface dark:text-on-surface-dark">Status:</span>
+                                <p class="text-on-surface-strong dark:text-on-surface-dark-strong">@Model.Status</p>
+                            </div>
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(Model.Description))
+                        {
+                            <div>
+                                <span class="text-sm font-medium text-on-surface dark:text-on-surface-dark">Description:</span>
+                                <p class="text-on-surface-strong dark:text-on-surface-dark-strong mt-1">@Model.Description</p>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Book Copies -->
+                    <div class="bg-surface dark:bg-surface-dark border border-outline dark:border-outline-dark rounded-radius p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-on-surface-strong dark:text-on-surface-dark-strong">Book Copies</h3>
+                            @if (User.IsInRole("Librarian") || User.IsInRole("Admin"))
+                            {
+                                <a asp-controller="BookCopy" asp-action="Create" asp-route-bookId="@Model.Id" 
+                                   class="rounded-radius bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark px-4 py-2 text-sm font-medium hover:opacity-75">
+                                    Add Copy
+                                </a>
+                            }
+                        </div>
+                        
+                        @if (Model.Copies.Any())
+                        {
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="border-b border-outline dark:border-outline-dark">
+                                            <th class="text-left py-3 px-4 font-medium text-on-surface-strong dark:text-on-surface-dark-strong">Copy Number</th>
+                                            <th class="text-left py-3 px-4 font-medium text-on-surface-strong dark:text-on-surface-dark-strong">Status</th>
+                                            <th class="text-left py-3 px-4 font-medium text-on-surface-strong dark:text-on-surface-dark-strong">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var copy in Model.Copies)
+                                        {
+                                            <tr class="border-b border-outline dark:border-outline-dark hover:bg-surface-alt dark:hover:bg-surface-dark-alt">
+                                                <td class="py-3 px-4 text-on-surface-strong dark:text-on-surface-dark-strong">@copy.CopyNumber</td>
+                                                <td class="py-3 px-4">
+                                                    <span class="text-xs px-2 py-1 rounded-full @(copy.Status == Domain.Enums.CopyStatus.Available ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400" : copy.Status == Domain.Enums.CopyStatus.Borrowed ? "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400" : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400")">
+                                                        @copy.Status
+                                                    </span>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    @if (User.IsInRole("Librarian") || User.IsInRole("Admin"))
+                                                    {
+                                                        <div class="flex gap-2">
+                                                            <a asp-controller="BookCopy" asp-action="Edit" asp-route-id="@copy.Id" 
+                                                               class="text-sm text-primary dark:text-primary-dark hover:underline">
+                                                                Edit
+                                                            </a>
+                                                            <a asp-controller="BookCopy" asp-action="Delete" asp-route-id="@copy.Id" 
+                                                               class="text-sm text-red-600 dark:text-red-400 hover:underline"
+                                                               onclick="return confirm('Are you sure you want to remove this copy?')">
+                                                                Remove
+                                                            </a>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-sm text-on-surface dark:text-on-surface-dark">-</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-8">
+                                <svg class="mx-auto h-12 w-12 text-on-surface dark:text-on-surface-dark opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-on-surface-strong dark:text-on-surface-dark-strong">No copies available</h3>
+                                <p class="mt-1 text-sm text-on-surface dark:text-on-surface-dark">This book has no physical copies in the library.</p>
+                                @if (User.IsInRole("Librarian") || User.IsInRole("Admin"))
+                                {
+                                    <div class="mt-4">
+                                        <a asp-controller="BookCopy" asp-action="Create" asp-route-bookId="@Model.Id" 
+                                           class="rounded-radius bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark px-4 py-2 text-sm font-medium hover:opacity-75">
+                                            Add First Copy
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

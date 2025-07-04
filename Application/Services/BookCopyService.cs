@@ -51,7 +51,7 @@ public class BookCopyService : IBookCopyService
 
     public async Task UpdateBookCopyAsync(int id, UpdateBookCopyDto bookCopyDto)
     {
-        var result = await _mediator.Send(new UpdateBookCopyCommand(id, bookCopyDto));
+        var result = await _mediator.Send(new UpdateBookCopyStatusCommand(id, bookCopyDto.Status));
         
         if (result.IsFailure)
             throw new InvalidOperationException(result.Error);

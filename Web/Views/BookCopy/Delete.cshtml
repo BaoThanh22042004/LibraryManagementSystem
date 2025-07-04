@@ -1,0 +1,139 @@
+@model Application.DTOs.BookCopyDto
+@{
+    ViewData["Title"] = "Remove Book Copy";
+}
+
+<div class="container mx-auto">
+    <div class="bg-surface-alt dark:bg-surface-dark-alt border border-outline dark:border-outline-dark rounded-radius shadow-md overflow-hidden">
+        <div class="bg-red-600 dark:bg-red-700 text-white p-4">
+            <h1 class="text-xl font-bold">Remove Book Copy</h1>
+        </div>
+        <div class="p-6">
+            <div class="mb-6">
+                <div class="flex items-center mb-4">
+                    <svg class="w-8 h-8 text-red-600 dark:text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <h2 class="text-lg font-semibold text-on-surface-strong dark:text-on-surface-dark-strong">Are you sure you want to remove this book copy?</h2>
+                </div>
+                <p class="text-on-surface dark:text-on-surface-dark mb-4">
+                    This action cannot be undone. The copy will be permanently removed from the system.
+                </p>
+            </div>
+
+            <!-- Copy Information -->
+            <div class="bg-surface dark:bg-surface-dark border border-outline dark:border-outline-dark rounded-radius p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Copy Details -->
+                    <div>
+                        <h3 class="text-xl font-bold text-on-surface-strong dark:text-on-surface-dark-strong mb-2">Copy Information</h3>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-sm font-medium text-on-surface dark:text-on-surface-dark">Copy Number:</span>
+                                <p class="text-on-surface-strong dark:text-on-surface-dark-strong">@Model.CopyNumber</p>
+                            </div>
+                            
+                            <div>
+                                <span class="text-sm font-medium text-on-surface dark:text-on-surface-dark">Status:</span>
+                                <span class="text-xs px-2 py-1 rounded-full @(Model.Status == Domain.Enums.CopyStatus.Available ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400" : Model.Status == Domain.Enums.CopyStatus.Borrowed ? "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400" : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400")">
+                                    @Model.Status
+                                </span>
+                            </div>
+                            
+                            <div>
+                                <span class="text-sm font-medium text-on-surface dark:text-on-surface-dark">Book:</span>
+                                <p class="text-on-surface-strong dark:text-on-surface-dark-strong">@Model.BookTitle</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Warning -->
+                    <div>
+                        @if (Model.Status == Domain.Enums.CopyStatus.Borrowed)
+                        {
+                            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-radius p-4">
+                                <div class="flex">
+                                    <svg class="w-5 h-5 text-red-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-red-800 dark:text-red-200">Warning</h4>
+                                        <p class="text-sm text-red-700 dark:text-red-300 mt-1">
+                                            This copy is currently borrowed. You should process the return before removing it.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else if (Model.Status == Domain.Enums.CopyStatus.Reserved)
+                        {
+                            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-radius p-4">
+                                <div class="flex">
+                                    <svg class="w-5 h-5 text-yellow-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Warning</h4>
+                                        <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                                            This copy is currently reserved. You should cancel the reservation before removing it.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-radius p-4">
+                                <div class="flex">
+                                    <svg class="w-5 h-5 text-green-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-green-800 dark:text-green-200">Safe to Remove</h4>
+                                        <p class="text-sm text-green-700 dark:text-green-300 mt-1">
+                                            This copy is available and can be safely removed.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning Messages -->
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-radius p-4 mb-6">
+                <div class="flex">
+                    <svg class="w-5 h-5 text-yellow-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <div>
+                        <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Important Information</h3>
+                        <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>This action will permanently remove the copy from the system</li>
+                                <li>Historical loan records will be preserved for audit purposes</li>
+                                <li>Any active loans or reservations will prevent removal</li>
+                                <li>This action cannot be undone</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-between">
+                <a asp-controller="Book" asp-action="Details" asp-route-id="@Model.BookId" class="rounded-radius border border-outline dark:border-outline-dark px-4 py-2 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt text-on-surface-strong dark:text-on-surface-dark-strong">
+                    Cancel
+                </a>
+                <form asp-action="Delete" method="post" class="inline">
+                    <button type="submit" class="rounded-radius bg-red-600 dark:bg-red-700 text-white px-6 py-2 text-sm font-medium hover:bg-red-700 dark:hover:bg-red-800 cursor-pointer" 
+                            onclick="return confirm('This action cannot be undone. Are you absolutely sure you want to remove this copy?')">
+                        Remove Copy
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div> 

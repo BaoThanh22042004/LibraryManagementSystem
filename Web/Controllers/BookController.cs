@@ -2,10 +2,34 @@ using Application.Common;
 using Application.DTOs;
 using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Web.Services;
 
 namespace Web.Controllers;
 
+/// <summary>
+/// Controller for managing books in the library system.
+/// Implements UC010 (Add Book), UC011 (Update Book), UC012 (Delete Book),
+/// UC013 (Search Books), and UC014 (Browse by Category).
+/// </summary>
+/// <remarks>
+/// This controller provides the web interface for book management operations.
+/// All operations are properly authorized based on user roles (BR-06).
+/// 
+/// Use Cases Supported:
+/// - UC010: Add Book - Create new books with categories and initial copies
+/// - UC011: Update Book - Modify existing book information and status
+/// - UC012: Delete Book - Remove books with dependency validation
+/// - UC013: Search Books - Search and browse books with pagination
+/// - UC014: Browse by Category - Filter books by category
+/// 
+/// Business Rules Enforced:
+/// - BR-06: Book Management Rights (Only Librarian or Admin can manage books)
+/// - BR-07: Book Deletion Restriction (Books with active loans/reservations cannot be deleted)
+/// - BR-22: Audit Logging Requirement (All operations logged)
+/// - BR-24: Role-Based Access Control (Proper authorization on all endpoints)
+/// </remarks>
+[Authorize]
 public class BookController : Controller
 {
     private readonly IBookService _bookService;
@@ -26,7 +50,7 @@ public class BookController : Controller
     }
 
     // GET: Book
-    public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10, string? searchTerm = null)
+    public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10, string? searchTerm = null, int? categoryId = null)
     {
         try
         {
@@ -36,7 +60,7 @@ public class BookController : Controller
                 PageSize = pageSize > 0 ? pageSize : 10
             };
 
-            var books = await _bookService.GetPaginatedBooksAsync(pagedRequest, searchTerm);
+            var books = await _bookService.SearchBooksAsync(searchTerm, null, null, null, categoryId, pagedRequest);
             return View(books);
         }
         catch (Exception ex)
@@ -68,6 +92,7 @@ public class BookController : Controller
     }
 
     // GET: Book/Create
+    [Authorize(Roles = "Librarian,Admin")]
     public async Task<IActionResult> Create()
     {
         try
@@ -88,6 +113,7 @@ public class BookController : Controller
     // POST: Book/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Librarian,Admin")]
     public async Task<IActionResult> Create(CreateBookDto bookDto, IFormFile? coverImageFile)
     {
         if (!ModelState.IsValid)
@@ -154,6 +180,7 @@ public class BookController : Controller
     }
 
     // GET: Book/Edit/5
+    [Authorize(Roles = "Librarian,Admin")]
     public async Task<IActionResult> Edit(int id)
     {
         try
@@ -192,6 +219,7 @@ public class BookController : Controller
     // POST: Book/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Librarian,Admin")]
     public async Task<IActionResult> Edit(int id, UpdateBookDto bookDto, IFormFile? coverImageFile)
     {
         if (!ModelState.IsValid)
@@ -266,6 +294,7 @@ public class BookController : Controller
     // POST: Book/RemoveCoverImage/5
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Librarian,Admin")]
     public async Task<IActionResult> RemoveCoverImage(int id)
     {
         try
@@ -307,6 +336,7 @@ public class BookController : Controller
     }
 
     // GET: Book/Delete/5
+    [Authorize(Roles = "Librarian,Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         try
@@ -329,6 +359,7 @@ public class BookController : Controller
     // POST: Book/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Librarian,Admin")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         try

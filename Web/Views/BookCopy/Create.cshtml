@@ -1,0 +1,106 @@
+@model Application.DTOs.CreateBookCopyDto
+@{
+    ViewData["Title"] = "Add Book Copy";
+    var bookTitle = ViewBag.BookTitle as string;
+}
+
+<div class="container mx-auto">
+    <div class="bg-surface-alt dark:bg-surface-dark-alt border border-outline dark:border-outline-dark rounded-radius shadow-md overflow-hidden">
+        <div class="bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark p-4">
+            <h1 class="text-xl font-bold">Add Book Copy</h1>
+        </div>
+        <div class="p-6">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-4"></div>
+
+                <!-- Book Information Display -->
+                @if (!string.IsNullOrEmpty(bookTitle))
+                {
+                    <div class="bg-surface dark:bg-surface-dark border border-outline dark:border-outline-dark rounded-radius p-4 mb-6">
+                        <h3 class="font-semibold text-on-surface-strong dark:text-on-surface-dark-strong mb-2">Book Information</h3>
+                        <p class="text-on-surface dark:text-on-surface-dark">@bookTitle</p>
+                    </div>
+                }
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left Column -->
+                    <div>
+                        <div class="mb-4">
+                            <label asp-for="BookId" class="block text-on-surface-strong dark:text-on-surface-dark-strong font-medium mb-1">Book</label>
+                            @if (!string.IsNullOrEmpty(bookTitle))
+                            {
+                                <input type="hidden" asp-for="BookId" />
+                                <input type="text" value="@bookTitle" class="w-full rounded-radius border border-outline dark:border-outline-dark px-4 py-2 bg-surface-alt dark:bg-surface-dark-alt text-on-surface dark:text-on-surface-dark" readonly />
+                                <span class="text-sm text-on-surface dark:text-on-surface-dark">Book is pre-selected</span>
+                            }
+                            else
+                            {
+                                <select asp-for="BookId" class="w-full rounded-radius border border-outline dark:border-outline-dark px-4 py-2 focus:border-primary dark:focus:border-primary-dark focus:outline-none bg-surface dark:bg-surface-dark text-on-surface-strong dark:text-on-surface-dark-strong">
+                                    <option value="">-- Select a Book --</option>
+                                    <!-- This would need to be populated with available books -->
+                                </select>
+                                <span asp-validation-for="BookId" class="text-danger text-sm"></span>
+                            }
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="CopyNumber" class="block text-on-surface-strong dark:text-on-surface-dark-strong font-medium mb-1">Copy Number</label>
+                            <input asp-for="CopyNumber" class="w-full rounded-radius border border-outline dark:border-outline-dark px-4 py-2 focus:border-primary dark:focus:border-primary-dark focus:outline-none bg-surface dark:bg-surface-dark text-on-surface-strong dark:text-on-surface-dark-strong" 
+                                   placeholder="Leave empty for auto-generation" />
+                            <span asp-validation-for="CopyNumber" class="text-danger text-sm"></span>
+                            <p class="text-sm text-on-surface dark:text-on-surface-dark mt-1">
+                                Leave empty to auto-generate a copy number, or provide a custom one.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div>
+                        <div class="bg-surface dark:bg-surface-dark border border-outline dark:border-outline-dark rounded-radius p-4">
+                            <h3 class="font-semibold text-on-surface-strong dark:text-on-surface-dark-strong mb-3">Copy Information</h3>
+                            <div class="space-y-2 text-sm text-on-surface dark:text-on-surface-dark">
+                                <div class="flex justify-between">
+                                    <span>Status:</span>
+                                    <span class="font-medium text-green-600 dark:text-green-400">Available</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Created Date:</span>
+                                    <span class="font-medium">@DateTime.Now.ToString("MMM dd, yyyy")</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Copy Type:</span>
+                                    <span class="font-medium">Physical Copy</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-radius p-4">
+                            <div class="flex">
+                                <svg class="w-5 h-5 text-blue-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                </svg>
+                                <div>
+                                    <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200">Information</h4>
+                                    <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                                        New copies are automatically set to "Available" status and can be borrowed immediately.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-6">
+                    <a asp-controller="Book" asp-action="Details" asp-route-id="@Model.BookId" class="rounded-radius border border-outline dark:border-outline-dark px-4 py-2 text-sm font-medium hover:bg-surface-alt dark:hover:bg-surface-dark-alt text-on-surface-strong dark:text-on-surface-dark-strong">
+                        Back to Book
+                    </a>
+                    <input type="submit" value="Create Copy" class="rounded-radius bg-primary dark:bg-primary-dark text-on-primary dark:text-on-primary-dark px-4 py-2 text-sm font-medium hover:opacity-75 cursor-pointer" />
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

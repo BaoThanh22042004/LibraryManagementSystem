@@ -11,12 +11,18 @@ namespace Application.Features.Books.Commands;
 /// </summary>
 /// <remarks>
 /// This implementation follows UC012 specifications:
-/// - Validates book exists before deletion
-/// - Checks for active loans and prevents deletion if found
-/// - Checks for active reservations and prevents deletion if found
-/// - Automatically deletes all associated book copies
-/// - Records deletion in the audit log
-/// - Maintains historical loan records for audit purposes
+/// - Validates book exists before deletion (Normal Flow 12.0 step 4)
+/// - Checks for active loans and prevents deletion if found (UC012.E1: Active Dependencies Found)
+/// - Checks for active reservations and prevents deletion if found (UC012.E2: Active Reservations Found)
+/// - Automatically deletes all associated book copies (POST-2)
+/// - Records deletion in the audit log (POST-4)
+/// - Maintains historical loan records for audit purposes (POST-5)
+/// - Supports alternative to deletion by changing status (Alternative Flow 12.1: Book Status Change)
+/// 
+/// Business Rules Enforced:
+/// - BR-06: Book Management Rights (Only Librarian or Admin can delete books)
+/// - BR-07: Book Deletion Restriction (Books with active loans or reservations cannot be deleted)
+/// - BR-22: Audit Logging Requirement (All key actions logged with timestamps)
 /// </remarks>
 public record DeleteBookCommand(int Id) : IRequest<Result>;
 

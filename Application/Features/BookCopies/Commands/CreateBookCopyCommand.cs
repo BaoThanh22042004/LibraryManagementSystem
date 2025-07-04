@@ -13,12 +13,19 @@ namespace Application.Features.BookCopies.Commands;
 /// </summary>
 /// <remarks>
 /// This implementation follows UC015 specifications:
-/// - Validates the parent book exists
-/// - Enforces copy number uniqueness within a book
-/// - Auto-generates copy numbers following the ISBN-XXX format if not provided
-/// - Sets initial status to Available
-/// - Updates book availability statistics
-/// - Records the addition in the audit log
+/// - Validates the parent book exists (Normal Flow 15.0 step 4)
+/// - Enforces copy number uniqueness within a book (Normal Flow 15.0 step 6)
+/// - Auto-generates copy numbers following the ISBN-XXX format if not provided (Alternative Flow 15.1: Auto-Generated Copy Number)
+/// - Sets initial status to Available (POST-3)
+/// - Updates book availability statistics (POST-4)
+/// - Records the addition in the audit log (POST-5)
+/// - Supports custom copy numbers (Alternative Flow 15.2: Custom Copy Number)
+/// - Supports multiple copy creation (Alternative Flow 15.3: Multiple Copy Creation)
+/// 
+/// Business Rules Enforced:
+/// - BR-06: Book Management Rights (Only Librarian or Admin can add copies)
+/// - BR-09: Copy Status Rules (Copy statuses include: Available, On Loan, Reserved, Lost)
+/// - BR-22: Audit Logging Requirement (All key actions logged with timestamps)
 /// </remarks>
 public record CreateBookCopyCommand(CreateBookCopyDto BookCopyDto) : IRequest<Result<int>>;
 

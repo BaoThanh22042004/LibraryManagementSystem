@@ -11,12 +11,18 @@ namespace Application.Features.BookCopies.Commands;
 /// </summary>
 /// <remarks>
 /// This implementation follows UC017 specifications:
-/// - Validates the book copy exists
-/// - Prevents removal of copies with active loans
-/// - Prevents removal of copies with active reservations
-/// - Records the removal in the audit log
-/// - Preserves historical loan records
-/// - Updates book availability statistics
+/// - Validates the book copy exists (Normal Flow 17.0 step 4)
+/// - Prevents removal of copies with active loans (UC017.E1: Active Loan Found)
+/// - Prevents removal of copies with active reservations (UC017.E2: Active Reservation Found)
+/// - Records the removal in the audit log (POST-3)
+/// - Preserves historical loan records (POST-4)
+/// - Updates book availability statistics (POST-2)
+/// - Supports bulk copy removal (Alternative Flow 17.3: Bulk Copy Removal)
+/// - Supports marking as lost instead of removal (Alternative Flow 17.2: Mark as Lost Instead of Removal)
+/// 
+/// Business Rules Enforced:
+/// - BR-08: Copy Deletion Restriction (Book copies with active loans or reservations cannot be deleted)
+/// - BR-22: Audit Logging Requirement (All key actions logged with timestamps)
 /// </remarks>
 public record DeleteBookCopyCommand(int Id) : IRequest<Result<bool>>;
 
