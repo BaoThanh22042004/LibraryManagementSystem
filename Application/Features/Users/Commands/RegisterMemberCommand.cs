@@ -69,6 +69,9 @@ public class RegisterMemberCommandHandler : IRequestHandler<RegisterMemberComman
                 Email = request.RegisterDto.Email,
                 PasswordHash = PasswordHasher.HashPassword(request.RegisterDto.Password), // BR-05
                 Role = UserRole.Member,
+                Status = UserStatus.Active,
+                Phone = request.RegisterDto.Phone,
+                Address = request.RegisterDto.Address,
                 CreatedAt = DateTime.UtcNow
             };
             

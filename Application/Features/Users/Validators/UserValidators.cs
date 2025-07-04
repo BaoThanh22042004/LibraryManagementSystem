@@ -27,6 +27,14 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
 
         RuleFor(x => x.UserDto.Role)
             .IsInEnum().WithMessage("Invalid role");
+            
+        RuleFor(x => x.UserDto.Phone)
+            .MaximumLength(20).WithMessage("Phone number cannot exceed 20 characters")
+            .Matches(@"^[\d\s\-\+\(\)]+$").When(x => !string.IsNullOrEmpty(x.UserDto.Phone))
+            .WithMessage("Phone number contains invalid characters");
+            
+        RuleFor(x => x.UserDto.Address)
+            .MaximumLength(255).WithMessage("Address cannot exceed 255 characters");
     }
 }
 
@@ -48,6 +56,14 @@ public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
 
         RuleFor(x => x.UserDto.Role)
             .IsInEnum().WithMessage("Invalid role");
+            
+        RuleFor(x => x.UserDto.Phone)
+            .MaximumLength(20).WithMessage("Phone number cannot exceed 20 characters")
+            .Matches(@"^[\d\s\-\+\(\)]+$").When(x => !string.IsNullOrEmpty(x.UserDto.Phone))
+            .WithMessage("Phone number contains invalid characters");
+            
+        RuleFor(x => x.UserDto.Address)
+            .MaximumLength(255).WithMessage("Address cannot exceed 255 characters");
     }
 }
 

@@ -1,0 +1,34 @@
+@model Web.ViewModels.UserViewModel
+<!--
+    User Details View
+    Displays detailed information for a user.
+    Related to UC007: View User Info
+-->
+<h2>User Details</h2>
+<div>
+    <strong>Name:</strong> @Model.Name
+</div>
+<div>
+    <strong>Email:</strong> @Model.Email
+</div>
+<div>
+    <strong>Role:</strong> @Model.Role
+</div>
+<div>
+    <strong>Status:</strong> @Model.Status
+</div>
+<div>
+    <strong>Membership Number:</strong> @Model.MembershipNumber
+</div>
+<div>
+    <strong>Phone:</strong> @Model.Phone
+</div>
+<div>
+    <strong>Address:</strong> @Model.Address
+</div>
+<div>
+    <strong>Membership Status:</strong> @Model.MembershipStatus
+</div>
+<a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
+<a asp-action="Delete" asp-route-id="@Model.Id">Delete</a> |
+<a asp-action="Index">Back to List</a> 

@@ -6,6 +6,8 @@ using Application.Interfaces.Services;
 using Domain.Entities;
 using Domain.Enums;
 using MediatR;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace Application.Features.Users.Commands;
 
@@ -24,14 +26,17 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
     private readonly int _tokenExpirationMinutes;
 
     public ForgotPasswordCommandHandler(
         IUnitOfWork unitOfWork, 
-        IEmailService emailService)
+        IEmailService emailService,
+        IConfiguration configuration)
     {
         _unitOfWork = unitOfWork;
         _emailService = emailService;
+        _configuration = configuration;
         _tokenExpirationMinutes = 60; // Default 60 minutes expiration (UC005 requirement)
     }
 
@@ -127,18 +132,28 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             
             // Send email with reset link (UC005 requirement)
-            string resetLink = $"/Account/ResetPassword?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(token)}";
+            string webBaseUrl = _configuration["WebBaseUrl"] ?? "https://localhost:5001";
+            string resetLink = $"{webBaseUrl}/Account/ResetPassword?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(token)}";
+
+            // Load email template
+            string templatePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "Application", "EmailTemplates", "PasswordResetEmail.html");
+            string emailBody = File.Exists(templatePath)
+                ? File.ReadAllText(templatePath)
+                : $@"
+                    <h2>Password Reset Request</h2>
+                    <p>Dear {user.FullName},</p>
+                    <p>We received a request to reset your password. Click the link below to set a new password:</p>
+                    <p><a href='{resetLink}'>Reset Your Password</a></p>
+                    <p>This link will expire in {_tokenExpirationMinutes} minutes.</p>
+                    <p>If you didn't request a password reset, you can ignore this email.</p>
+                    <p>Regards,<br>Library Management System</p>
+                ";
+            emailBody = emailBody
+                .Replace("{{FullName}}", user.FullName)
+                .Replace("{{ResetLink}}", resetLink)
+                .Replace("{{ExpirationMinutes}}", _tokenExpirationMinutes.ToString());
+
             string emailSubject = "Password Reset Request";
-            string emailBody = $@"
-                <h2>Password Reset Request</h2>
-                <p>Dear {user.FullName},</p>
-                <p>We received a request to reset your password. Click the link below to set a new password:</p>
-                <p><a href='{resetLink}'>Reset Your Password</a></p>
-                <p>This link will expire in {_tokenExpirationMinutes} minutes.</p>
-                <p>If you didn't request a password reset, you can ignore this email.</p>
-                <p>Regards,<br>Library Management System</p>
-            ";
-            
             await _emailService.SendEmailAsync(user.Email, emailSubject, emailBody);
             
             // Commit transaction

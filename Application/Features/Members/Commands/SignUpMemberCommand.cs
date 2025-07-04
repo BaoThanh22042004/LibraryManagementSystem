@@ -7,6 +7,9 @@ using Domain.Entities;
 using Domain.Enums;
 using MediatR;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Configuration;
+using Application.Interfaces.Services;
+using System.IO;
 
 namespace Application.Features.Members.Commands;
 
@@ -16,11 +19,15 @@ public class SignUpMemberCommandHandler : IRequestHandler<SignUpMemberCommand, R
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
 
-    public SignUpMemberCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public SignUpMemberCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration configuration, IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _configuration = configuration;
+        _emailService = emailService;
     }
 
     public async Task<Result<int>> Handle(SignUpMemberCommand request, CancellationToken cancellationToken)
@@ -81,7 +88,28 @@ public class SignUpMemberCommandHandler : IRequestHandler<SignUpMemberCommand, R
             
             // Step 7: Commit transaction
             await _unitOfWork.CommitTransactionAsync();
-            
+
+            // Send welcome email to the new member
+            string templatePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "Application", "EmailTemplates", "MemberWelcomeEmail.html");
+            string emailBody = File.Exists(templatePath)
+                ? File.ReadAllText(templatePath)
+                : $@"
+                    <h2>Welcome to the Library!</h2>
+                    <p>Dear {user.FullName},</p>
+                    <p>Your membership has been successfully registered.</p>
+                    <ul>
+                        <li>Membership Number: {membershipNumber}</li>
+                    </ul>
+                    <p>You can now log in and start using library services.</p>
+                    <p>Regards,<br>Library Management System</p>
+                ";
+            emailBody = emailBody
+                .Replace("{{FullName}}", user.FullName)
+                .Replace("{{MembershipNumber}}", membershipNumber);
+
+            string emailSubject = "Welcome to the Library!";
+            await _emailService.SendEmailAsync(user.Email, emailSubject, emailBody);
+
             return Result.Success(member.Id);
         }
         catch (Exception ex)

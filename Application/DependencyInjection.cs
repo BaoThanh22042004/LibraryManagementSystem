@@ -8,6 +8,10 @@ using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+using Application.Features.Users.Commands;
+using Application.Features.Members.Commands;
+using Application.Interfaces;
+using AutoMapper;
 
 namespace Application;
 
@@ -36,6 +40,25 @@ public static class DependencyInjection
         
         // Register FluentValidation
         services.AddValidatorsFromAssembly(assembly);
+        
+        // Register command handlers with extra dependencies
+        services.AddTransient<ForgotPasswordCommandHandler>(provider =>
+            new ForgotPasswordCommandHandler(
+                provider.GetRequiredService<IUnitOfWork>(),
+                provider.GetRequiredService<IEmailService>(),
+                provider.GetRequiredService<IConfiguration>()));
+        services.AddTransient<CreateUserCommandHandler>(provider =>
+            new CreateUserCommandHandler(
+                provider.GetRequiredService<IUnitOfWork>(),
+                provider.GetRequiredService<IMapper>(),
+                provider.GetRequiredService<IConfiguration>(),
+                provider.GetRequiredService<IEmailService>()));
+        services.AddTransient<SignUpMemberCommandHandler>(provider =>
+            new SignUpMemberCommandHandler(
+                provider.GetRequiredService<IUnitOfWork>(),
+                provider.GetRequiredService<IMapper>(),
+                provider.GetRequiredService<IConfiguration>(),
+                provider.GetRequiredService<IEmailService>()));
         
         // Register security services
         services.AddSingleton<ITokenGenerator>(provider => {

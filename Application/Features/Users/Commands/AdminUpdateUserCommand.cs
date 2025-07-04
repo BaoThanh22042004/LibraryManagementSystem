@@ -53,6 +53,9 @@ public class AdminUpdateUserCommandHandler : IRequestHandler<AdminUpdateUserComm
         var originalFullName = user.FullName;
         var originalEmail = user.Email;
         var originalRole = user.Role;
+        var originalStatus = user.Status;
+        var originalPhone = user.Phone;
+        var originalAddress = user.Address;
         
         // Check if current user has proper permissions (UC006 Exception 6.0.E2)
         bool hasPermission = false;
@@ -146,6 +149,9 @@ public class AdminUpdateUserCommandHandler : IRequestHandler<AdminUpdateUserComm
             user.FullName = request.UserDto.FullName;
             user.Email = request.UserDto.Email;
             user.Role = request.UserDto.Role;
+            user.Status = request.UserDto.Status;
+            user.Phone = request.UserDto.Phone;
+            user.Address = request.UserDto.Address;
             user.LastModifiedAt = DateTime.UtcNow;
             
             userRepository.Update(user);
@@ -158,6 +164,12 @@ public class AdminUpdateUserCommandHandler : IRequestHandler<AdminUpdateUserComm
                 changes.Add($"Email changed from '{originalEmail}' to '{user.Email}'");
             if (originalRole != user.Role)
                 changes.Add($"Role changed from '{originalRole}' to '{user.Role}'");
+            if (originalStatus != user.Status)
+                changes.Add($"Status changed from '{originalStatus}' to '{user.Status}'");
+            if (originalPhone != user.Phone)
+                changes.Add($"Phone changed from '{originalPhone}' to '{user.Phone}'");
+            if (originalAddress != user.Address)
+                changes.Add($"Address changed from '{originalAddress}' to '{user.Address}'");
             
             // Log the audit trail for this update (BR-22)
             await auditLogRepository.AddAsync(new AuditLog
@@ -168,8 +180,8 @@ public class AdminUpdateUserCommandHandler : IRequestHandler<AdminUpdateUserComm
                 EntityId = user.Id.ToString(),
                 EntityName = user.FullName,
                 Details = $"User updated: {string.Join(", ", changes)}",
-                BeforeState = $"{{\"FullName\":\"{originalFullName}\",\"Email\":\"{originalEmail}\",\"Role\":\"{originalRole}\"}}",
-                AfterState = $"{{\"FullName\":\"{user.FullName}\",\"Email\":\"{user.Email}\",\"Role\":\"{user.Role}\"}}",
+                BeforeState = $"{{\"FullName\":\"{originalFullName}\",\"Email\":\"{originalEmail}\",\"Role\":\"{originalRole}\",\"Status\":\"{originalStatus}\",\"Phone\":\"{originalPhone}\",\"Address\":\"{originalAddress}\"}}",
+                AfterState = $"{{\"FullName\":\"{user.FullName}\",\"Email\":\"{user.Email}\",\"Role\":\"{user.Role}\",\"Status\":\"{user.Status}\",\"Phone\":\"{user.Phone}\",\"Address\":\"{user.Address}\"}}",
                 Module = "UserManagement",
                 IsSuccess = true
             });

@@ -1,0 +1,31 @@
+@model Web.ViewModels.ProfileViewModel
+<!--
+    Edit Profile View
+    Allows user to edit their profile information.
+    Related to UC003: Update Profile
+-->
+<h2>Edit Profile</h2>
+<form asp-action="Edit" method="post">
+    <div>
+        <label asp-for="Name"></label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name"></span>
+    </div>
+    <div>
+        <label asp-for="Email"></label>
+        <input asp-for="Email" />
+        <span asp-validation-for="Email"></span>
+    </div>
+    <div>
+        <label asp-for="Phone"></label>
+        <input asp-for="Phone" />
+        <span asp-validation-for="Phone"></span>
+    </div>
+    <div>
+        <label asp-for="Address"></label>
+        <input asp-for="Address" />
+        <span asp-validation-for="Address"></span>
+    </div>
+    <button type="submit">Save</button>
+</form>
+<a asp-action="Index">Back to Profile</a> 

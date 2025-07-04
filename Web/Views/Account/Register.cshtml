@@ -1,0 +1,54 @@
+@model Web.ViewModels.RegisterViewModel
+<!--
+    Register View
+    Allows user to register as Member, Librarian, or Admin.
+    Related to UC001: Create User, UC008: Register Member
+-->
+<h2>Register</h2>
+<form asp-action="Register" method="post">
+    <div>
+        <label asp-for="Name"></label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name"></span>
+    </div>
+    <div>
+        <label asp-for="Email"></label>
+        <input asp-for="Email" />
+        <span asp-validation-for="Email"></span>
+    </div>
+    <div>
+        <label asp-for="Password"></label>
+        <input asp-for="Password" type="password" />
+        <span asp-validation-for="Password"></span>
+    </div>
+    <div>
+        <label asp-for="ConfirmPassword"></label>
+        <input asp-for="ConfirmPassword" type="password" />
+        <span asp-validation-for="ConfirmPassword"></span>
+    </div>
+    <div>
+        <label asp-for="Role"></label>
+        <select asp-for="Role">
+            <option value="Member">Member</option>
+            <option value="Librarian">Librarian</option>
+            <option value="Admin">Admin</option>
+        </select>
+        <span asp-validation-for="Role"></span>
+    </div>
+    <div>
+        <label asp-for="MembershipNumber"></label>
+        <input asp-for="MembershipNumber" />
+        <span asp-validation-for="MembershipNumber"></span>
+    </div>
+    <div>
+        <label asp-for="Phone"></label>
+        <input asp-for="Phone" />
+        <span asp-validation-for="Phone"></span>
+    </div>
+    <div>
+        <label asp-for="Address"></label>
+        <input asp-for="Address" />
+        <span asp-validation-for="Address"></span>
+    </div>
+    <button type="submit">Register</button>
+</form> 

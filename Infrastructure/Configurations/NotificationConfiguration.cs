@@ -12,7 +12,7 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
 
 		// Configure relationships
 		builder.HasOne(n => n.User)
-			.WithMany()
+			.WithMany(u => u.Notifications)
 			.HasForeignKey(n => n.UserId)
 			.OnDelete(DeleteBehavior.Cascade);
 	}

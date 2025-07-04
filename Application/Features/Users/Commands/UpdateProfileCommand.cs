@@ -41,6 +41,8 @@ public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand,
         // Store the original values for audit logging
         var originalName = user.FullName;
         var originalEmail = user.Email;
+        var originalPhone = user.Phone;
+        var originalAddress = user.Address;
         
         // Check if the email is changed and if so, check if it's already in use (UC003 Exception 3.0.E1)
         if (!user.Email.Equals(request.ProfileDto.Email, StringComparison.CurrentCultureIgnoreCase))
@@ -78,6 +80,8 @@ public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand,
             // Update the user profile
             user.FullName = request.ProfileDto.FullName;
             user.Email = request.ProfileDto.Email;
+            user.Phone = request.ProfileDto.Phone;
+            user.Address = request.ProfileDto.Address;
             user.LastModifiedAt = DateTime.UtcNow;
             
             userRepository.Update(user);
@@ -88,6 +92,10 @@ public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand,
                 changes.Add($"Name changed from '{originalName}' to '{user.FullName}'");
             if (originalEmail != user.Email)
                 changes.Add($"Email changed from '{originalEmail}' to '{user.Email}'");
+            if (originalPhone != user.Phone)
+                changes.Add($"Phone changed from '{originalPhone}' to '{user.Phone}'");
+            if (originalAddress != user.Address)
+                changes.Add($"Address changed from '{originalAddress}' to '{user.Address}'");
                 
             await auditLogRepository.AddAsync(new AuditLog
             {
@@ -98,8 +106,8 @@ public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand,
                 EntityName = user.FullName,
                 Details = $"User profile updated: {string.Join(", ", changes)}",
                 Module = "UserProfile",
-                BeforeState = $"{{\"FullName\":\"{originalName}\",\"Email\":\"{originalEmail}\"}}",
-                AfterState = $"{{\"FullName\":\"{user.FullName}\",\"Email\":\"{user.Email}\"}}",
+                BeforeState = $"{{\"FullName\":\"{originalName}\",\"Email\":\"{originalEmail}\",\"Phone\":\"{originalPhone}\",\"Address\":\"{originalAddress}\"}}",
+                AfterState = $"{{\"FullName\":\"{user.FullName}\",\"Email\":\"{user.Email}\",\"Phone\":\"{user.Phone}\",\"Address\":\"{user.Address}\"}}",
                 IsSuccess = true
             });
             

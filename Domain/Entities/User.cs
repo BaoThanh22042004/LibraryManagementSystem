@@ -11,6 +11,11 @@ public class User : BaseEntity
 	public string Email { get; set; } = string.Empty;
 	public string PasswordHash { get; set; } = string.Empty;
 	public UserRole Role { get; set; }
+	public UserStatus Status { get; set; } = UserStatus.Active;
+	[MaxLength(20)]
+	public string? Phone { get; set; }
+	[MaxLength(255)]
+	public string? Address { get; set; }
 
 	// Navigation properties
 	public Member? Member { get; set; }

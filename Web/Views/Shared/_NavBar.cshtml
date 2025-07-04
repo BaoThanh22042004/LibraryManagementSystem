@@ -1,4 +1,10 @@
-﻿<nav x-data="{ mobileMenuIsOpen: false }"
+﻿@using System.Security.Claims
+@{
+	var isAuthenticated = User?.Identity != null && User.Identity.IsAuthenticated;
+	var userName = User?.Identity?.Name ?? "";
+	var userRole = User?.FindFirstValue(ClaimTypes.Role) ?? "";
+}
+<nav x-data="{ mobileMenuIsOpen: false }"
 	 x-on:click.away="mobileMenuIsOpen = false"
 	 class="flex items-center justify-between bg-surface-alt border-b border-outline px-6 py-4 dark:border-outline-dark dark:bg-surface-dark-alt"
 	 aria-label="ui menu">
@@ -23,25 +29,50 @@
 				Categories
 			</a>
 		</li>
+		@if (isAuthenticated && (userRole == "Admin" || userRole == "Librarian"))
+		{
+			<li>
+				<a class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark"
+				   asp-area="" asp-controller="User" asp-action="Index">
+					Users
+				</a>
+			</li>
+		}
 		<li>
 			<a class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark"
 			   asp-area="" asp-controller="Home" asp-action="Privacy">
 				Privacy
 			</a>
 		</li>
-		<li>
-			<a class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark"
-			   href="#">
-				Sign In
-			</a>
-		</li>
-		<!-- CTA Button -->
-		<li>
-			<a class="rounded-radius bg-primary border border-primary px-4 py-2 text-center text-sm font-medium tracking-wide text-on-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark"
-			   href="#">
-				Sign Up
-			</a>
-		</li>
+		@if (!isAuthenticated)
+		{
+			<li>
+				<a class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark"
+				   asp-area="" asp-controller="Account" asp-action="Login">
+					Sign In
+				</a>
+			</li>
+			<li>
+				<a class="rounded-radius bg-primary border border-primary px-4 py-2 text-center text-sm font-medium tracking-wide text-on-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark"
+				   asp-area="" asp-controller="Account" asp-action="Register">
+					Sign Up
+				</a>
+			</li>
+		}
+		else
+		{
+			<li>
+				<a class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark"
+				   asp-area="" asp-controller="Profile" asp-action="Index">
+					Profile
+				</a>
+			</li>
+			<li>
+				<form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="inline">
+					<button type="submit" class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark bg-transparent border-none cursor-pointer">Logout</button>
+				</form>
+			</li>
+		}
 	</ul>
 	<!-- Mobile Menu Button -->
 	<button x-on:click="mobileMenuIsOpen = !mobileMenuIsOpen"
@@ -81,22 +112,47 @@
 				Categories
 			</a>
 		</li>
+		@if (isAuthenticated && (userRole == "Admin" || userRole == "Librarian"))
+		{
+			<li class="py-4">
+				<a class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark"
+				   asp-area="" asp-controller="User" asp-action="Index">
+					Users
+				</a>
+			</li>
+		}
 		<li class="py-4">
 			<a class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark"
 			   asp-area="" asp-controller="Home" asp-action="Privacy">
 				Privacy
 			</a>
 		</li>
-		<li class="py-4">
-			<a class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark"
-			   href="#">
-				Sign In
-			</a>
-		</li>
-		<!-- CTA Button -->
-		<li class="mt-4 w-full border-none">
-			<a class="rounded-radius border border-primary bg-primary px-4 py-2 block text-center font-medium tracking-wide text-on-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark"
-			   href="#">Sign Up</a>
-		</li>
+		@if (!isAuthenticated)
+		{
+			<li class="py-4">
+				<a class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark"
+				   asp-area="" asp-controller="Account" asp-action="Login">
+					Sign In
+				</a>
+			</li>
+			<li class="mt-4 w-full border-none">
+				<a class="rounded-radius border border-primary bg-primary px-4 py-2 block text-center font-medium tracking-wide text-on-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark"
+				   asp-area="" asp-controller="Account" asp-action="Register">Sign Up</a>
+			</li>
+		}
+		else
+		{
+			<li class="py-4">
+				<a class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark"
+				   asp-area="" asp-controller="Profile" asp-action="Index">
+					Profile
+				</a>
+			</li>
+			<li class="py-4">
+				<form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="inline">
+					<button type="submit" class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark bg-transparent border-none cursor-pointer">Logout</button>
+				</form>
+			</li>
+		}
 	</ul>
 </nav>

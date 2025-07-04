@@ -1,0 +1,43 @@
+@model IEnumerable<Web.ViewModels.UserViewModel>
+<!--
+    User List View
+    Displays a list of users for Admin/Librarian management.
+    Related to UC007: View User Info
+-->
+<h2>User List</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Membership Number</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>MembershipStatus</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Name</td>
+                <td>@user.Email</td>
+                <td>@user.Role</td>
+                <td>@user.Status</td>
+                <td>@user.MembershipNumber</td>
+                <td>@user.Phone</td>
+                <td>@user.Address</td>
+                <td>@user.MembershipStatus</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@user.Id">Details</a> |
+                    <a asp-action="Edit" asp-route-id="@user.Id">Edit</a> |
+                    <a asp-action="Delete" asp-route-id="@user.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<a asp-action="Create">Create New User</a> 

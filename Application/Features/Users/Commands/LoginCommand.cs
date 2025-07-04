@@ -66,6 +66,31 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponseDt
             };
         }
         
+        // Check user status (UC002 Exception 2.0.E4)
+        if (user.Status != UserStatus.Active)
+        {
+            // Log failed login attempt due to inactive status (BR-22)
+            await auditLogRepository.AddAsync(new AuditLog
+            {
+                UserId = user.Id,
+                ActionType = AuditActionType.LoginFailed,
+                EntityType = "User",
+                EntityId = user.Id.ToString(),
+                EntityName = user.FullName,
+                Details = $"Failed login attempt for user: {user.Email} - account status: {user.Status}",
+                Module = "Authentication",
+                IsSuccess = false,
+                ErrorMessage = "Account is not active"
+            });
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            
+            return new LoginResponseDto
+            {
+                IsSuccess = false,
+                Message = "Account is not active. Please contact administrator."
+            };
+        }
+        
         // Verify password (UC002 Exception 2.0.E1)
         if (!PasswordHasher.VerifyPassword(request.LoginDto.Password, user.PasswordHash))
         {

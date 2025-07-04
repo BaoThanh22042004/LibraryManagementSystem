@@ -1,0 +1,21 @@
+@model Web.ViewModels.ProfileViewModel
+<!--
+    Profile View
+    Displays the current user's profile information.
+    Related to UC003: Update Profile
+-->
+<h2>My Profile</h2>
+<div>
+    <strong>Name:</strong> @Model.Name
+</div>
+<div>
+    <strong>Email:</strong> @Model.Email
+</div>
+<div>
+    <strong>Phone:</strong> @Model.Phone
+</div>
+<div>
+    <strong>Address:</strong> @Model.Address
+</div>
+<a asp-action="Edit">Edit Profile</a> |
+<a asp-action="ChangePassword">Change Password</a> 

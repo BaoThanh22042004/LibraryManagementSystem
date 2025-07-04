@@ -8,6 +8,9 @@ public class UserDto
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public UserRole Role { get; set; }
+    public UserStatus Status { get; set; }
+    public string? Phone { get; set; }
+    public string? Address { get; set; }
 }
 
 public class CreateUserDto
@@ -16,6 +19,8 @@ public class CreateUserDto
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public UserRole Role { get; set; }
+    public string? Phone { get; set; }
+    public string? Address { get; set; }
 }
 
 public class UpdateUserDto
@@ -23,6 +28,8 @@ public class UpdateUserDto
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public UserRole Role { get; set; }
+    public string? Phone { get; set; }
+    public string? Address { get; set; }
 }
 
 public class ChangePasswordDto
@@ -64,7 +71,8 @@ public class UpdateProfileDto
 {
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    // Additional profile information can be added here
+    public string? Phone { get; set; }
+    public string? Address { get; set; }
 }
 
 public class AdminUpdateUserDto
@@ -72,6 +80,9 @@ public class AdminUpdateUserDto
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public UserRole Role { get; set; }
+    public UserStatus Status { get; set; }
+    public string? Phone { get; set; }
+    public string? Address { get; set; }
     public string? StatusChangeReason { get; set; }
 }
 
@@ -88,5 +99,7 @@ public class RegisterMemberDto
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+    public string? Phone { get; set; }
+    public string? Address { get; set; }
     public string? PreferredMembershipNumber { get; set; }
 }

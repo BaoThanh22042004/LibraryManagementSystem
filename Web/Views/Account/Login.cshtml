@@ -1,0 +1,21 @@
+@model Web.ViewModels.LoginViewModel
+<!--
+    Login View
+    Allows user to enter email and password to log in.
+    Related to UC002: Login
+-->
+<h2>Login</h2>
+<form asp-action="Login" method="post">
+    <div>
+        <label asp-for="Email"></label>
+        <input asp-for="Email" />
+        <span asp-validation-for="Email"></span>
+    </div>
+    <div>
+        <label asp-for="Password"></label>
+        <input asp-for="Password" type="password" />
+        <span asp-validation-for="Password"></span>
+    </div>
+    <button type="submit">Login</button>
+</form>
+<a asp-action="ForgotPassword">Forgot your password?</a> 

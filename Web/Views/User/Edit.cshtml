@@ -1,0 +1,52 @@
+@model Web.ViewModels.EditUserViewModel
+<!--
+    Edit User View
+    Allows Admin/Librarian to edit user information.
+    Related to UC006: Update User Info
+-->
+<h2>Edit User</h2>
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+    <div>
+        <label asp-for="Name"></label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name"></span>
+    </div>
+    <div>
+        <label asp-for="Email"></label>
+        <input asp-for="Email" />
+        <span asp-validation-for="Email"></span>
+    </div>
+    <div>
+        <label asp-for="Role"></label>
+        <input asp-for="Role" />
+        <span asp-validation-for="Role"></span>
+    </div>
+    <div>
+        <label asp-for="Status"></label>
+        <input asp-for="Status" />
+        <span asp-validation-for="Status"></span>
+    </div>
+    <div>
+        <label asp-for="MembershipNumber"></label>
+        <input asp-for="MembershipNumber" />
+        <span asp-validation-for="MembershipNumber"></span>
+    </div>
+    <div>
+        <label asp-for="Phone"></label>
+        <input asp-for="Phone" />
+        <span asp-validation-for="Phone"></span>
+    </div>
+    <div>
+        <label asp-for="Address"></label>
+        <input asp-for="Address" />
+        <span asp-validation-for="Address"></span>
+    </div>
+    <div>
+        <label asp-for="MembershipStatus"></label>
+        <input asp-for="MembershipStatus" />
+        <span asp-validation-for="MembershipStatus"></span>
+    </div>
+    <button type="submit">Save</button>
+</form>
+<a asp-action="Index">Back to List</a> 

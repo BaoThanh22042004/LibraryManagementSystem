@@ -6,6 +6,9 @@ using AutoMapper;
 using Domain.Entities;
 using Domain.Enums;
 using MediatR;
+using Microsoft.Extensions.Configuration;
+using Application.Interfaces.Services;
+using System.IO;
 
 namespace Application.Features.Users.Commands;
 
@@ -24,11 +27,15 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
 
-    public CreateUserCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    public CreateUserCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration configuration, IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _configuration = configuration;
+        _emailService = emailService;
     }
 
     public async Task<Result<int>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -72,6 +79,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
             
             // Hash the password (BR-05)
             user.PasswordHash = PasswordHasher.HashPassword(request.UserDto.Password);
+            user.Status = UserStatus.Active; // Set default status
             
             await userRepository.AddAsync(user);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -125,7 +133,38 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
             
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await _unitOfWork.CommitTransactionAsync();
-            
+
+            // Send invite email to the new user
+            string webBaseUrl = _configuration["WebBaseUrl"] ?? "https://localhost:5001";
+            string templatePath = Path.Combine(AppContext.BaseDirectory, "..", "..", "Application", "EmailTemplates", "UserInviteEmail.html");
+            string emailBody = File.Exists(templatePath)
+                ? File.ReadAllText(templatePath)
+                : $@"
+                    <h2>Welcome to the Library Management System</h2>
+                    <p>Dear {user.FullName},</p>
+                    <p>Your account has been created with the following details:</p>
+                    <ul>
+                        <li>Email: {user.Email}</li>
+                        <li>Role: {user.Role}</li>
+                    </ul>
+                    <p>Please log in and change your password as soon as possible.</p>
+                    <p>Regards,<br>Library Management System</p>
+                ";
+            emailBody = emailBody
+                .Replace("{{FullName}}", user.FullName)
+                .Replace("{{Email}}", user.Email)
+                .Replace("{{Role}}", user.Role.ToString());
+            // If a temporary password is set, include it
+            if (!string.IsNullOrEmpty(request.UserDto.Password))
+                emailBody = emailBody.Replace("{{TemporaryPassword}}", request.UserDto.Password);
+            else
+                emailBody = emailBody.Replace("{{TemporaryPassword}}", "");
+            // If a password setup link is used, you can add logic here
+            emailBody = emailBody.Replace("{{PasswordSetupLink}}", "");
+
+            string emailSubject = "Your Library Account Has Been Created";
+            await _emailService.SendEmailAsync(user.Email, emailSubject, emailBody);
+
             return Result.Success(user.Id);
         }
         catch (Exception ex)

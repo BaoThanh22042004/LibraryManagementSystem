@@ -35,7 +35,7 @@ public interface IUserService
     Task<Result<bool>> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
     Task<Result<bool>> ValidateResetTokenAsync(string email, string token);
     Task<Result<bool>> AdminUpdateUserAsync(int id, AdminUpdateUserDto userDto, int currentUserId);
-    Task<UserDetailsDto?> GetUserDetailsAsync(int id);
+    Task<UserDetailsDto?> GetUserDetailsAsync(int id, int currentUserId);
     Task<Result<bool>> ValidateUserDeletionAsync(int id);
 
     /// <summary>
