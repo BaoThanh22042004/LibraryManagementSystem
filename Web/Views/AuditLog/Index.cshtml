@@ -1,0 +1,52 @@
+@model Application.Common.PagedResult<Application.DTOs.AuditLogDto>
+@{
+    ViewData["Title"] = "Audit Logs";
+}
+<h2>Audit Logs</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Entity Type</th>
+            <th>Entity Id</th>
+            <th>Entity Name</th>
+            <th>Details</th>
+            <th>Success</th>
+            <th>Timestamp</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var log in Model.Items)
+    {
+        <tr>
+            <td>@log.Id</td>
+            <td>@log.UserName</td>
+            <td>@log.ActionType</td>
+            <td>@log.EntityType</td>
+            <td>@log.EntityId</td>
+            <td>@log.EntityName</td>
+            <td>@log.Details</td>
+            <td>@(log.IsSuccess ? "Yes" : "No")</td>
+            <td>@log.Timestamp.ToString("g")</td>
+            <td>
+                <a asp-action="Details" asp-route-id="@log.Id">Details</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+<!-- Minimal pagination controls -->
+<div>
+    Page @Model.PageNumber of @((Model.TotalCount + Model.PageSize - 1) / Model.PageSize)
+    @if (Model.PageNumber > 1)
+    {
+        <a asp-action="Index" asp-route-page="@(Model.PageNumber - 1)">Previous</a>
+    }
+    @if (Model.PageNumber * Model.PageSize < Model.TotalCount)
+    {
+        <a asp-action="Index" asp-route-page="@(Model.PageNumber + 1)">Next</a>
+    }
+</div> 

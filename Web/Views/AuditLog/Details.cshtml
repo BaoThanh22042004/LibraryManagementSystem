@@ -1,0 +1,36 @@
+@model Application.DTOs.AuditLogDto
+@{
+    ViewData["Title"] = "Audit Log Details";
+}
+<h2>Audit Log Details</h2>
+<dl class="row">
+    <dt class="col-sm-2">Id</dt>
+    <dd class="col-sm-10">@Model.Id</dd>
+    <dt class="col-sm-2">User</dt>
+    <dd class="col-sm-10">@Model.UserName</dd>
+    <dt class="col-sm-2">Action</dt>
+    <dd class="col-sm-10">@Model.ActionType</dd>
+    <dt class="col-sm-2">Entity Type</dt>
+    <dd class="col-sm-10">@Model.EntityType</dd>
+    <dt class="col-sm-2">Entity Id</dt>
+    <dd class="col-sm-10">@Model.EntityId</dd>
+    <dt class="col-sm-2">Entity Name</dt>
+    <dd class="col-sm-10">@Model.EntityName</dd>
+    <dt class="col-sm-2">Details</dt>
+    <dd class="col-sm-10">@Model.Details</dd>
+    <dt class="col-sm-2">Before State</dt>
+    <dd class="col-sm-10">@Model.BeforeState</dd>
+    <dt class="col-sm-2">After State</dt>
+    <dd class="col-sm-10">@Model.AfterState</dd>
+    <dt class="col-sm-2">IP Address</dt>
+    <dd class="col-sm-10">@Model.IpAddress</dd>
+    <dt class="col-sm-2">Module</dt>
+    <dd class="col-sm-10">@Model.Module</dd>
+    <dt class="col-sm-2">Success</dt>
+    <dd class="col-sm-10">@(Model.IsSuccess ? "Yes" : "No")</dd>
+    <dt class="col-sm-2">Error Message</dt>
+    <dd class="col-sm-10">@Model.ErrorMessage</dd>
+    <dt class="col-sm-2">Timestamp</dt>
+    <dd class="col-sm-10">@Model.Timestamp.ToString("g")</dd>
+</dl>
+<a asp-action="Index" class="btn btn-secondary">Back to List</a> 
