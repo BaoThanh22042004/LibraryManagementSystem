@@ -26,7 +26,7 @@ public class GetFineByIdQueryHandler : IRequestHandler<GetFineByIdQuery, FineDto
         var fine = await fineRepository.GetAsync(
             f => f.Id == request.Id,
             f => f.Member,
-            f => f.Loan
+            f => f.Loan!
         );
         
         if (fine == null)

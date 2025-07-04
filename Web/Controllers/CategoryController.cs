@@ -1,22 +1,25 @@
-using Application.Common;
-using Application.DTOs;
-using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 using Web.Extensions;
+using Application.DTOs;
+using Application.Common;
+using MediatR;
+using Application.Features.Categories.Commands;
+using Application.Features.Categories.Queries;
+using Application.Interfaces.Services;
 
 namespace Web.Controllers;
 
 public class CategoryController : Controller
 {
-    private readonly ICategoryService _categoryService;
     private readonly IFileUploadService _fileUploadService;
     private readonly ILogger<CategoryController> _logger;
+    private readonly IMediator _mediator;
 
-    public CategoryController(ICategoryService categoryService, IFileUploadService fileUploadService, ILogger<CategoryController> logger)
+    public CategoryController(IFileUploadService fileUploadService, ILogger<CategoryController> logger, IMediator mediator)
     {
-        _categoryService = categoryService;
         _fileUploadService = fileUploadService;
         _logger = logger;
+        _mediator = mediator;
     }
 
     // GET: Category
@@ -24,13 +27,8 @@ public class CategoryController : Controller
     {
         try
         {
-            var pagedRequest = new PagedRequest
-            {
-                PageNumber = pageNumber > 0 ? pageNumber : 1,
-                PageSize = pageSize > 0 ? pageSize : 10
-            };
-
-            var categories = await _categoryService.GetPaginatedCategoriesAsync(pagedRequest, searchTerm);
+            var query = new GetCategoriesQuery(pageNumber, pageSize, searchTerm);
+            var categories = await _mediator.Send(query);
             return View(categories);
         }
         catch (Exception ex)
@@ -46,7 +44,7 @@ public class CategoryController : Controller
     {
         try
         {
-            var category = await _categoryService.GetCategoryByIdAsync(id);
+            var category = await _mediator.Send(new GetCategoryByIdQuery(id));
             if (category == null)
             {
                 return NotFound();
@@ -79,21 +77,22 @@ public class CategoryController : Controller
 
         try
         {
-            // Handle file upload if provided
             var uploadResult = await this.HandleCoverImageUploadAsync(_fileUploadService, coverImageFile, "categories");
-            
             if (!uploadResult.Success)
             {
                 ModelState.AddModelError("coverImageFile", uploadResult.ErrorMessage!);
                 return View(categoryDto);
             }
-
             if (!string.IsNullOrEmpty(uploadResult.UploadedUrl))
             {
                 categoryDto.CoverImageUrl = uploadResult.UploadedUrl;
             }
-
-            await _categoryService.CreateCategoryAsync(categoryDto);
+            var result = await _mediator.Send(new CreateCategoryCommand(categoryDto));
+            if (!result.IsSuccess)
+            {
+                ModelState.AddModelError("", result.Error ?? "Failed to create category.");
+                return View(categoryDto);
+            }
             TempData["Success"] = "Category created successfully.";
             return RedirectToAction(nameof(Index));
         }
@@ -110,19 +109,17 @@ public class CategoryController : Controller
     {
         try
         {
-            var category = await _categoryService.GetCategoryByIdAsync(id);
+            var category = await _mediator.Send(new GetCategoryByIdQuery(id));
             if (category == null)
             {
                 return NotFound();
             }
-
             var updateDto = new UpdateCategoryDto
             {
                 Name = category.Name,
                 Description = category.Description,
                 CoverImageUrl = category.CoverImageUrl
             };
-
             return View(updateDto);
         }
         catch (Exception ex)
@@ -142,24 +139,24 @@ public class CategoryController : Controller
         {
             return View(categoryDto);
         }
-
         try
         {
-            // Handle file upload if provided
             var uploadResult = await this.HandleCoverImageUploadAsync(_fileUploadService, coverImageFile, "categories", categoryDto.CoverImageUrl);
-            
             if (!uploadResult.Success)
             {
                 ModelState.AddModelError("coverImageFile", uploadResult.ErrorMessage!);
                 return View(categoryDto);
             }
-
             if (!string.IsNullOrEmpty(uploadResult.UploadedUrl))
             {
                 categoryDto.CoverImageUrl = uploadResult.UploadedUrl;
             }
-
-            await _categoryService.UpdateCategoryAsync(id, categoryDto);
+            var result = await _mediator.Send(new UpdateCategoryCommand(id, categoryDto));
+            if (!result.IsSuccess)
+            {
+                ModelState.AddModelError("", result.Error ?? "Failed to update category.");
+                return View(categoryDto);
+            }
             TempData["Success"] = "Category updated successfully.";
             return RedirectToAction(nameof(Index));
         }
@@ -176,7 +173,7 @@ public class CategoryController : Controller
     {
         try
         {
-            var category = await _categoryService.GetCategoryByIdAsync(id);
+            var category = await _mediator.Send(new GetCategoryByIdQuery(id));
             if (category == null)
             {
                 return NotFound();
@@ -198,15 +195,20 @@ public class CategoryController : Controller
     {
         try
         {
-            await _categoryService.DeleteCategoryAsync(id);
+            var result = await _mediator.Send(new DeleteCategoryCommand(id));
+            if (!result.IsSuccess)
+            {
+                TempData["Error"] = result.Error ?? "Failed to delete category.";
+                return RedirectToAction(nameof(Delete), new { id });
+            }
             TempData["Success"] = "Category deleted successfully.";
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while deleting category ID: {CategoryId}", id);
-            TempData["Error"] = "An error occurred while deleting the category: " + ex.Message;
-            return RedirectToAction(nameof(Index));
+            TempData["Error"] = ex.Message;
+            return RedirectToAction(nameof(Delete), new { id });
         }
     }
 
@@ -217,7 +219,7 @@ public class CategoryController : Controller
     {
         try
         {
-            var category = await _categoryService.GetCategoryByIdAsync(id);
+            var category = await _mediator.Send(new GetCategoryByIdQuery(id));
             if (category == null)
             {
                 return NotFound();
@@ -233,7 +235,7 @@ public class CategoryController : Controller
                 CoverImageUrl = null // Remove the cover image
             };
 
-            await _categoryService.UpdateCategoryAsync(id, updateDto);
+            await _mediator.Send(new UpdateCategoryCommand(id, updateDto));
             TempData["Success"] = "Cover image removed successfully.";
             
             return RedirectToAction(nameof(Edit), new { id });

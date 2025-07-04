@@ -1,0 +1,25 @@
+@model Application.DTOs.ReservationDto
+@{
+    ViewData["Title"] = "Reservation Details";
+}
+<h2>Reservation Details</h2>
+@if (Model == null)
+{
+    <div>No reservation details available.</div>
+}
+else
+{
+    <dl>
+        <dt>Reservation ID</dt>
+        <dd>@Model.Id</dd>
+        <dt>Member</dt>
+        <dd>@Model.MemberName</dd>
+        <dt>Book</dt>
+        <dd>@Model.BookTitle</dd>
+        <dt>Status</dt>
+        <dd>@Model.Status</dd>
+        <dt>Reservation Date</dt>
+        <dd>@Model.ReservationDate.ToShortDateString()</dd>
+    </dl>
+    <a asp-action="Index">Back to List</a>
+} 

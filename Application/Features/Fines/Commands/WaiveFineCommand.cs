@@ -43,7 +43,7 @@ public class WaiveFineCommandHandler : IRequestHandler<WaiveFineCommand, Result>
                 f => f.Id == request.Id,
                 f => f.Member,
                 f => f.Member.User,
-                f => f.Loan
+                f => f.Loan!
             );
             
             if (fine == null || fine.Member == null)
@@ -65,6 +65,8 @@ public class WaiveFineCommandHandler : IRequestHandler<WaiveFineCommand, Result>
             
             // Update member's outstanding fines (POST-2: Member's outstanding balance is reduced)
             var member = fine.Member;
+            if (member == null)
+                return Result.Failure($"Member with ID {fine.MemberId} not found.");
             member.OutstandingFines -= fine.Amount;
             memberRepository.Update(member);
             

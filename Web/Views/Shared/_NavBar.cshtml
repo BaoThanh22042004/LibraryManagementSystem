@@ -39,6 +39,21 @@
 		{
 			<li>
 				<a class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark"
+				   asp-area="" asp-controller="Loan" asp-action="Index">
+					Loans
+				</a>
+			</li>
+			<li>
+				<a class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark"
+				   asp-area="" asp-controller="Reservation" asp-action="Index">
+					Reservations
+				</a>
+			</li>
+		}
+		@if (isAuthenticated && (userRole == "Admin" || userRole == "Librarian"))
+		{
+			<li>
+				<a class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark"
 				   asp-area="" asp-controller="User" asp-action="Index">
 					Users
 				</a>
@@ -124,6 +139,21 @@
 				Categories
 			</a>
 		</li>
+		@if (isAuthenticated && (userRole == "Admin" || userRole == "Librarian"))
+		{
+			<li class="py-4">
+				<a class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark"
+				   asp-area="" asp-controller="Loan" asp-action="Index">
+					Loans
+				</a>
+			</li>
+			<li class="py-4">
+				<a class="w-full text-lg font-medium text-on-surface focus:underline dark:text-on-surface-dark"
+				   asp-area="" asp-controller="Reservation" asp-action="Index">
+					Reservations
+				</a>
+			</li>
+		}
 		@if (isAuthenticated && (userRole == "Admin" || userRole == "Librarian"))
 		{
 			<li class="py-4">

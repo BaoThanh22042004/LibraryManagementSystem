@@ -30,7 +30,7 @@ public class GetFinesByLoanIdQueryHandler : IRequestHandler<GetFinesByLoanIdQuer
             includes: new Expression<Func<Fine, object>>[] 
             { 
                 f => f.Member,
-                f => f.Loan
+                f => f.Loan!
             }
         );
         

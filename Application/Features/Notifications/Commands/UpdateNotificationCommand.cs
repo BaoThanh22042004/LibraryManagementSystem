@@ -40,7 +40,7 @@ public class UpdateNotificationCommandHandler : IRequestHandler<UpdateNotificati
             var auditRepository = _unitOfWork.Repository<AuditLog>();
             
             // Get notification (PRE-1: Notification must exist in the system)
-            var notification = await notificationRepository.GetAsync(n => n.Id == request.Id, n => n.User);
+            var notification = await notificationRepository.GetAsync(n => n.Id == request.Id, n => n.User!);
             if (notification == null)
                 return Result.Failure($"Notification with ID {request.Id} not found."); // UC031.E1: Notification Not Found
             

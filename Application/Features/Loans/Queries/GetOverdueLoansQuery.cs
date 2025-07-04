@@ -1,3 +1,4 @@
+using Application.Common;
 using Application.DTOs;
 using Application.Interfaces;
 using AutoMapper;
@@ -8,9 +9,9 @@ using System.Linq.Expressions;
 
 namespace Application.Features.Loans.Queries;
 
-public record GetOverdueLoansQuery : IRequest<List<LoanDto>>;
+public record GetOverdueLoansQuery(PagedRequest PagedRequest) : IRequest<Result<PagedResult<LoanDto>>>;
 
-public class GetOverdueLoansQueryHandler : IRequestHandler<GetOverdueLoansQuery, List<LoanDto>>
+    public class GetOverdueLoansQueryHandler : IRequestHandler<GetOverdueLoansQuery, Result<PagedResult<LoanDto>>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -21,7 +22,7 @@ public class GetOverdueLoansQueryHandler : IRequestHandler<GetOverdueLoansQuery,
         _mapper = mapper;
     }
 
-    public async Task<List<LoanDto>> Handle(GetOverdueLoansQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<LoanDto>>> Handle(GetOverdueLoansQuery request, CancellationToken cancellationToken)
     {
         var loanRepository = _unitOfWork.Repository<Loan>();
         var now = DateTime.Now;
@@ -37,6 +38,6 @@ public class GetOverdueLoansQueryHandler : IRequestHandler<GetOverdueLoansQuery,
             }
         );
 
-        return _mapper.Map<List<LoanDto>>(loans);
+        return Result.Success(new PagedResult<LoanDto>(loans.Select(l => _mapper.Map<LoanDto>(l)).ToList(), request.PagedRequest.PageNumber, request.PagedRequest.PageSize, loans.Count));
     }
 }

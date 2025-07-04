@@ -1,4 +1,4 @@
-@model Web.ViewModels.UserViewModel
+@model Application.DTOs.UserDto
 <!--
     User Details View
     Displays detailed information for a user.
@@ -6,7 +6,7 @@
 -->
 <h2>User Details</h2>
 <div>
-    <strong>Name:</strong> @Model.Name
+    <strong>FullName:</strong> @Model.FullName
 </div>
 <div>
     <strong>Email:</strong> @Model.Email
@@ -18,16 +18,10 @@
     <strong>Status:</strong> @Model.Status
 </div>
 <div>
-    <strong>Membership Number:</strong> @Model.MembershipNumber
-</div>
-<div>
     <strong>Phone:</strong> @Model.Phone
 </div>
 <div>
     <strong>Address:</strong> @Model.Address
-</div>
-<div>
-    <strong>Membership Status:</strong> @Model.MembershipStatus
 </div>
 <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
 <a asp-action="Delete" asp-route-id="@Model.Id">Delete</a> |

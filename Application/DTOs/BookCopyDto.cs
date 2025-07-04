@@ -13,6 +13,7 @@ public class BookCopyDto
     public CopyStatus Status { get; set; }
     public int BookId { get; set; }
     public string BookTitle { get; set; } = string.Empty;
+    public BookDto Book { get; set; } = null!;
 }
 
 /// <summary>

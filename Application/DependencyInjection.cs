@@ -1,17 +1,16 @@
 using Application.Behaviors;
 using Application.Common.Security;
-using Application.Interfaces.Services;
 using Application.Mappings;
-using Application.Services;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using Application.Features.Users.Commands;
-using Application.Features.Members.Commands;
 using Application.Interfaces;
 using AutoMapper;
+using Application.Services;
+using Application.Interfaces.Services;
 
 namespace Application;
 
@@ -41,25 +40,6 @@ public static class DependencyInjection
         // Register FluentValidation
         services.AddValidatorsFromAssembly(assembly);
         
-        // Register command handlers with extra dependencies
-        services.AddTransient<ForgotPasswordCommandHandler>(provider =>
-            new ForgotPasswordCommandHandler(
-                provider.GetRequiredService<IUnitOfWork>(),
-                provider.GetRequiredService<IEmailService>(),
-                provider.GetRequiredService<IConfiguration>()));
-        services.AddTransient<CreateUserCommandHandler>(provider =>
-            new CreateUserCommandHandler(
-                provider.GetRequiredService<IUnitOfWork>(),
-                provider.GetRequiredService<IMapper>(),
-                provider.GetRequiredService<IConfiguration>(),
-                provider.GetRequiredService<IEmailService>()));
-        services.AddTransient<SignUpMemberCommandHandler>(provider =>
-            new SignUpMemberCommandHandler(
-                provider.GetRequiredService<IUnitOfWork>(),
-                provider.GetRequiredService<IMapper>(),
-                provider.GetRequiredService<IConfiguration>(),
-                provider.GetRequiredService<IEmailService>()));
-        
         // Register security services
         services.AddSingleton<ITokenGenerator>(provider => {
             var jwtSettings = configuration.GetSection("JwtSettings");
@@ -71,20 +51,8 @@ public static class DependencyInjection
             );
         });
         
-        // Register services
-        services.AddScoped<IBookService, BookService>();
-        services.AddScoped<ICategoryService, CategoryService>();
-        services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IMemberService, MemberService>();
-        services.AddScoped<ILoanService, LoanService>();
-        services.AddScoped<IBookCopyService, BookCopyService>();
-        services.AddScoped<IReservationService, ReservationService>();
-        services.AddScoped<IFineService, FineService>();
-        services.AddScoped<INotificationService, NotificationService>();
-        services.AddScoped<ILibrarianService, LibrarianService>();
+        // Register Services
         services.AddScoped<IEmailService, EmailService>();
-        services.AddScoped<IReportService, ReportService>();
-        services.AddScoped<IAuditService, AuditService>();
         
         return services;
     }

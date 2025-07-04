@@ -1,4 +1,4 @@
-@model Web.ViewModels.UserViewModel
+@model Application.DTOs.UserDto
 <!--
     Create User View
     Allows Admin/Librarian to create a new user.
@@ -7,9 +7,9 @@
 <h2>Create User</h2>
 <form asp-action="Create" method="post">
     <div>
-        <label asp-for="Name"></label>
-        <input asp-for="Name" />
-        <span asp-validation-for="Name"></span>
+        <label asp-for="FullName"></label>
+        <input asp-for="FullName" />
+        <span asp-validation-for="FullName"></span>
     </div>
     <div>
         <label asp-for="Email"></label>
@@ -25,21 +25,6 @@
         <label asp-for="Status"></label>
         <input asp-for="Status" />
         <span asp-validation-for="Status"></span>
-    </div>
-    <div>
-        <label asp-for="MembershipNumber"></label>
-        <input asp-for="MembershipNumber" />
-        <span asp-validation-for="MembershipNumber"></span>
-    </div>
-    <div>
-        <label asp-for="MembershipStatus"></label>
-        <input asp-for="MembershipStatus" />
-        <span asp-validation-for="MembershipStatus"></span>
-    </div>
-    <div>
-        <label asp-for="Password"></label>
-        <input asp-for="Password" type="password" />
-        <span asp-validation-for="Password"></span>
     </div>
     <div>
         <label asp-for="Phone"></label>

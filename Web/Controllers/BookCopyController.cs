@@ -1,8 +1,12 @@
-using Application.DTOs;
-using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Domain.Enums;
+using Application.DTOs;
+using Application.Common;
+using MediatR;
+using Application.Features.BookCopies.Commands;
+using Application.Features.BookCopies.Queries;
+using Application.Features.Books.Queries;
 
 namespace Web.Controllers;
 
@@ -30,18 +34,13 @@ namespace Web.Controllers;
 [Authorize(Roles = "Librarian,Admin")]
 public class BookCopyController : Controller
 {
-    private readonly IBookCopyService _bookCopyService;
-    private readonly IBookService _bookService;
     private readonly ILogger<BookCopyController> _logger;
+    private readonly IMediator _mediator;
 
-    public BookCopyController(
-        IBookCopyService bookCopyService,
-        IBookService bookService,
-        ILogger<BookCopyController> logger)
+    public BookCopyController(ILogger<BookCopyController> logger, IMediator mediator)
     {
-        _bookCopyService = bookCopyService;
-        _bookService = bookService;
         _logger = logger;
+        _mediator = mediator;
     }
 
     /// <summary>
@@ -58,8 +57,7 @@ public class BookCopyController : Controller
             
             if (bookId.HasValue)
             {
-                // Verify the book exists
-                var book = await _bookService.GetBookByIdAsync(bookId.Value);
+                var book = await _mediator.Send(new GetBookByIdQuery(bookId.Value));
                 if (book == null)
                 {
                     TempData["Error"] = "Book not found.";
@@ -92,12 +90,11 @@ public class BookCopyController : Controller
     {
         if (!ModelState.IsValid)
         {
-            // Reload book title for display
             if (bookCopyDto.BookId > 0)
             {
                 try
                 {
-                    var book = await _bookService.GetBookByIdAsync(bookCopyDto.BookId);
+                    var book = await _mediator.Send(new GetBookByIdQuery(bookCopyDto.BookId));
                     ViewBag.BookTitle = book?.Title;
                 }
                 catch (Exception ex)
@@ -110,19 +107,17 @@ public class BookCopyController : Controller
 
         try
         {
-            // Validate that the book exists
-            var book = await _bookService.GetBookByIdAsync(bookCopyDto.BookId);
+            var book = await _mediator.Send(new GetBookByIdQuery(bookCopyDto.BookId));
             if (book == null)
             {
                 ModelState.AddModelError("BookId", "Selected book does not exist.");
                 return View(bookCopyDto);
             }
 
-            // Check if copy number already exists for this book
             if (!string.IsNullOrEmpty(bookCopyDto.CopyNumber))
             {
-                var copyExists = await _bookCopyService.CopyNumberExistsAsync(bookCopyDto.CopyNumber, bookCopyDto.BookId);
-                if (copyExists)
+                var copies = await _mediator.Send(new GetBookCopiesByBookIdQuery(bookCopyDto.BookId));
+                if (copies.Any(c => c.CopyNumber == bookCopyDto.CopyNumber))
                 {
                     ModelState.AddModelError("CopyNumber", "A copy with this number already exists for this book.");
                     ViewBag.BookTitle = book.Title;
@@ -130,7 +125,13 @@ public class BookCopyController : Controller
                 }
             }
 
-            await _bookCopyService.CreateBookCopyAsync(bookCopyDto);
+            var result = await _mediator.Send(new CreateBookCopyCommand(bookCopyDto));
+            if (!result.IsSuccess)
+            {
+                ModelState.AddModelError("", result.Error ?? "Failed to create book copy.");
+                ViewBag.BookTitle = book.Title;
+                return View(bookCopyDto);
+            }
             TempData["Success"] = "Book copy created successfully.";
             
             return RedirectToAction("Details", "Book", new { id = bookCopyDto.BookId });
@@ -140,10 +141,9 @@ public class BookCopyController : Controller
             _logger.LogError(ex, "Error occurred while creating book copy for book ID: {BookId}", bookCopyDto.BookId);
             ModelState.AddModelError("", ex.Message);
             
-            // Reload book title for display
             try
             {
-                var book = await _bookService.GetBookByIdAsync(bookCopyDto.BookId);
+                var book = await _mediator.Send(new GetBookByIdQuery(bookCopyDto.BookId));
                 ViewBag.BookTitle = book?.Title;
             }
             catch (Exception bookEx)
@@ -165,7 +165,7 @@ public class BookCopyController : Controller
     {
         try
         {
-            var bookCopy = await _bookCopyService.GetBookCopyByIdAsync(id);
+            var bookCopy = await _mediator.Send(new GetBookCopyByIdQuery(id));
             if (bookCopy == null)
             {
                 return NotFound();
@@ -203,68 +203,54 @@ public class BookCopyController : Controller
     {
         if (!ModelState.IsValid)
         {
-            // Reload book information for display
             try
             {
-                var bookCopy = await _bookCopyService.GetBookCopyByIdAsync(id);
-                if (bookCopy != null)
-                {
-                    ViewBag.BookTitle = bookCopy.BookTitle;
-                    ViewBag.BookId = bookCopy.BookId;
-                }
+                var bookCopy = await _mediator.Send(new GetBookCopyByIdQuery(id));
+                ViewBag.BookTitle = bookCopy?.BookTitle;
+                ViewBag.BookId = bookCopy?.BookId;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading book copy information for display");
+                _logger.LogError(ex, "Error loading book copy for display");
             }
             return View(bookCopyDto);
         }
 
         try
         {
-            // Get current book copy to validate
-            var currentCopy = await _bookCopyService.GetBookCopyByIdAsync(id);
-            if (currentCopy == null)
+            var bookCopy = await _mediator.Send(new GetBookCopyByIdQuery(id));
+            if (bookCopy == null)
             {
                 return NotFound();
             }
 
-            // Check if copy number already exists for this book (if changed)
-            if (bookCopyDto.CopyNumber != currentCopy.CopyNumber)
+            var result = await _mediator.Send(new UpdateBookCopyStatusCommand(id, bookCopyDto.Status));
+            if (!result.IsSuccess)
             {
-                var copyExists = await _bookCopyService.CopyNumberExistsAsync(bookCopyDto.CopyNumber, currentCopy.BookId);
-                if (copyExists)
-                {
-                    ModelState.AddModelError("CopyNumber", "A copy with this number already exists for this book.");
-                    ViewBag.BookTitle = currentCopy.BookTitle;
-                    ViewBag.BookId = currentCopy.BookId;
-                    return View(bookCopyDto);
-                }
+                ModelState.AddModelError("", result.Error ?? "Failed to update book copy.");
+                ViewBag.BookTitle = bookCopy.BookTitle;
+                ViewBag.BookId = bookCopy.BookId;
+                return View(bookCopyDto);
             }
 
-            await _bookCopyService.UpdateBookCopyAsync(id, bookCopyDto);
             TempData["Success"] = "Book copy updated successfully.";
             
-            return RedirectToAction("Details", "Book", new { id = currentCopy.BookId });
+            return RedirectToAction("Details", "Book", new { id = bookCopy.BookId });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while updating book copy ID: {CopyId}", id);
             ModelState.AddModelError("", ex.Message);
             
-            // Reload book information for display
             try
             {
-                var bookCopy = await _bookCopyService.GetBookCopyByIdAsync(id);
-                if (bookCopy != null)
-                {
-                    ViewBag.BookTitle = bookCopy.BookTitle;
-                    ViewBag.BookId = bookCopy.BookId;
-                }
+                var bookCopy = await _mediator.Send(new GetBookCopyByIdQuery(id));
+                ViewBag.BookTitle = bookCopy?.BookTitle;
+                ViewBag.BookId = bookCopy?.BookId;
             }
             catch (Exception bookEx)
             {
-                _logger.LogError(bookEx, "Error loading book copy information for display");
+                _logger.LogError(bookEx, "Error loading book copy for display");
             }
             
             return View(bookCopyDto);
@@ -281,18 +267,20 @@ public class BookCopyController : Controller
     {
         try
         {
-            var bookCopy = await _bookCopyService.GetBookCopyByIdAsync(id);
+            var bookCopy = await _mediator.Send(new GetBookCopyByIdQuery(id));
             if (bookCopy == null)
             {
                 return NotFound();
             }
 
+            ViewBag.BookTitle = bookCopy.BookTitle;
+            ViewBag.BookId = bookCopy.BookId;
             return View(bookCopy);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while retrieving book copy for deletion, ID: {CopyId}", id);
-            TempData["Error"] = "An error occurred while retrieving the book copy.";
+            _logger.LogError(ex, "Error occurred while loading delete book copy page, ID: {CopyId}", id);
+            TempData["Error"] = "An error occurred while loading the page.";
             return RedirectToAction("Index", "Book");
         }
     }
@@ -309,23 +297,26 @@ public class BookCopyController : Controller
     {
         try
         {
-            // Get book copy details first to redirect properly
-            var bookCopy = await _bookCopyService.GetBookCopyByIdAsync(id);
+            var bookCopy = await _mediator.Send(new GetBookCopyByIdQuery(id));
             if (bookCopy == null)
             {
                 return NotFound();
             }
 
-            await _bookCopyService.DeleteBookCopyAsync(id);
-            TempData["Success"] = "Book copy removed successfully.";
-            
+            var result = await _mediator.Send(new DeleteBookCopyCommand(id));
+            if (!result.IsSuccess)
+            {
+                TempData["Error"] = result.Error ?? "Failed to delete book copy.";
+                return RedirectToAction(nameof(Delete), new { id });
+            }
+            TempData["Success"] = "Book copy deleted successfully.";
             return RedirectToAction("Details", "Book", new { id = bookCopy.BookId });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while deleting book copy ID: {CopyId}", id);
-            TempData["Error"] = "An error occurred while removing the book copy: " + ex.Message;
-            return RedirectToAction("Index", "Book");
+            TempData["Error"] = ex.Message;
+            return RedirectToAction(nameof(Delete), new { id });
         }
     }
 
@@ -342,20 +333,17 @@ public class BookCopyController : Controller
     {
         try
         {
-            var success = await _bookCopyService.UpdateBookCopyStatusAsync(id, status);
-            if (success)
+            var result = await _mediator.Send(new UpdateBookCopyStatusCommand(id, status));
+            if (!result.IsSuccess)
             {
-                return Json(new { success = true, message = "Copy status updated successfully." });
+                return BadRequest(result.Error);
             }
-            else
-            {
-                return Json(new { success = false, message = "Failed to update copy status." });
-            }
+            return Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while updating book copy status, ID: {CopyId}", id);
-            return Json(new { success = false, message = "An error occurred while updating the copy status." });
+            _logger.LogError(ex, "Error occurred while updating status for book copy ID: {CopyId}", id);
+            return StatusCode(500, ex.Message);
         }
     }
 } 

@@ -1,9 +1,13 @@
-using Application.Common;
-using Application.DTOs;
-using Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Web.Services;
+using Application.DTOs;
+using Application.Common;
+using MediatR;
+using Application.Features.Books.Commands;
+using Application.Features.Books.Queries;
+using Application.Features.Categories.Queries;
+using Application.Interfaces.Services;
 
 namespace Web.Controllers;
 
@@ -32,21 +36,18 @@ namespace Web.Controllers;
 [Authorize]
 public class BookController : Controller
 {
-    private readonly IBookService _bookService;
-    private readonly ICategoryService _categoryService;
     private readonly IFileUploadService _fileUploadService;
     private readonly ILogger<BookController> _logger;
+    private readonly IMediator _mediator;
 
     public BookController(
-        IBookService bookService, 
-        ICategoryService categoryService,
         IFileUploadService fileUploadService, 
-        ILogger<BookController> logger)
+        ILogger<BookController> logger,
+        IMediator mediator)
     {
-        _bookService = bookService;
-        _categoryService = categoryService;
         _fileUploadService = fileUploadService;
         _logger = logger;
+        _mediator = mediator;
     }
 
     // GET: Book
@@ -54,13 +55,12 @@ public class BookController : Controller
     {
         try
         {
-            var pagedRequest = new PagedRequest
-            {
-                PageNumber = pageNumber > 0 ? pageNumber : 1,
-                PageSize = pageSize > 0 ? pageSize : 10
-            };
-
-            var books = await _bookService.SearchBooksAsync(searchTerm, null, null, null, categoryId, pagedRequest);
+            var books = await _mediator.Send(new SearchBooksQuery(
+                SearchTerm: searchTerm,
+                CategoryId: categoryId,
+                PageNumber: pageNumber,
+                PageSize: pageSize
+            ));
             return View(books);
         }
         catch (Exception ex)
@@ -76,7 +76,7 @@ public class BookController : Controller
     {
         try
         {
-            var book = await _bookService.GetBookByIdAsync(id);
+            var book = await _mediator.Send(new GetBookByIdQuery(id));
             if (book == null)
             {
                 return NotFound();
@@ -97,8 +97,7 @@ public class BookController : Controller
     {
         try
         {
-            // Get all categories for the dropdown
-            var allCategories = await _categoryService.GetAllCategoriesAsync();
+            var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
             ViewBag.Categories = allCategories;
             return View();
         }
@@ -120,7 +119,7 @@ public class BookController : Controller
         {
             try
             {
-                var allCategories = await _categoryService.GetAllCategoriesAsync();
+                var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
                 ViewBag.Categories = allCategories;
             }
             catch (Exception ex)
@@ -138,7 +137,7 @@ public class BookController : Controller
                 if (!_fileUploadService.IsValidImageFile(coverImageFile))
                 {
                     ModelState.AddModelError("coverImageFile", "Please select a valid image file (jpg, jpeg, png, gif, bmp, webp).");
-                    var allCategories = await _categoryService.GetAllCategoriesAsync();
+                    var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
                     ViewBag.Categories = allCategories;
                     return View(bookDto);
                 }
@@ -152,13 +151,20 @@ public class BookController : Controller
                 {
                     _logger.LogError(ex, "Error uploading cover image for book");
                     ModelState.AddModelError("coverImageFile", "Error uploading the image. Please try again.");
-                    var allCategories = await _categoryService.GetAllCategoriesAsync();
+                    var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
                     ViewBag.Categories = allCategories;
                     return View(bookDto);
                 }
             }
 
-            await _bookService.CreateBookAsync(bookDto);
+            var result = await _mediator.Send(new CreateBookCommand(bookDto));
+            if (!result.IsSuccess)
+            {
+                ModelState.AddModelError("", result.Error ?? "Failed to create book.");
+                var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
+                ViewBag.Categories = allCategories;
+                return View(bookDto);
+            }
             TempData["Success"] = "Book created successfully.";
             return RedirectToAction(nameof(Index));
         }
@@ -168,7 +174,7 @@ public class BookController : Controller
             ModelState.AddModelError("", ex.Message);
             try
             {
-                var allCategories = await _categoryService.GetAllCategoriesAsync();
+                var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
                 ViewBag.Categories = allCategories;
             }
             catch (Exception categoryEx)
@@ -185,7 +191,7 @@ public class BookController : Controller
     {
         try
         {
-            var book = await _bookService.GetBookByIdAsync(id);
+            var book = await _mediator.Send(new GetBookByIdQuery(id));
             if (book == null)
             {
                 return NotFound();
@@ -203,15 +209,15 @@ public class BookController : Controller
                 Status = book.Status
             };
 
-            var allCategories = await _categoryService.GetAllCategoriesAsync();
+            var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
             ViewBag.Categories = allCategories;
 
             return View(updateDto);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while retrieving book for edit, ID: {BookId}", id);
-            TempData["Error"] = "An error occurred while retrieving the book.";
+            _logger.LogError(ex, "Error occurred while loading edit book page for ID: {BookId}", id);
+            TempData["Error"] = "An error occurred while loading the page.";
             return RedirectToAction(nameof(Index));
         }
     }
@@ -226,7 +232,7 @@ public class BookController : Controller
         {
             try
             {
-                var allCategories = await _categoryService.GetAllCategoriesAsync();
+                var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
                 ViewBag.Categories = allCategories;
             }
             catch (Exception ex)
@@ -244,7 +250,7 @@ public class BookController : Controller
                 if (!_fileUploadService.IsValidImageFile(coverImageFile))
                 {
                     ModelState.AddModelError("coverImageFile", "Please select a valid image file (jpg, jpeg, png, gif, bmp, webp).");
-                    var allCategories = await _categoryService.GetAllCategoriesAsync();
+                    var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
                     ViewBag.Categories = allCategories;
                     return View(bookDto);
                 }
@@ -264,23 +270,30 @@ public class BookController : Controller
                 {
                     _logger.LogError(ex, "Error uploading cover image for book");
                     ModelState.AddModelError("coverImageFile", "Error uploading the image. Please try again.");
-                    var allCategories = await _categoryService.GetAllCategoriesAsync();
+                    var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
                     ViewBag.Categories = allCategories;
                     return View(bookDto);
                 }
             }
 
-            await _bookService.UpdateBookAsync(id, bookDto);
+            var result = await _mediator.Send(new UpdateBookCommand(id, bookDto));
+            if (!result.IsSuccess)
+            {
+                ModelState.AddModelError("", result.Error ?? "Failed to update book.");
+                var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
+                ViewBag.Categories = allCategories;
+                return View(bookDto);
+            }
             TempData["Success"] = "Book updated successfully.";
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while updating book ID: {BookId}", id);
+            _logger.LogError(ex, "Error occurred while updating book with ID: {BookId}", id);
             ModelState.AddModelError("", ex.Message);
             try
             {
-                var allCategories = await _categoryService.GetAllCategoriesAsync();
+                var allCategories = await _mediator.Send(new GetAllCategoriesQuery());
                 ViewBag.Categories = allCategories;
             }
             catch (Exception categoryEx)
@@ -299,7 +312,7 @@ public class BookController : Controller
     {
         try
         {
-            var book = await _bookService.GetBookByIdAsync(id);
+            var book = await _mediator.Send(new GetBookByIdQuery(id));
             if (book == null)
             {
                 return NotFound();
@@ -322,7 +335,7 @@ public class BookController : Controller
                 Status = book.Status
             };
 
-            await _bookService.UpdateBookAsync(id, updateDto);
+            await _mediator.Send(new UpdateBookCommand(id, updateDto));
             TempData["Success"] = "Cover image removed successfully.";
             
             return RedirectToAction(nameof(Edit), new { id });
@@ -341,7 +354,7 @@ public class BookController : Controller
     {
         try
         {
-            var book = await _bookService.GetBookByIdAsync(id);
+            var book = await _mediator.Send(new GetBookByIdQuery(id));
             if (book == null)
             {
                 return NotFound();
@@ -350,8 +363,8 @@ public class BookController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while retrieving book for deletion, ID: {BookId}", id);
-            TempData["Error"] = "An error occurred while retrieving the book.";
+            _logger.LogError(ex, "Error occurred while loading delete book page for ID: {BookId}", id);
+            TempData["Error"] = "An error occurred while loading the page.";
             return RedirectToAction(nameof(Index));
         }
     }
@@ -364,22 +377,20 @@ public class BookController : Controller
     {
         try
         {
-            // Get book details first to delete associated image file
-            var book = await _bookService.GetBookByIdAsync(id);
-            if (book != null && !string.IsNullOrEmpty(book.CoverImageUrl) && !book.CoverImageUrl.StartsWith("http"))
+            var result = await _mediator.Send(new DeleteBookCommand(id));
+            if (!result.IsSuccess)
             {
-                await _fileUploadService.DeleteFileAsync(book.CoverImageUrl);
+                TempData["Error"] = result.Error ?? "Failed to delete book.";
+                return RedirectToAction(nameof(Delete), new { id });
             }
-
-            await _bookService.DeleteBookAsync(id);
             TempData["Success"] = "Book deleted successfully.";
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while deleting book ID: {BookId}", id);
-            TempData["Error"] = "An error occurred while deleting the book: " + ex.Message;
-            return RedirectToAction(nameof(Index));
+            _logger.LogError(ex, "Error occurred while deleting book with ID: {BookId}", id);
+            TempData["Error"] = ex.Message;
+            return RedirectToAction(nameof(Delete), new { id });
         }
     }
 }

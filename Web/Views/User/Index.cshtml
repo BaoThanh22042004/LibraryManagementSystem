@@ -1,4 +1,4 @@
-@model IEnumerable<Web.ViewModels.UserViewModel>
+@model IEnumerable<Application.DTOs.UserDto>
 <!--
     User List View
     Displays a list of users for Admin/Librarian management.
@@ -23,14 +23,12 @@
         @foreach (var user in Model)
         {
             <tr>
-                <td>@user.Name</td>
+                <td>@user.FullName</td>
                 <td>@user.Email</td>
                 <td>@user.Role</td>
                 <td>@user.Status</td>
-                <td>@user.MembershipNumber</td>
                 <td>@user.Phone</td>
                 <td>@user.Address</td>
-                <td>@user.MembershipStatus</td>
                 <td>
                     <a asp-action="Details" asp-route-id="@user.Id">Details</a> |
                     <a asp-action="Edit" asp-route-id="@user.Id">Edit</a> |

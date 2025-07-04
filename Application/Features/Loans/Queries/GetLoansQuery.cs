@@ -9,9 +9,9 @@ using System.Linq.Expressions;
 
 namespace Application.Features.Loans.Queries;
 
-public record GetLoansQuery(int PageNumber = 1, int PageSize = 10, string? SearchTerm = null) : IRequest<PagedResult<LoanDto>>;
+public record GetLoansQuery(PagedRequest PagedRequest, int? MemberId = null) : IRequest<Result<PagedResult<LoanDto>>>;
 
-public class GetLoansQueryHandler : IRequestHandler<GetLoansQuery, PagedResult<LoanDto>>
+public class GetLoansQueryHandler : IRequestHandler<GetLoansQuery, Result<PagedResult<LoanDto>>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -22,22 +22,20 @@ public class GetLoansQueryHandler : IRequestHandler<GetLoansQuery, PagedResult<L
         _mapper = mapper;
     }
 
-    public async Task<PagedResult<LoanDto>> Handle(GetLoansQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedResult<LoanDto>>> Handle(GetLoansQuery request, CancellationToken cancellationToken)
     {
         var pagedRequest = new PagedRequest
         {
-            PageNumber = request.PageNumber,
-            PageSize = request.PageSize
+            PageNumber = request.PagedRequest.PageNumber,
+            PageSize = request.PagedRequest.PageSize
         };
 
         var loanRepository = _unitOfWork.Repository<Loan>();
         
         var loanQuery = await loanRepository.PagedListAsync(
             pagedRequest,
-            predicate: !string.IsNullOrWhiteSpace(request.SearchTerm) 
-                ? l => l.BookCopy.Book.Title.Contains(request.SearchTerm) || 
-                      l.BookCopy.CopyNumber.Contains(request.SearchTerm) ||
-                      l.Member.User.FullName.Contains(request.SearchTerm)
+            predicate: request.MemberId.HasValue 
+                ? l => l.MemberId == request.MemberId
                 : null,
             orderBy: q => q.OrderByDescending(l => l.LoanDate),
             includes: new Expression<Func<Loan, object>>[] { 
@@ -48,11 +46,11 @@ public class GetLoansQueryHandler : IRequestHandler<GetLoansQuery, PagedResult<L
             }
         );
 
-        return new PagedResult<LoanDto>(
+        return Result.Success(new PagedResult<LoanDto>(
             _mapper.Map<List<LoanDto>>(loanQuery.Items),
-            loanQuery.TotalCount,
-            loanQuery.PageNumber,
-            loanQuery.PageSize
-        );
+            request.PagedRequest.PageNumber,
+            request.PagedRequest.PageSize,
+            loanQuery.TotalCount
+        ));
     }
 }

@@ -20,6 +20,6 @@
   </ItemGroup>
 
 	<Target Name="BuildCss" BeforeTargets="Compile">
-		<Exec Command="npm run build:css"/>
+		<Exec Command="npm run build:css" />
 	</Target>
 </Project>

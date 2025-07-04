@@ -36,9 +36,9 @@ public class GetFinesReportQueryHandler : IRequestHandler<GetFinesReportQuery, R
             includes: [
                 f => f.Member, 
                 f => f.Member.User, 
-                f => f.Loan,
-                f => f.Loan.BookCopy,
-                f => f.Loan.BookCopy.Book
+                f => f.Loan!,
+                f => f.Loan!.BookCopy,
+                f => f.Loan!.BookCopy.Book
             ]
         );
         

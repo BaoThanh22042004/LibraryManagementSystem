@@ -1,3 +1,4 @@
+using Application.Common;
 using Application.DTOs;
 using Application.Interfaces;
 using AutoMapper;
@@ -6,9 +7,9 @@ using MediatR;
 
 namespace Application.Features.Loans.Queries;
 
-public record GetLoanByIdQuery(int Id) : IRequest<LoanDto?>;
+public record GetLoanByIdQuery(int Id) : IRequest<Result<LoanDto>>;
 
-public class GetLoanByIdQueryHandler : IRequestHandler<GetLoanByIdQuery, LoanDto?>
+public class GetLoanByIdQueryHandler : IRequestHandler<GetLoanByIdQuery, Result<LoanDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -19,7 +20,7 @@ public class GetLoanByIdQueryHandler : IRequestHandler<GetLoanByIdQuery, LoanDto
         _mapper = mapper;
     }
 
-    public async Task<LoanDto?> Handle(GetLoanByIdQuery request, CancellationToken cancellationToken)
+    public async Task<Result<LoanDto>> Handle(GetLoanByIdQuery request, CancellationToken cancellationToken)
     {
         var loanRepository = _unitOfWork.Repository<Loan>();
         
@@ -32,8 +33,8 @@ public class GetLoanByIdQueryHandler : IRequestHandler<GetLoanByIdQuery, LoanDto
         );
 
         if (loan == null)
-            return null;
+            return Result.Failure<LoanDto>("Loan not found");
 
-        return _mapper.Map<LoanDto>(loan);
+        return Result.Success(_mapper.Map<LoanDto>(loan));
     }
 }

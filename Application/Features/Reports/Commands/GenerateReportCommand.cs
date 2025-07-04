@@ -1,6 +1,6 @@
 using Application.Common;
 using Application.DTOs;
-using Application.Interfaces;
+using Application.Features.Reports.Queries;
 using Application.Interfaces.Services;
 using Domain.Enums;
 using MediatR;
@@ -17,16 +17,13 @@ public record GenerateReportCommand(GenerateReportDto ReportParameters) : IReque
 public class GenerateReportCommandHandler : IRequestHandler<GenerateReportCommand, Result<ReportResultDto>>
 {
     private readonly IMediator _mediator;
-    private readonly IReportService _reportService;
     private readonly IFileExportService _fileExportService;
     
     public GenerateReportCommandHandler(
         IMediator mediator, 
-        IReportService reportService,
         IFileExportService fileExportService)
     {
         _mediator = mediator;
-        _reportService = reportService;
         _fileExportService = fileExportService;
     }
     
@@ -98,24 +95,28 @@ public class GenerateReportCommandHandler : IRequestHandler<GenerateReportComman
     {
         if (parameters.StartDate.HasValue && parameters.EndDate.HasValue)
         {
-            return await _reportService.GetDashboardStatisticsAsync(
+            var result = await _mediator.Send(new GetDashboardStatisticsQuery(
                 parameters.StartDate.Value, 
-                parameters.EndDate.Value);
+                parameters.EndDate.Value));
+            return result.Value;
         }
         else
         {
-            return await _reportService.GetDashboardStatisticsAsync();
+            var result = await _mediator.Send(new GetDashboardStatisticsQuery());
+            return result.Value;
         }
     }
     
     private async Task<OverdueReportDto> GetOverdueLoansData()
     {
-        return await _reportService.GetOverdueReportAsync();
+        var result = await _mediator.Send(new GetOverdueReportQuery());
+        return result.Value;
     }
     
     private async Task<FineReportDto> GetFinesData(FineStatus[]? statusFilter)
     {
-        return await _reportService.GetFinesReportAsync(statusFilter);
+        var result = await _mediator.Send(new GetFinesReportQuery(statusFilter));
+        return result.Value;
     }
     
     private async Task<OutstandingFineDto> GetOutstandingFinesData(int? memberId)
@@ -125,7 +126,8 @@ public class GenerateReportCommandHandler : IRequestHandler<GenerateReportComman
             throw new ArgumentException("Member ID is required for outstanding fines report");
         }
         
-        return await _reportService.GetOutstandingFinesAsync(memberId.Value);
+        var result = await _mediator.Send(new GetOutstandingFinesQuery(memberId.Value));
+        return result.Value;
     }
     
     #endregion

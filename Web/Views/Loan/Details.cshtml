@@ -1,0 +1,29 @@
+@model Application.DTOs.LoanDto
+@{
+    ViewData["Title"] = "Loan Details";
+}
+<h2>Loan Details</h2>
+@if (Model == null)
+{
+    <div>No loan details available.</div>
+}
+else
+{
+    <dl>
+        <dt>Loan ID</dt>
+        <dd>@Model.Id</dd>
+        <dt>Member</dt>
+        <dd>@Model.Member.User.FullName</dd>
+        <dt>Book Copy</dt>
+        <dd>@Model.BookCopy.BookTitle</dd>
+        <dt>Status</dt>
+        <dd>@Model.Status</dd>
+        <dt>Loan Date</dt>
+        <dd>@Model.LoanDate.ToShortDateString()</dd>
+        <dt>Due Date</dt>
+        <dd>@Model.DueDate.ToShortDateString()</dd>
+        <dt>Return Date</dt>
+        <dd>@(Model.ReturnDate?.ToShortDateString() ?? "-")</dd>
+    </dl>
+    <a asp-action="Index">Back to List</a>
+} 

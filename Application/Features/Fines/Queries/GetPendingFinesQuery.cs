@@ -31,7 +31,7 @@ public class GetPendingFinesQueryHandler : IRequestHandler<GetPendingFinesQuery,
             includes: new Expression<Func<Fine, object>>[] 
             { 
                 f => f.Member.User,
-                f => f.Loan
+                f => f.Loan!
             }
         );
         

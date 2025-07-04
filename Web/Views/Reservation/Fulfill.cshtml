@@ -1,0 +1,27 @@
+@model Application.DTOs.ReservationDto
+@{
+    ViewData["Title"] = "Fulfill Reservation";
+}
+<h2>Fulfill Reservation</h2>
+@if (Model == null)
+{
+    <div>No reservation details available.</div>
+}
+else
+{
+    <dl>
+        <dt>Reservation ID</dt>
+        <dd>@Model.Id</dd>
+        <dt>Member</dt>
+        <dd>@Model.MemberName</dd>
+        <dt>Book</dt>
+        <dd>@Model.BookTitle</dd>
+        <dt>Status</dt>
+        <dd>@Model.Status</dd>
+    </dl>
+    <form asp-action="Fulfill" method="post">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-success">Confirm Fulfillment</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+} 

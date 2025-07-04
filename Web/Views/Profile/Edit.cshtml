@@ -1,4 +1,4 @@
-@model Web.ViewModels.ProfileViewModel
+@model Application.DTOs.UpdateProfileDto
 <!--
     Edit Profile View
     Allows user to edit their profile information.
@@ -7,9 +7,9 @@
 <h2>Edit Profile</h2>
 <form asp-action="Edit" method="post">
     <div>
-        <label asp-for="Name"></label>
-        <input asp-for="Name" />
-        <span asp-validation-for="Name"></span>
+        <label asp-for="FullName"></label>
+        <input asp-for="FullName" />
+        <span asp-validation-for="FullName"></span>
     </div>
     <div>
         <label asp-for="Email"></label>

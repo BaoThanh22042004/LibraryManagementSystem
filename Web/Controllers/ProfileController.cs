@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
-using Web.ViewModels;
-using Application.Interfaces.Services;
-using Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Application.DTOs;
+using Application.Common;
+using MediatR;
+using Application.Features.Users.Commands;
+using Application.Features.Users.Queries;
 
 namespace Web.Controllers
 {
@@ -13,10 +15,11 @@ namespace Web.Controllers
     [Authorize]
     public class ProfileController : Controller
     {
-        private readonly IUserService _userService;
-        public ProfileController(IUserService userService)
+        private readonly IMediator _mediator;
+
+        public ProfileController(IMediator mediator)
         {
-            _userService = userService;
+            _mediator = mediator;
         }
 
         /// <summary>
@@ -27,11 +30,11 @@ namespace Web.Controllers
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdStr, out int currentUserId))
                 return Unauthorized();
-            var user = await _userService.GetUserByIdAsync(currentUserId);
+            var user = await _mediator.Send(new GetUserByIdQuery(currentUserId));
             if (user == null) return NotFound();
-            var model = new ProfileViewModel
+            var model = new UpdateProfileDto
             {
-                Name = user.FullName,
+                FullName = user.FullName,
                 Email = user.Email,
                 Phone = user.Phone,
                 Address = user.Address
@@ -47,11 +50,11 @@ namespace Web.Controllers
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdStr, out int currentUserId))
                 return Unauthorized();
-            var user = await _userService.GetUserByIdAsync(currentUserId);
+            var user = await _mediator.Send(new GetUserByIdQuery(currentUserId));
             if (user == null) return NotFound();
-            var model = new ProfileViewModel
-            {
-                Name = user.FullName,
+            var model = new UpdateProfileDto
+			{
+                FullName = user.FullName,
                 Email = user.Email,
                 Phone = user.Phone,
                 Address = user.Address
@@ -63,23 +66,16 @@ namespace Web.Controllers
         /// Handles edit profile form submission.
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> Edit(ProfileViewModel model)
+        public async Task<IActionResult> Edit(UpdateProfileDto model)
         {
             if (!ModelState.IsValid) return View(model);
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdStr, out int currentUserId))
                 return Unauthorized();
-            var dto = new UpdateProfileDto
-            {
-                FullName = model.Name,
-                Email = model.Email,
-                Phone = model.Phone,
-                Address = model.Address
-            };
-            var result = await _userService.UpdateProfileAsync(currentUserId, dto);
+            var result = await _mediator.Send(new UpdateProfileCommand(currentUserId, model));
             if (!result.IsSuccess)
             {
-                ModelState.AddModelError("", result.Error);
+                ModelState.AddModelError("", result.Error ?? "Failed to update profile.");
                 return View(model);
             }
             return RedirectToAction("Index");
@@ -94,25 +90,16 @@ namespace Web.Controllers
         /// Handles change password form submission.
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        public async Task<IActionResult> ChangePassword(ChangePasswordDto model)
         {
             if (!ModelState.IsValid) return View(model);
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdStr, out int currentUserId))
                 return Unauthorized();
-            var dto = new ChangePasswordDto
+            var result = await _mediator.Send(new ChangePasswordCommand(currentUserId, model));
+            if (!result.IsSuccess)
             {
-                CurrentPassword = model.CurrentPassword,
-                NewPassword = model.NewPassword,
-                ConfirmNewPassword = model.ConfirmPassword
-            };
-            try
-            {
-                await _userService.ChangePasswordAsync(currentUserId, dto);
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", ex.Message);
+                ModelState.AddModelError("", result.Error ?? "Failed to change password.");
                 return View(model);
             }
             return RedirectToAction("Index");

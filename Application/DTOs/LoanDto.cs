@@ -2,6 +2,10 @@ using Domain.Enums;
 
 namespace Application.DTOs;
 
+/// <summary>
+/// Data transfer object for loan information (borrowing transaction).
+/// Used in UC018 (Check Out), UC019 (Return Book), UC020 (Renew Loan), UC021 (View Loan History).
+/// </summary>
 public class LoanDto
 {
     public int Id { get; set; }
@@ -17,6 +21,10 @@ public class LoanDto
     public BookCopyDto BookCopy { get; set; } = null!;
 }
 
+/// <summary>
+/// Data transfer object for creating a new loan (book checkout).
+/// Used in UC018 (Check Out).
+/// </summary>
 public class CreateLoanDto
 {
     public int MemberId { get; set; }
@@ -24,12 +32,20 @@ public class CreateLoanDto
     public DateTime? CustomDueDate { get; set; } // Optional, system will use default if not specified
 }
 
+/// <summary>
+/// Data transfer object for updating an existing loan (return, status change).
+/// Used in UC019 (Return Book), UC020 (Renew Loan).
+/// </summary>
 public class UpdateLoanDto
 {
     public DateTime? ReturnDate { get; set; }
     public LoanStatus Status { get; set; }
 }
 
+/// <summary>
+/// Data transfer object for extending a loan (renewal).
+/// Used in UC020 (Renew Loan).
+/// </summary>
 public class ExtendLoanDto
 {
     public int LoanId { get; set; }
@@ -37,6 +53,10 @@ public class ExtendLoanDto
     public string? Reason { get; set; }
 }
 
+/// <summary>
+/// Extended loan information for detailed views, including calculated overdue and fine info.
+/// Used in UC021 (View Loan History) and reporting.
+/// </summary>
 public class LoanDetailsDto : LoanDto
 {
     public bool IsOverdue => Status == LoanStatus.Active && DueDate < DateTime.UtcNow;
@@ -44,7 +64,10 @@ public class LoanDetailsDto : LoanDto
     public decimal CalculatedFine => IsOverdue ? DaysOverdue * 0.50m : 0; // $0.50 per day overdue
 }
 
-// DTO for checking out multiple books at once to the same member
+/// <summary>
+/// Data transfer object for checking out multiple books at once to the same member.
+/// Used in UC018 (Check Out) alternative flow (bulk checkout).
+/// </summary>
 public class BulkCheckoutDto
 {
     public int MemberId { get; set; }
@@ -52,13 +75,19 @@ public class BulkCheckoutDto
     public DateTime? CustomDueDate { get; set; } // Optional, system will use default if not specified
 }
 
-// DTO for returning multiple books at once
+/// <summary>
+/// Data transfer object for returning multiple books at once.
+/// Used in UC019 (Return Book) alternative flow (bulk return).
+/// </summary>
 public class BulkReturnDto
 {
     public List<int> LoanIds { get; set; } = new List<int>();
 }
 
-// DTO for checking loan eligibility
+/// <summary>
+/// Data transfer object for checking loan eligibility for a member.
+/// Used in UC018 (Check Out) and business rules BR-13, BR-16.
+/// </summary>
 public class LoanEligibilityDto
 {
     public int MemberId { get; set; }
@@ -67,7 +96,10 @@ public class LoanEligibilityDto
     public int AvailableLoanSlots { get; set; }
 }
 
-// DTO for loan history
+/// <summary>
+/// Data transfer object for member loan history and statistics.
+/// Used in UC021 (View Loan History).
+/// </summary>
 public class LoanHistoryDto
 {
     public int MemberId { get; set; }

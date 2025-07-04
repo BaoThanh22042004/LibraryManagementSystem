@@ -40,7 +40,7 @@ public class MarkAsReadCommandHandler : IRequestHandler<MarkAsReadCommand, Resul
             // Get notification (PRE-1, PRE-4: Member must be authenticated and notification must exist)
             var notification = await notificationRepository.GetAsync(
                 n => n.Id == request.Id,
-                n => n.User
+                n => n.User!
             );
             
             if (notification == null)

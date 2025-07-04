@@ -46,9 +46,9 @@ public class GetOutstandingFinesQueryHandler : IRequestHandler<GetOutstandingFin
         var outstandingFines = await fineRepository.ListAsync(
             predicate: f => f.MemberId == request.MemberId && f.Status == FineStatus.Pending,
             includes: [
-                f => f.Loan,
-                f => f.Loan.BookCopy,
-                f => f.Loan.BookCopy.Book
+                f => f.Loan!,
+                f => f.Loan!.BookCopy,
+                f => f.Loan!.BookCopy.Book
             ]
         );
         
