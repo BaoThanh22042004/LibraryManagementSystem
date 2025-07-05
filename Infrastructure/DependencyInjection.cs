@@ -1,8 +1,6 @@
 using Application.Interfaces;
-using Application.Interfaces.Services;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
-using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,9 +24,6 @@ public static class DependencyInjection
         // Register repositories
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        
-        // Register services
-        services.AddScoped<IFileExportService, FileExportService>();
         
         return services;
     }

@@ -1,41 +1,294 @@
-@model IEnumerable<Application.DTOs.UserDto>
-<!--
-    User List View
-    Displays a list of users for Admin/Librarian management.
-    Related to UC007: View User Info
--->
-<h2>User List</h2>
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Membership Number</th>
-            <th>Phone</th>
-            <th>Address</th>
-            <th>MembershipStatus</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var user in Model)
-        {
-            <tr>
-                <td>@user.FullName</td>
-                <td>@user.Email</td>
-                <td>@user.Role</td>
-                <td>@user.Status</td>
-                <td>@user.Phone</td>
-                <td>@user.Address</td>
-                <td>
-                    <a asp-action="Details" asp-route-id="@user.Id">Details</a> |
-                    <a asp-action="Edit" asp-route-id="@user.Id">Edit</a> |
-                    <a asp-action="Delete" asp-route-id="@user.Id">Delete</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-<a asp-action="Create">Create New User</a> 
+@model Application.DTOs.UserSearchResponse
+@{
+    ViewData["Title"] = "User Management";
+    var searchTerm = ViewData["SearchTerm"] as string;
+    var role = ViewData["Role"] as UserRole?;
+    var status = ViewData["Status"] as UserStatus?;
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>User Management</h2>
+                <a asp-action="Create" class="btn btn-success">
+                    <i class="bi bi-person-plus"></i> Create User
+                </a>
+            </div>
+            <hr />
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Search Users</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Index" method="get">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="searchTerm" name="SearchTerm" placeholder="Search" value="@searchTerm">
+                                    <label for="searchTerm">Search by name, email, or ID</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <select class="form-select" id="role" name="Role">
+                                        <option value="">All Roles</option>
+                                        @if (role == UserRole.Member)
+                                        {
+                                            <option value="@((int)UserRole.Member)" selected>Member</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)UserRole.Member)">Member</option>
+                                        }
+                                        
+                                        @if (role == UserRole.Librarian)
+                                        {
+                                            <option value="@((int)UserRole.Librarian)" selected>Librarian</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)UserRole.Librarian)">Librarian</option>
+                                        }
+                                        
+                                        @if (role == UserRole.Admin)
+                                        {
+                                            <option value="@((int)UserRole.Admin)" selected>Administrator</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)UserRole.Admin)">Administrator</option>
+                                        }
+                                    </select>
+                                    <label for="role">Role</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <select class="form-select" id="status" name="Status">
+                                        <option value="">All Statuses</option>
+                                        @if (status == UserStatus.Active)
+                                        {
+                                            <option value="@((int)UserStatus.Active)" selected>Active</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)UserStatus.Active)">Active</option>
+                                        }
+                                        
+                                        @if (status == UserStatus.Suspended)
+                                        {
+                                            <option value="@((int)UserStatus.Suspended)" selected>Suspended</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)UserStatus.Suspended)">Suspended</option>
+                                        }
+                                        
+                                        @if (status == UserStatus.Inactive)
+                                        {
+                                            <option value="@((int)UserStatus.Inactive)" selected>Inactive</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)UserStatus.Inactive)">Inactive</option>
+                                        }
+                                    </select>
+                                    <label for="status">Status</label>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary h-100 w-100">
+                                    <i class="bi bi-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">User List</h5>
+                        <span class="badge bg-primary">Total: @Model.Count users</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.Items.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model.Items)
+                                    {
+                                        <tr>
+                                            <td>@user.Id</td>
+                                            <td>@user.FullName</td>
+                                            <td>@user.Email</td>
+                                            <td>
+                                                @switch (user.Role)
+                                                {
+                                                    case UserRole.Admin:
+                                                        <span class="badge bg-danger">Administrator</span>
+                                                        break;
+                                                    case UserRole.Librarian:
+                                                        <span class="badge bg-info">Librarian</span>
+                                                        break;
+                                                    case UserRole.Member:
+                                                        <span class="badge bg-success">Member</span>
+                                                        if (!string.IsNullOrEmpty(user.MembershipNumber))
+                                                        {
+                                                            <small class="d-block text-muted">@user.MembershipNumber</small>
+                                                        }
+                                                        break;
+                                                }
+                                            </td>
+                                            <td>
+                                                @switch (user.Status)
+                                                {
+                                                    case UserStatus.Active:
+                                                        <span class="badge bg-success">Active</span>
+                                                        break;
+                                                    case UserStatus.Suspended:
+                                                        <span class="badge bg-warning text-dark">Suspended</span>
+                                                        break;
+                                                    case UserStatus.Inactive:
+                                                        <span class="badge bg-secondary">Inactive</span>
+                                                        break;
+                                                }
+                                            </td>
+                                            <td>@user.CreatedAt.ToString("yyyy-MM-dd")</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-outline-secondary">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <a asp-action="Delete" asp-route-id="@user.Id" class="btn btn-sm btn-outline-danger">
+                                                        <i class="bi bi-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        @if (Model.TotalPages > 1)
+                        {
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-center">
+                                    @if (Model.Page > 1)
+                                    {
+                                        <li class="page-item">
+                                            <a class="page-link" asp-action="Index" 
+                                               asp-route-searchTerm="@searchTerm"
+                                               asp-route-role="@((int?)role)"
+                                               asp-route-status="@((int?)status)"
+                                               asp-route-pageNumber="1"
+                                               asp-route-pageSize="@Model.PageSize">First</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" asp-action="Index" 
+                                               asp-route-searchTerm="@searchTerm"
+                                               asp-route-role="@((int?)role)"
+                                               asp-route-status="@((int?)status)"
+                                               asp-route-pageNumber="@(Model.Page - 1)"
+                                               asp-route-pageSize="@Model.PageSize">Previous</a>
+                                        </li>
+                                    }
+
+                                    @for (var i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
+                                    {
+                                        <li class="page-item @(i == Model.Page ? "active" : "")">
+                                            <a class="page-link" asp-action="Index" 
+                                               asp-route-searchTerm="@searchTerm"
+                                               asp-route-role="@((int?)role)"
+                                               asp-route-status="@((int?)status)"
+                                               asp-route-pageNumber="@i"
+                                               asp-route-pageSize="@Model.PageSize">@i</a>
+                                        </li>
+                                    }
+
+                                    @if (Model.Page < Model.TotalPages)
+                                    {
+                                        <li class="page-item">
+                                            <a class="page-link" asp-action="Index" 
+                                               asp-route-searchTerm="@searchTerm"
+                                               asp-route-role="@((int?)role)"
+                                               asp-route-status="@((int?)status)"
+                                               asp-route-pageNumber="@(Model.Page + 1)"
+                                               asp-route-pageSize="@Model.PageSize">Next</a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" asp-action="Index" 
+                                               asp-route-searchTerm="@searchTerm"
+                                               asp-route-role="@((int?)role)"
+                                               asp-route-status="@((int?)status)"
+                                               asp-route-pageNumber="@Model.TotalPages"
+                                               asp-route-pageSize="@Model.PageSize">Last</a>
+                                        </li>
+                                    }
+                                </ul>
+                            </nav>
+                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-info text-center" role="alert">
+                            <i class="bi bi-info-circle me-2"></i> No users found matching the search criteria.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize any JS functionality here
+        });
+    </script>
+}

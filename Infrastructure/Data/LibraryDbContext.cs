@@ -25,6 +25,7 @@ public class LibraryDbContext : DbContext
 	public DbSet<Notification> Notifications { get; set; }
 
 	public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+	public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
 	
 	public DbSet<AuditLog> AuditLogs { get; set; }
 

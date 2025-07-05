@@ -1,36 +1,115 @@
-@model Application.DTOs.UpdateUserDto
-<!--
-    Edit User View
-    Allows Admin/Librarian to edit user information.
-    Related to UC006: Update User Info
--->
-<h2>Edit User</h2>
-<form asp-action="Edit" method="post">
-    <div>
-        <label asp-for="FullName"></label>
-        <input asp-for="FullName" />
-        <span asp-validation-for="FullName"></span>
+@model Application.DTOs.UpdateUserRequest
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Edit User</h2>
+                <div>
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left"></i> Back to Details
+                    </a>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-list"></i> Back to List
+                    </a>
+                </div>
+            </div>
+            <hr />
+        </div>
     </div>
-    <div>
-        <label asp-for="Email"></label>
-        <input asp-for="Email" />
-        <span asp-validation-for="Email"></span>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Edit User Information</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label asp-for="FullName" class="form-label">Full Name</label>
+                                <input asp-for="FullName" class="form-control" placeholder="Enter full name" />
+                                <span asp-validation-for="FullName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label">Email</label>
+                                <input asp-for="Email" class="form-control" type="email" placeholder="Enter email address" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Status" class="form-label">Account Status</label>
+                                <select asp-for="Status" class="form-select" id="statusSelect">
+                                    <option value="@UserStatus.Active">Active</option>
+                                    <option value="@UserStatus.Suspended">Suspended</option>
+                                    <option value="@UserStatus.Inactive">Inactive</option>
+                                </select>
+                                <span asp-validation-for="Status" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 status-reason-container" style="display: none;">
+                            <label asp-for="StatusChangeReason" class="form-label">Reason for Status Change</label>
+                            <textarea asp-for="StatusChangeReason" class="form-control" rows="2" placeholder="Provide reason for status change"></textarea>
+                            <div class="form-text">Required when changing user status.</div>
+                            <span asp-validation-for="StatusChangeReason" class="text-danger"></span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Phone" class="form-label">Phone Number (Optional)</label>
+                                <input asp-for="Phone" class="form-control" placeholder="Enter phone number" />
+                                <span asp-validation-for="Phone" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Address" class="form-label">Address (Optional)</label>
+                            <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter address"></textarea>
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    <div>
-        <label asp-for="Role"></label>
-        <input asp-for="Role" />
-        <span asp-validation-for="Role"></span>
-    </div>
-    <div>
-        <label asp-for="Phone"></label>
-        <input asp-for="Phone" />
-        <span asp-validation-for="Phone"></span>
-    </div>
-    <div>
-        <label asp-for="Address"></label>
-        <input asp-for="Address" />
-        <span asp-validation-for="Address"></span>
-    </div>
-    <button type="submit">Save</button>
-</form>
-<a asp-action="Index">Back to List</a> 
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Store initial status
+            var initialStatus = $('#statusSelect').val();
+            
+            // Check if status has changed
+            $('#statusSelect').change(function() {
+                var currentStatus = $(this).val();
+                
+                if (currentStatus !== initialStatus) {
+                    $('.status-reason-container').show();
+                    $('#StatusChangeReason').attr('required', 'required');
+                } else {
+                    $('.status-reason-container').hide();
+                    $('#StatusChangeReason').removeAttr('required');
+                }
+            });
+            
+            // Initialize
+            $('#statusSelect').trigger('change');
+        });
+    </script>
+}

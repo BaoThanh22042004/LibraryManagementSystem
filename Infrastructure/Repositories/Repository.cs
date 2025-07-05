@@ -46,7 +46,7 @@ public class Repository<T> : IRepository<T> where T : class
         bool asNoTracking = true,
         params Expression<Func<T, object>>[] includes)
     {
-        int pageNumber = Math.Max(pagedRequest.PageNumber, 1);
+        int pageNumber = Math.Max(pagedRequest.Page, 1);
         int pageSize = Math.Clamp(pagedRequest.PageSize, 1, 100);
 
         IQueryable<T> query = _dbSet;

@@ -2,21 +2,21 @@ namespace Application.Common;
 
 public class PagedResult<T>
 {
-    public IReadOnlyList<T> Items { get; set; } = new List<T>();
-    public int TotalCount { get; set; }
-    public int PageNumber { get; set; }
+    public IReadOnlyList<T> Items { get; set; } = [];
+    public int Count { get; set; }
+    public int Page { get; set; }
     public int PageSize { get; set; }
-    public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
-    public bool HasPreviousPage => PageNumber > 1;
-    public bool HasNextPage => PageNumber < TotalPages;
+    public int TotalPages => (int)Math.Ceiling((double)Count / PageSize);
+    public bool HasPreviousPage => Page > 1;
+    public bool HasNextPage => Page < TotalPages;
 
 	public PagedResult() { }
 
-    public PagedResult(IReadOnlyList<T> items, int totalCount, int pageNumber, int pageSize)
+    public PagedResult(IReadOnlyList<T> items, int count, int page, int pageSize)
     {
         Items = items;
-        TotalCount = totalCount;
-        PageNumber = pageNumber;
+        this.Count = count;
+        Page = page;
         PageSize = pageSize;
     }
 }

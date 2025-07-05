@@ -23,6 +23,12 @@ public class User : BaseEntity
 	public string Email { get; set; } = string.Empty;
 
 	/// <summary>
+	/// The new email address pending verification (for profile update flow).
+	/// </summary>
+	[MaxLength(100)]
+	public string? PendingEmail { get; set; }
+
+	/// <summary>
 	/// The hashed password for secure authentication.
 	/// </summary>
 	public string PasswordHash { get; set; } = string.Empty;
@@ -48,6 +54,16 @@ public class User : BaseEntity
 	/// </summary>
 	[MaxLength(255)]
 	public string? Address { get; set; }
+
+	/// <summary>
+	/// Number of failed login attempts for account lockout functionality (UC002).
+	/// </summary>
+	public int? FailedLoginAttempts { get; set; }
+
+	/// <summary>
+	/// End time for account lockout due to failed login attempts (UC002).
+	/// </summary>
+	public DateTime? LockoutEndTime { get; set; }
 
 	// Navigation properties
 	/// <summary>

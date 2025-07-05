@@ -1,108 +1,160 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Application.DTOs;
+using Application.Interfaces;
+using Application.Validators;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Application.DTOs;
-using Application.Common;
-using MediatR;
-using Application.Features.Users.Commands;
-using Application.Features.Users.Queries;
+using Web.Extensions;
 
 namespace Web.Controllers
 {
     /// <summary>
-    /// Handles profile management for the currently logged-in user.
+    /// Controller for user profile operations.
+    /// Implements UC003 (Update Profile).
     /// </summary>
     [Authorize]
     public class ProfileController : Controller
     {
-        private readonly IMediator _mediator;
+        private readonly IProfileService _profileService;
+        private readonly ILogger<ProfileController> _logger;
+        private readonly UpdateProfileRequestValidator _updateProfileValidator;
 
-        public ProfileController(IMediator mediator)
+        public ProfileController(
+            IProfileService profileService,
+            ILogger<ProfileController> logger,
+            UpdateProfileRequestValidator updateProfileValidator)
         {
-            _mediator = mediator;
+            _profileService = profileService;
+            _logger = logger;
+            _updateProfileValidator = updateProfileValidator;
         }
 
         /// <summary>
-        /// Displays the current user's profile.
+        /// Displays the user's profile page (UC003 - Update Profile).
         /// </summary>
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdStr, out int currentUserId))
-                return Unauthorized();
-            var user = await _mediator.Send(new GetUserByIdQuery(currentUserId));
-            if (user == null) return NotFound();
-            var model = new UpdateProfileDto
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
             {
-                FullName = user.FullName,
-                Email = user.Email,
-                Phone = user.Phone,
-                Address = user.Address
-            };
-            return View(model);
+                return RedirectToAction("Login", "Auth");
+            }
+
+            var result = await _profileService.GetProfileAsync(userId);
+            if (!result.IsSuccess)
+            {
+                TempData["ErrorMessage"] = result.Error;
+                return RedirectToAction("Index", "Home");
+            }
+
+            return View(result.Value);
         }
 
         /// <summary>
-        /// Displays the edit profile form.
+        /// Displays the edit profile form (UC003 - Update Profile).
         /// </summary>
+        [HttpGet]
         public async Task<IActionResult> Edit()
         {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdStr, out int currentUserId))
-                return Unauthorized();
-            var user = await _mediator.Send(new GetUserByIdQuery(currentUserId));
-            if (user == null) return NotFound();
-            var model = new UpdateProfileDto
-			{
-                FullName = user.FullName,
-                Email = user.Email,
-                Phone = user.Phone,
-                Address = user.Address
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            var result = await _profileService.GetProfileAsync(userId);
+            if (!result.IsSuccess)
+            {
+                TempData["ErrorMessage"] = result.Error;
+                return RedirectToAction("Index", "Home");
+            }
+
+            var updateProfileRequest = new UpdateProfileRequest
+            {
+                UserId = userId,
+                FullName = result.Value.FullName,
+                Email = result.Value.Email,
+                Phone = result.Value.Phone,
+                Address = result.Value.Address
             };
-            return View(model);
+
+            return View(updateProfileRequest);
         }
 
         /// <summary>
-        /// Handles edit profile form submission.
+        /// Processes the profile update request (UC003 - Update Profile).
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> Edit(UpdateProfileDto model)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(UpdateProfileRequest model)
         {
-            if (!ModelState.IsValid) return View(model);
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdStr, out int currentUserId))
-                return Unauthorized();
-            var result = await _mediator.Send(new UpdateProfileCommand(currentUserId, model));
-            if (!result.IsSuccess)
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
             {
-                ModelState.AddModelError("", result.Error ?? "Failed to update profile.");
+                return RedirectToAction("Login", "Auth");
+            }
+
+            // Ensure the user ID in the model matches the authenticated user
+            if (model.UserId != userId)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid user ID");
                 return View(model);
             }
-            return RedirectToAction("Index");
+
+            var validationResult = await _updateProfileValidator.ValidateAsync(model);
+            if (!validationResult.IsValid)
+            {
+                validationResult.AddToModelState(ModelState);
+                return View(model);
+            }
+
+            var result = await _profileService.UpdateProfileAsync(model);
+            if (!result.IsSuccess)
+            {
+                ModelState.AddModelError(string.Empty, result.Error);
+                return View(model);
+            }
+
+            _logger.LogInformation("Profile updated for user {UserId} at {Time}", userId, DateTime.UtcNow);
+            
+            TempData["SuccessMessage"] = "Your profile has been updated successfully.";
+            if (model.Email != User.FindFirstValue(ClaimTypes.Email))
+            {
+                TempData["InfoMessage"] = "A verification email has been sent to your new email address. Please check your inbox and click the verification link to complete the email change.";
+            }
+            
+            return RedirectToAction(nameof(Index));
         }
 
         /// <summary>
-        /// Displays the change password form.
+        /// Verifies an email change using a token (UC003 - Update Profile).
         /// </summary>
-        public IActionResult ChangePassword() => View();
-
-        /// <summary>
-        /// Handles change password form submission.
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> ChangePassword(ChangePasswordDto model)
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerifyEmail(string email, string token)
         {
-            if (!ModelState.IsValid) return View(model);
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdStr, out int currentUserId))
-                return Unauthorized();
-            var result = await _mediator.Send(new ChangePasswordCommand(currentUserId, model));
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
+            {
+                return BadRequest("Invalid email verification token");
+            }
+
+            var request = new VerifyEmailChangeRequest
+            {
+                Email = email,
+                Token = token
+            };
+
+            var result = await _profileService.VerifyEmailChangeAsync(request);
             if (!result.IsSuccess)
             {
-                ModelState.AddModelError("", result.Error ?? "Failed to change password.");
-                return View(model);
+                TempData["ErrorMessage"] = result.Error;
+                return RedirectToAction("Index", "Home");
             }
-            return RedirectToAction("Index");
+
+            TempData["SuccessMessage"] = "Your email address has been verified successfully.";
+            
+            // If user is logged in, redirect to profile; otherwise, to login
+            return User.Identity?.IsAuthenticated == true
+                ? RedirectToAction(nameof(Index))
+                : RedirectToAction("Login", "Auth");
         }
     }
-} 
+}

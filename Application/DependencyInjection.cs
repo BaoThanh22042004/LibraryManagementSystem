@@ -1,16 +1,9 @@
-using Application.Behaviors;
-using Application.Common.Security;
-using Application.Mappings;
+using Application.Interfaces;
+using Application.Services;
 using FluentValidation;
-using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
-using Application.Features.Users.Commands;
-using Application.Interfaces;
-using AutoMapper;
-using Application.Services;
-using Application.Interfaces.Services;
 
 namespace Application;
 
@@ -24,35 +17,21 @@ public static class DependencyInjection
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
     {
-        var assembly = Assembly.GetExecutingAssembly();
-        
-        // Register AutoMapper
-        services.AddAutoMapper(typeof(MappingProfile));
-        
-        // Register MediatR
-        services.AddMediatR(cfg => 
+        // Register AutoMapper profiles from this assembly
+        services.AddAutoMapper(configAction => 
         {
-            cfg.RegisterServicesFromAssembly(assembly);
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            configAction.AddMaps(Assembly.GetExecutingAssembly());
         });
+
+		// Register FluentValidation validators from this assembly
+		services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         
-        // Register FluentValidation
-        services.AddValidatorsFromAssembly(assembly);
-        
-        // Register security services
-        services.AddSingleton<ITokenGenerator>(provider => {
-            var jwtSettings = configuration.GetSection("JwtSettings");
-            return new JwtTokenGenerator(
-                jwtSettings["SecretKey"] ?? "YourSuperSecretKey1234567890!@#$%^&*()",
-                jwtSettings["Issuer"] ?? "LibraryManagementSystem",
-                jwtSettings["Audience"] ?? "LibraryUsers",
-                int.Parse(jwtSettings["ExpiryMinutes"] ?? "60")
-            );
-        });
-        
-        // Register Services
+        // Register services
+        services.AddScoped<IAuditService, AuditService>();
+        services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<IUserService, UserService>();
         
         return services;
     }

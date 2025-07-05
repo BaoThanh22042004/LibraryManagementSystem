@@ -1,41 +1,143 @@
-@model Application.DTOs.UserDto
-<!--
-    Create User View
-    Allows Admin/Librarian to create a new user.
-    Related to UC001: Create User
--->
-<h2>Create User</h2>
-<form asp-action="Create" method="post">
-    <div>
-        <label asp-for="FullName"></label>
-        <input asp-for="FullName" />
-        <span asp-validation-for="FullName"></span>
+@model Application.DTOs.CreateUserRequest
+@{
+    ViewData["Title"] = "Create User";
+    var canCreateLibrarian = ViewData["CanCreateLibrarian"] as bool? ?? false;
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Create New User</h2>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+            <hr />
+        </div>
     </div>
-    <div>
-        <label asp-for="Email"></label>
-        <input asp-for="Email" />
-        <span asp-validation-for="Email"></span>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">User Information</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Role" class="form-label">User Role</label>
+                            <select asp-for="Role" class="form-select" id="roleSelect">
+                                <option value="@UserRole.Member">Member</option>
+                                @if (canCreateLibrarian)
+                                {
+                                    <option value="@UserRole.Librarian">Librarian</option>
+                                    <option value="@UserRole.Admin">Administrator</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Role" class="text-danger"></span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label asp-for="FullName" class="form-label">Full Name</label>
+                                <input asp-for="FullName" class="form-control" placeholder="Enter full name" />
+                                <span asp-validation-for="FullName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label">Email</label>
+                                <input asp-for="Email" class="form-control" type="email" placeholder="Enter email address" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <input asp-for="Password" class="form-control" type="password" id="password" placeholder="Enter password" />
+                                    <button class="btn btn-outline-secondary password-toggle" type="button" data-target="password">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    Password must be at least 8 characters long and contain a mix of letters, numbers, and special characters.
+                                </div>
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Phone" class="form-label">Phone Number (Optional)</label>
+                                <input asp-for="Phone" class="form-control" placeholder="Enter phone number" />
+                                <span asp-validation-for="Phone" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 member-field">
+                                <label asp-for="MembershipNumber" class="form-label">Membership Number (Optional)</label>
+                                <input asp-for="MembershipNumber" class="form-control" placeholder="Leave blank for auto-generated" />
+                                <div class="form-text">If left blank, a membership number will be generated automatically.</div>
+                                <span asp-validation-for="MembershipNumber" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 librarian-field" style="display: none;">
+                                <label asp-for="EmployeeId" class="form-label">Employee ID</label>
+                                <input asp-for="EmployeeId" class="form-control" placeholder="Enter employee ID" />
+                                <span asp-validation-for="EmployeeId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Address" class="form-label">Address (Optional)</label>
+                            <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter address"></textarea>
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Create User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    <div>
-        <label asp-for="Role"></label>
-        <input asp-for="Role" />
-        <span asp-validation-for="Role"></span>
-    </div>
-    <div>
-        <label asp-for="Status"></label>
-        <input asp-for="Status" />
-        <span asp-validation-for="Status"></span>
-    </div>
-    <div>
-        <label asp-for="Phone"></label>
-        <input asp-for="Phone" />
-        <span asp-validation-for="Phone"></span>
-    </div>
-    <div>
-        <label asp-for="Address"></label>
-        <input asp-for="Address" />
-        <span asp-validation-for="Address"></span>
-    </div>
-    <button type="submit">Create</button>
-</form>
-<a asp-action="Index">Back to List</a> 
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Toggle password visibility
+            $('.password-toggle').click(function() {
+                var targetId = $(this).data('target');
+                var passwordInput = $('#' + targetId);
+                var icon = $(this).find('i');
+                
+                if (passwordInput.attr('type') === 'password') {
+                    passwordInput.attr('type', 'text');
+                    icon.removeClass('bi-eye').addClass('bi-eye-slash');
+                } else {
+                    passwordInput.attr('type', 'password');
+                    icon.removeClass('bi-eye-slash').addClass('bi-eye');
+                }
+            });
+            
+            // Toggle fields based on role selection
+            $('#roleSelect').change(function() {
+                var selectedRole = $(this).val();
+                
+                if (selectedRole == '@((int)UserRole.Member)') {
+                    $('.member-field').show();
+                    $('.librarian-field').hide();
+                } else {
+                    $('.member-field').hide();
+                    $('.librarian-field').show();
+                }
+            });
+            
+            // Initialize based on default selection
+            $('#roleSelect').trigger('change');
+        });
+    </script>
+}

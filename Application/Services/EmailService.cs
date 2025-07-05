@@ -1,4 +1,5 @@
-using Application.Interfaces.Services;
+using Application.Common;
+using Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Net;
@@ -6,115 +7,155 @@ using System.Net.Mail;
 
 namespace Application.Services;
 
+/// <summary>
+/// Implementation of the IEmailService interface.
+/// </summary>
 public class EmailService : IEmailService
 {
-    private readonly ILogger<EmailService> _logger;
     private readonly IConfiguration _configuration;
-    private readonly string _smtpServer;
-    private readonly int _smtpPort;
-    private readonly string _smtpUsername;
-    private readonly string _smtpPassword;
-    private readonly string _senderEmail;
-    private readonly string _senderName;
-    private readonly bool _enableSsl;
+    private readonly ILogger<EmailService> _logger;
 
-    public EmailService(ILogger<EmailService> logger, IConfiguration configuration)
+    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
-        _logger = logger;
         _configuration = configuration;
-        
-        // Load email settings from configuration
-        var emailSettings = _configuration.GetSection("EmailSettings");
-        _smtpServer = emailSettings["SmtpServer"] ?? "smtp.example.com";
-        _smtpPort = int.Parse(emailSettings["SmtpPort"] ?? "587");
-        _smtpUsername = emailSettings["SmtpUsername"] ?? "";
-        _smtpPassword = emailSettings["SmtpPassword"] ?? "";
-        _senderEmail = emailSettings["SenderEmail"] ?? "noreply@library.com";
-        _senderName = emailSettings["SenderName"] ?? "Library Management System";
-        _enableSsl = bool.Parse(emailSettings["EnableSsl"] ?? "true");
+        _logger = logger;
     }
 
-    public async Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = true)
-    {
-        return await SendEmailAsync(to, subject, body, null, isHtml);
-    }
-
-    public async Task<bool> SendEmailAsync(string to, string subject, string body, string? attachmentPath, bool isHtml = true)
+    /// <inheritdoc/>
+    public async Task<Result> SendEmailAsync(string email, string subject, string message)
     {
         try
         {
-            using var client = new SmtpClient(_smtpServer, _smtpPort)
-            {
-                EnableSsl = _enableSsl,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_smtpUsername, _smtpPassword)
-            };
+            // Get email settings from configuration
+            var host = _configuration["EmailSettings:Host"];
+            var port = int.Parse(_configuration["EmailSettings:Port"] ?? "587");
+            var enableSsl = bool.Parse(_configuration["EmailSettings:EnableSsl"] ?? "true");
+            var userName = _configuration["EmailSettings:UserName"];
+            var password = _configuration["EmailSettings:Password"];
+            var from = _configuration["EmailSettings:From"];
 
-            using var message = new MailMessage
+            // Validate settings
+            if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(userName) || 
+                string.IsNullOrEmpty(password) || string.IsNullOrEmpty(from))
             {
-                From = new MailAddress(_senderEmail, _senderName),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = isHtml
-            };
-
-            message.To.Add(to);
-
-            if (!string.IsNullOrEmpty(attachmentPath) && File.Exists(attachmentPath))
-            {
-                message.Attachments.Add(new Attachment(attachmentPath));
+                _logger.LogError("Email settings are not properly configured.");
+                return Result.Failure("Email settings are not properly configured.");
             }
 
-            await client.SendMailAsync(message);
-            _logger.LogInformation("Email sent successfully to {Recipient}", to);
-            return true;
+            // Create message
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(from),
+                Subject = subject,
+                Body = message,
+                IsBodyHtml = true
+            };
+            
+            mailMessage.To.Add(new MailAddress(email));
+
+            // Create client
+            using var client = new SmtpClient(host, port)
+            {
+                EnableSsl = enableSsl,
+                Credentials = new NetworkCredential(userName, password)
+            };
+
+            // Send email
+            await client.SendMailAsync(mailMessage);
+            _logger.LogInformation("Email sent successfully to {Email}", email);
+            
+            return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email to {Recipient}", to);
-            return false;
+            _logger.LogError(ex, "Failed to send email to {Email}", email);
+            return Result.Failure($"Failed to send email: {ex.Message}");
         }
     }
 
-    public async Task<bool> SendBulkEmailAsync(List<string> recipients, string subject, string body, bool isHtml = true)
+    /// <inheritdoc/>
+    public async Task<Result> SendPasswordResetEmailAsync(string email, string fullName, string resetToken)
     {
-        if (recipients == null || recipients.Count == 0)
-        {
-            _logger.LogWarning("Bulk email not sent: recipient list is empty");
-            return false;
-        }
+        var subject = "Password Reset Request";
+        var htmlBody = $@"
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background-color: #4CAF50; color: white; padding: 10px; text-align: center; }}
+                    .content {{ padding: 20px; border: 1px solid #ddd; }}
+                    .button {{ display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; 
+                              text-decoration: none; border-radius: 4px; }}
+                    .footer {{ margin-top: 20px; font-size: 12px; color: #777; text-align: center; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h2>Password Reset Request</h2>
+                    </div>
+                    <div class='content'>
+                        <p>Hello {WebUtility.HtmlEncode(fullName)},</p>
+                        <p>We received a request to reset your password. Please click on the button below to reset your password:</p>
+                        <p style='text-align: center;'>
+                            <a class='button' href='{_configuration["AppSettings:PasswordResetUrl"]}?token={WebUtility.UrlEncode(resetToken)}&email={WebUtility.UrlEncode(email)}'>
+                                Reset Password
+                            </a>
+                        </p>
+                        <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
+                        <p>This link will expire in 1 hour.</p>
+                    </div>
+                    <div class='footer'>
+                        <p>This is an automated message, please do not reply to this email.</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
 
-        try
-        {
-            using var client = new SmtpClient(_smtpServer, _smtpPort)
-            {
-                EnableSsl = _enableSsl,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_smtpUsername, _smtpPassword)
-            };
+        return await SendEmailAsync(email, subject, htmlBody);
+    }
 
-            using var message = new MailMessage
-            {
-                From = new MailAddress(_senderEmail, _senderName),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = isHtml
-            };
+    /// <inheritdoc/>
+    public async Task<Result> SendEmailVerificationAsync(string email, string fullName, string verificationToken)
+    {
+        var subject = "Email Verification";
+        var htmlBody = $@"
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background-color: #2196F3; color: white; padding: 10px; text-align: center; }}
+                    .content {{ padding: 20px; border: 1px solid #ddd; }}
+                    .button {{ display: inline-block; background-color: #2196F3; color: white; padding: 10px 20px; 
+                              text-decoration: none; border-radius: 4px; }}
+                    .footer {{ margin-top: 20px; font-size: 12px; color: #777; text-align: center; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h2>Verify Your Email Address</h2>
+                    </div>
+                    <div class='content'>
+                        <p>Hello {WebUtility.HtmlEncode(fullName)},</p>
+                        <p>Please click on the button below to verify your email address:</p>
+                        <p style='text-align: center;'>
+                            <a class='button' href='{_configuration["AppSettings:EmailVerificationUrl"]}?token={WebUtility.UrlEncode(verificationToken)}&email={WebUtility.UrlEncode(email)}'>
+                                Verify Email
+                            </a>
+                        </p>
+                        <p>If you did not request this verification, please ignore this email.</p>
+                        <p>This link will expire in 24 hours.</p>
+                    </div>
+                    <div class='footer'>
+                        <p>This is an automated message, please do not reply to this email.</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
 
-            // Add recipients as BCC to protect their privacy
-            foreach (var recipient in recipients)
-            {
-                message.Bcc.Add(recipient);
-            }
-
-            await client.SendMailAsync(message);
-            _logger.LogInformation("Bulk email sent successfully to {RecipientCount} recipients", recipients.Count);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send bulk email to {RecipientCount} recipients", recipients.Count);
-            return false;
-        }
+        return await SendEmailAsync(email, subject, htmlBody);
     }
 }
