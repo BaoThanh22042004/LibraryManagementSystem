@@ -1,0 +1,91 @@
+@model UpdateCategoryDto
+@{
+    ViewData["Title"] = "Edit Category";
+}
+
+<div class="mb-6">
+    <div class="flex items-center">
+        <a asp-action="Details" asp-route-id="@Model.Id" class="text-blue-600 hover:text-blue-800 mr-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <h1 class="text-3xl font-bold">Edit Category</h1>
+    </div>
+</div>
+
+@await Html.PartialAsync("_AlertsPartial")
+
+<div class="bg-white shadow-md rounded-lg overflow-hidden p-6 mb-6">
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="Id" />
+        
+        <div class="mb-6">
+            <label asp-for="Name" class="block text-gray-700 text-sm font-bold mb-2">Category Name <span class="text-red-600">*</span></label>
+            <input asp-for="Name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
+                   placeholder="Enter category name" data-val-remote-url="@Url.Action("NameExists", new { id = Model.Id })" 
+                   data-val-remote="A category with this name already exists." data-val-remote-additionalfields="*.Name,*.Id" />
+            <span asp-validation-for="Name" class="text-red-600 text-sm"></span>
+        </div>
+        
+        <div class="mb-6">
+            <label asp-for="Description" class="block text-gray-700 text-sm font-bold mb-2">Description</label>
+            <textarea asp-for="Description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter category description (optional)"></textarea>
+            <span asp-validation-for="Description" class="text-red-600 text-sm"></span>
+        </div>
+        
+        <div class="mb-6">
+            <label asp-for="CoverImageUrl" class="block text-gray-700 text-sm font-bold mb-2">Cover Image URL</label>
+            <input asp-for="CoverImageUrl" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                   placeholder="Enter image URL (optional)" />
+            <span asp-validation-for="CoverImageUrl" class="text-red-600 text-sm"></span>
+            <p class="text-gray-500 text-xs mt-1">Provide a URL to an image that represents this category.</p>
+        </div>
+        
+        @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+        {
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Current Cover Image</label>
+                <img src="@Model.CoverImageUrl" alt="@Model.Name" class="h-32 w-32 object-cover rounded-md border border-gray-300" />
+            </div>
+        }
+        
+        <div class="flex items-center justify-between">
+            <div>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="text-blue-600 hover:text-blue-800 font-semibold mr-4">Cancel</a>
+                <a asp-action="Index" class="text-gray-600 hover:text-gray-800 font-semibold">Back to List</a>
+            </div>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        // Client-side validation for category name uniqueness
+        $(document).ready(function () {
+            $.validator.addMethod("uniqueCategoryName", function (value, element) {
+                var isValid = false;
+                var categoryId = $("#Id").val();
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("NameExists")",
+                    data: { name: value, id: categoryId },
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        isValid = !data.exists;
+                    }
+                });
+                return isValid;
+            }, "A category with this name already exists.");
+
+            $("#Name").rules("add", { uniqueCategoryName: true });
+        });
+    </script>
+}

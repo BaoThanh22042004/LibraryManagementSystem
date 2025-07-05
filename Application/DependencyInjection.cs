@@ -33,6 +33,11 @@ public static class DependencyInjection
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IUserService, UserService>();
         
+        // Register book and category management services
+        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IBookService, BookService>();
+        services.AddScoped<IBookCopyService, BookCopyService>();
+        
         return services;
     }
 }

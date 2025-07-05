@@ -1,0 +1,244 @@
+@model BookDetailDto
+@{
+    ViewData["Title"] = "Book Details";
+}
+
+<div class="mb-6">
+    <div class="flex justify-between items-center">
+        <div class="flex items-center">
+            <a asp-action="Index" class="text-blue-600 hover:text-blue-800 mr-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </a>
+            <h1 class="text-3xl font-bold">Book Details</h1>
+        </div>
+        @if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
+        {
+            <div class="flex space-x-2">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Edit
+                </a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Delete
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@await Html.PartialAsync("_AlertsPartial")
+
+<div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+    <div class="flex flex-col md:flex-row">
+        <!-- Book Image and Details -->
+        <div class="p-6 md:w-1/3">
+            <div class="flex flex-col items-center">
+                @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+                {
+                    <img src="@Model.CoverImageUrl" alt="@Model.Title" class="w-full max-w-xs h-auto object-cover rounded-lg shadow-md mb-4">
+                }
+                else
+                {
+                    <div class="w-full max-w-xs h-64 bg-gray-200 rounded-lg shadow-md flex items-center justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    </div>
+                }
+
+                <div class="w-full text-center">
+                    @{
+                        var statusClasses = Model.Status switch
+                        {
+                            Domain.Enums.BookStatus.Available => "bg-green-100 text-green-800",
+                            Domain.Enums.BookStatus.Unavailable => "bg-red-100 text-red-800",
+                            Domain.Enums.BookStatus.UnderMaintenance => "bg-yellow-100 text-yellow-800",
+                            _ => "bg-gray-100 text-gray-800"
+                        };
+                    }
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @statusClasses">
+                        @Model.Status
+                    </span>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h2 class="text-2xl font-bold mb-2">@Model.Title</h2>
+                <p class="text-lg text-gray-700 mb-4">by <span class="font-semibold">@Model.Author</span></p>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500">ISBN</h3>
+                        <p class="text-gray-700">@Model.ISBN</p>
+                    </div>
+                    
+                    @if (Model.PublicationDate.HasValue)
+                    {
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-500">Publication Date</h3>
+                            <p class="text-gray-700">@Model.PublicationDate.Value.ToString("MMM yyyy")</p>
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(Model.Publisher))
+                    {
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-500">Publisher</h3>
+                            <p class="text-gray-700">@Model.Publisher</p>
+                        </div>
+                    }
+                    
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500">Availability</h3>
+                        <p class="text-gray-700">
+                            <span class="font-semibold text-green-600">@Model.AvailableCopies</span> / <span>@Model.TotalCopies</span> copies
+                        </p>
+                    </div>
+                </div>
+                
+                @if (Model.Categories.Any())
+                {
+                    <div class="mb-4">
+                        <h3 class="text-sm font-semibold text-gray-500 mb-2">Categories</h3>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach (var category in Model.Categories)
+                            {
+                                <a href="@Url.Action("Index", new { categoryId = category.Id })" 
+                                   class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded hover:bg-blue-200">
+                                    @category.Name
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+                
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="mb-4">
+                        <h3 class="text-sm font-semibold text-gray-500 mb-2">Description</h3>
+                        <p class="text-gray-700 whitespace-pre-line">@Model.Description</p>
+                    </div>
+                }
+                
+                <div class="text-xs text-gray-500 mt-6">
+                    <p>Added: @Model.CreatedAt.ToString("MMM dd, yyyy")</p>
+                    @if (Model.UpdatedAt.HasValue)
+                    {
+                        <p>Last updated: @Model.UpdatedAt.Value.ToString("MMM dd, yyyy")</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Copies -->
+        <div class="p-6 border-t md:border-t-0 md:border-l border-gray-200 md:w-2/3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">Book Copies</h3>
+                <div class="flex gap-2">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                        @Model.TotalCopies Total
+                    </span>
+                    <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                        @Model.AvailableCopies Available
+                    </span>
+                </div>
+            </div>
+            
+            @if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
+            {
+                <div class="mb-6 flex gap-2 justify-end">
+                    <a asp-controller="BookCopy" asp-action="Create" asp-route-bookId="@Model.Id" 
+                       class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Add Single Copy
+                    </a>
+                    <a asp-controller="BookCopy" asp-action="CreateMultiple" asp-route-bookId="@Model.Id" 
+                       class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Add Multiple Copies
+                    </a>
+                </div>
+            }
+
+            @if (Model.Copies.Any())
+            {
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Copy Number
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Added On
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach (var copy in Model.Copies)
+                            {
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">@copy.CopyNumber</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @{
+                                            var copyStatusClasses = copy.Status switch
+                                            {
+                                                Domain.Enums.CopyStatus.Available => "bg-green-100 text-green-800",
+                                                Domain.Enums.CopyStatus.Borrowed => "bg-blue-100 text-blue-800",
+                                                Domain.Enums.CopyStatus.Reserved => "bg-purple-100 text-purple-800",
+                                                Domain.Enums.CopyStatus.Lost => "bg-red-100 text-red-800",
+                                                Domain.Enums.CopyStatus.Damaged => "bg-yellow-100 text-yellow-800",
+                                                _ => "bg-gray-100 text-gray-800"
+                                            };
+                                        }
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @copyStatusClasses">
+                                            @copy.Status
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-500">@copy.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a asp-controller="BookCopy" asp-action="Details" asp-route-id="@copy.Id" 
+                                           class="text-blue-600 hover:text-blue-900 mr-3">Details</a>
+                                        @if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
+                                        {
+                                            <a asp-controller="BookCopy" asp-action="UpdateStatus" asp-route-id="@copy.Id" 
+                                               class="text-indigo-600 hover:text-indigo-900 mr-3">Update Status</a>
+                                            <a asp-controller="BookCopy" asp-action="Delete" asp-route-id="@copy.Id" 
+                                               class="text-red-600 hover:text-red-900">Delete</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                No copies are available for this book. Please add copies to make this book available for lending.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

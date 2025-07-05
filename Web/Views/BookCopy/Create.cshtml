@@ -1,0 +1,82 @@
+@model CreateBookCopyDto
+@{
+    ViewData["Title"] = "Add Book Copy";
+    var book = ViewBag.Book as BookDetailDto;
+}
+
+<div class="mb-6">
+    <div class="flex items-center">
+        <a asp-controller="Book" asp-action="Details" asp-route-id="@Model.BookId" class="text-blue-600 hover:text-blue-800 mr-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <h1 class="text-3xl font-bold">Add New Copy</h1>
+    </div>
+</div>
+
+@await Html.PartialAsync("_AlertsPartial")
+
+<div class="bg-white shadow-md rounded-lg overflow-hidden p-6 mb-6">
+    <div class="mb-6">
+        <h2 class="text-xl font-semibold mb-4">Book Information</h2>
+        
+        <div class="flex flex-col md:flex-row items-center md:items-start">
+            @if (book != null && !string.IsNullOrEmpty(book.CoverImageUrl))
+            {
+                <img src="@book.CoverImageUrl" alt="@book.Title" class="w-24 h-32 object-cover rounded mr-6 mb-4 md:mb-0">
+            }
+            else
+            {
+                <div class="w-24 h-32 bg-gray-200 rounded flex items-center justify-center mr-6 mb-4 md:mb-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+            }
+            
+            <div>
+                <h3 class="text-lg font-semibold">@(book?.Title ?? "Book")</h3>
+                <p class="text-gray-700">by @(book?.Author ?? "Unknown Author")</p>
+                <p class="text-gray-500 text-sm mt-1">ISBN: @(book?.ISBN ?? "N/A")</p>
+                
+                @if (book != null)
+                {
+                    <p class="text-gray-500 text-sm mt-1">Current copies: @book.TotalCopies (@book.AvailableCopies available)</p>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <form asp-action="Create" method="post">
+        <input type="hidden" asp-for="BookId" />
+        
+        <div class="mb-6">
+            <div class="max-w-md">
+                <label asp-for="CopyNumber" class="block text-gray-700 text-sm font-bold mb-2">Copy Number</label>
+                <input asp-for="CopyNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" 
+                       placeholder="Enter copy number or leave blank for auto-generation">
+                <span asp-validation-for="CopyNumber" class="text-red-600 text-sm"></span>
+                <p class="text-gray-500 text-xs mt-1">Leave blank to auto-generate a unique copy number</p>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <div class="max-w-md">
+                <label asp-for="Status" class="block text-gray-700 text-sm font-bold mb-2">Initial Status</label>
+                <select asp-for="Status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="@Domain.Enums.CopyStatus.Available">Available</option>
+                    <option value="@Domain.Enums.CopyStatus.Damaged">Damaged</option>
+                </select>
+                <span asp-validation-for="Status" class="text-red-600 text-sm"></span>
+            </div>
+        </div>
+        
+        <div class="flex items-center justify-between">
+            <a asp-controller="Book" asp-action="Details" asp-route-id="@Model.BookId" class="text-blue-600 hover:text-blue-800 font-semibold">Cancel</a>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Create Copy
+            </button>
+        </div>
+    </form>
+</div>
