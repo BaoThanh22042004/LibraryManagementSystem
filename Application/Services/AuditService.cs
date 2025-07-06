@@ -3,7 +3,6 @@ using Application.DTOs;
 using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
-using Domain.Enums;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
@@ -30,7 +29,7 @@ public class AuditService : IAuditService
     }
 
     /// <inheritdoc/>
-    public async Task CreateAuditLogAsync(CreateAuditLogRequest request)
+    public async Task<Result> CreateAuditLogAsync(CreateAuditLogRequest request)
     {
         try
         {
@@ -41,55 +40,14 @@ public class AuditService : IAuditService
             
             _logger.LogInformation("Audit log created: {ActionType} on {EntityType} {EntityId}",
                 auditLog.ActionType, auditLog.EntityType, auditLog.EntityId);
+            return Result.Success();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating audit log for {ActionType} on {EntityType}", 
                 request.ActionType, request.EntityType);
-            
-            // We don't want audit logging failures to break the application
-            // Just log the error and continue
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task LogAuthenticationAsync(int? userId, AuditActionType action, bool isSuccess, string details, string? ipAddress = null, string? errorMessage = null)
-    {
-        var request = new CreateAuditLogRequest
-        {
-            UserId = userId,
-            ActionType = action,
-            EntityType = "User",
-            EntityId = userId?.ToString(),
-            Details = details,
-            IpAddress = ipAddress,
-            IsSuccess = isSuccess,
-            ErrorMessage = errorMessage,
-            Module = "Authentication"
-        };
-
-        await CreateAuditLogAsync(request);
-    }
-
-    /// <inheritdoc/>
-    public async Task LogUserManagementAsync(int performedByUserId, int targetUserId, AuditActionType action, bool isSuccess, string details, string? beforeState = null, string? afterState = null, string? ipAddress = null, string? errorMessage = null)
-    {
-        var request = new CreateAuditLogRequest
-        {
-            UserId = performedByUserId,
-            ActionType = action,
-            EntityType = "User",
-            EntityId = targetUserId.ToString(),
-            Details = details,
-            BeforeState = beforeState,
-            AfterState = afterState,
-            IpAddress = ipAddress,
-            IsSuccess = isSuccess,
-            ErrorMessage = errorMessage,
-            Module = "UserManagement"
-        };
-
-        await CreateAuditLogAsync(request);
+            return Result.Failure("An error occurred while creating the audit log. Please try again later.");
+		}
     }
 
     /// <inheritdoc/>
@@ -124,17 +82,14 @@ public class AuditService : IAuditService
                 );
             }
 
-            // Default sorting by most recent first
-            Func<IQueryable<AuditLog>, IOrderedQueryable<AuditLog>> orderBy = 
-                q => q.OrderByDescending(log => log.CreatedAt);
+			// Default sorting by most recent first
+			static IOrderedQueryable<AuditLog> orderBy(IQueryable<AuditLog> q) => q.OrderByDescending(log => log.CreatedAt);
 
-            var pagedRequest = new PagedRequest(request.PageNumber, request.PageSize);
-            
-            // Include the User navigation property to get user names
-            var pagedAuditLogs = await _unitOfWork.Repository<AuditLog>()
+			// Include the User navigation property to get user names
+			var pagedAuditLogs = await _unitOfWork.Repository<AuditLog>()
                 .PagedListAsync(
-                    pagedRequest, 
-                    predicate, 
+					request, 
+                    predicate,
                     orderBy, 
                     true, 
                     log => log.User!);

@@ -7,7 +7,7 @@ namespace Application.DTOs;
 /// Data transfer object for creating a new category
 /// Supports UC037 (Create Category)
 /// </summary>
-public class CreateCategoryDto
+public record CreateCategoryRequest
 {
     /// <summary>
     /// The unique name of the category (required, 1-100 characters)
@@ -29,7 +29,7 @@ public class CreateCategoryDto
 /// Data transfer object for updating an existing category
 /// Supports UC038 (Update Category)
 /// </summary>
-public class UpdateCategoryDto
+public record UpdateCategoryRequest
 {
     /// <summary>
     /// The ID of the category to update
@@ -56,7 +56,7 @@ public class UpdateCategoryDto
 /// Data transfer object for retrieving category details
 /// Supports UC040 (View Category Details), UC041 (Browse Categories)
 /// </summary>
-public class CategoryDto
+public record CategoryDto
 {
     /// <summary>
     /// The unique identifier of the category
@@ -93,7 +93,7 @@ public class CategoryDto
 /// Data transfer object for category details with associated books
 /// Supports UC040 (View Category Details)
 /// </summary>
-public class CategoryWithBooksDto : CategoryDto
+public record CategoryWithBooksDto : CategoryDto
 {
     /// <summary>
     /// Collection of books assigned to this category
@@ -107,31 +107,15 @@ public class CategoryWithBooksDto : CategoryDto
 }
 
 /// <summary>
-/// Data transfer object for providing a paginated list of categories
-/// Supports UC041 (Browse Categories)
-/// </summary>
-public class PaginatedCategoriesDto : PagedResult<CategoryDto>;
-
-/// <summary>
 /// Data transfer object for providing category search parameters
 /// Supports UC041 (Browse Categories)
 /// </summary>
-public class CategorySearchParametersDto
+public record CategorySearchRequest : PagedRequest
 {
     /// <summary>
     /// Optional search term to filter categories by name or description
     /// </summary>
     public string? SearchTerm { get; set; }
-    
-    /// <summary>
-    /// Page number for pagination (default: 1)
-    /// </summary>
-    public int PageNumber { get; set; } = 1;
-    
-    /// <summary>
-    /// Page size for pagination (default: 10)
-    /// </summary>
-    public int PageSize { get; set; } = 10;
     
     /// <summary>
     /// Flag to indicate if pagination should be applied (false for complete list)

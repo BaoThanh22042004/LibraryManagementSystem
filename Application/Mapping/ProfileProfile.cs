@@ -12,7 +12,7 @@ public class ProfileProfile : Profile
     public ProfileProfile()
     {
         // User to ProfileResponse
-        CreateMap<User, ProfileResponse>();
+        CreateMap<User, ProfileDto>();
         
         // UpdateProfileRequest to User
         CreateMap<UpdateProfileRequest, User>()

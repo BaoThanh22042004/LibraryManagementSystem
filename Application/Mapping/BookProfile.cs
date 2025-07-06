@@ -15,12 +15,12 @@ public class BookProfile : Profile
     public BookProfile()
     {
         // Map from CreateBookDto to Book entity
-        CreateMap<CreateBookDto, Book>()
+        CreateMap<CreateBookRequest, Book>()
             .ForMember(dest => dest.Categories, opt => opt.Ignore()) // Categories handled separately
             .ForMember(dest => dest.Copies, opt => opt.Ignore()); // Copies created separately
             
         // Map from UpdateBookDto to Book entity
-        CreateMap<UpdateBookDto, Book>()
+        CreateMap<UpdateBookRequest, Book>()
             .ForMember(dest => dest.Categories, opt => opt.Ignore()) // Categories handled separately
             .ForMember(dest => dest.Copies, opt => opt.Ignore()); // Copies not updated through book update
             

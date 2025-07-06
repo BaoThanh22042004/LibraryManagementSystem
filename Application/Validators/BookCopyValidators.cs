@@ -8,9 +8,9 @@ namespace Application.Validators;
 /// Validator for CreateBookCopyDto
 /// Enforces business rules for book copy creation
 /// </summary>
-public class CreateBookCopyDtoValidator : AbstractValidator<CreateBookCopyDto>
+public class CreateBookCopyRequestValidator : AbstractValidator<CreateBookCopyRequest>
 {
-    public CreateBookCopyDtoValidator()
+    public CreateBookCopyRequestValidator()
     {
         RuleFor(x => x.BookId)
             .GreaterThan(0).WithMessage("Invalid book ID");
@@ -28,9 +28,9 @@ public class CreateBookCopyDtoValidator : AbstractValidator<CreateBookCopyDto>
 /// Validator for CreateMultipleBookCopiesDto
 /// Enforces business rules for bulk copy creation
 /// </summary>
-public class CreateMultipleBookCopiesDtoValidator : AbstractValidator<CreateMultipleBookCopiesDto>
+public class CreateMultipleBookCopiesRequestValidator : AbstractValidator<CreateMultipleBookCopiesRequest>
 {
-    public CreateMultipleBookCopiesDtoValidator()
+    public CreateMultipleBookCopiesRequestValidator()
     {
         RuleFor(x => x.BookId)
             .GreaterThan(0).WithMessage("Invalid book ID");
@@ -48,9 +48,9 @@ public class CreateMultipleBookCopiesDtoValidator : AbstractValidator<CreateMult
 /// Validator for UpdateBookCopyStatusDto
 /// Enforces business rules for copy status updates
 /// </summary>
-public class UpdateBookCopyStatusDtoValidator : AbstractValidator<UpdateBookCopyStatusDto>
+public class UpdateBookCopyStatusRequestValidator : AbstractValidator<UpdateBookCopyStatusRequest>
 {
-    public UpdateBookCopyStatusDtoValidator()
+    public UpdateBookCopyStatusRequestValidator()
     {
         RuleFor(x => x.Id)
             .GreaterThan(0).WithMessage("Invalid copy ID");

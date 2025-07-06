@@ -12,8 +12,7 @@ public class AuthProfile : Profile
     public AuthProfile()
     {
         // User to LoginResponse
-        CreateMap<User, LoginResponse>()
-            .ForMember(dest => dest.RequirePasswordChange, opt => opt.MapFrom(src => false));
+        CreateMap<User, LoginResponse>();
         
         // RegisterRequest to User
         CreateMap<RegisterRequest, User>()

@@ -18,27 +18,15 @@ public class BookService : IBookService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly IValidator<CreateBookDto> _createValidator;
-    private readonly IValidator<UpdateBookDto> _updateValidator;
-    private readonly IValidator<BookSearchParametersDto> _searchValidator;
-    private readonly IAuditService _auditService;
     private readonly ILogger<BookService> _logger;
 
     public BookService(
         IUnitOfWork unitOfWork,
         IMapper mapper,
-        IValidator<CreateBookDto> createValidator,
-        IValidator<UpdateBookDto> updateValidator,
-        IValidator<BookSearchParametersDto> searchValidator,
-        IAuditService auditService,
         ILogger<BookService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _createValidator = createValidator;
-        _updateValidator = updateValidator;
-        _searchValidator = searchValidator;
-        _auditService = auditService;
         _logger = logger;
     }
 
@@ -46,29 +34,20 @@ public class BookService : IBookService
     /// Creates a new book with initial copies
     /// Implements UC010 (Add Book)
     /// </summary>
-    public async Task<Result<BookDetailDto>> CreateBookAsync(CreateBookDto createBookDto)
+    public async Task<Result<BookDetailDto>> CreateBookAsync(CreateBookRequest request)
     {
         try
         {
-            // Validate input
-            var validationResult = await _createValidator.ValidateAsync(createBookDto);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                _logger.LogWarning("Book creation validation failed: {Errors}", errors);
-                return Result.Failure<BookDetailDto>(errors);
-            }
-
             // Check if ISBN already exists
-            var isbnExistsResult = await IsbnExistsAsync(createBookDto.ISBN);
+            var isbnExistsResult = await IsbnExistsAsync(request.ISBN);
             if (isbnExistsResult.IsSuccess && isbnExistsResult.Value)
             {
-                _logger.LogWarning("Book creation failed: ISBN '{ISBN}' already exists", createBookDto.ISBN);
+                _logger.LogWarning("Book creation failed: ISBN '{ISBN}' already exists", request.ISBN);
                 return Result.Failure<BookDetailDto>("A book with this ISBN already exists.");
             }
 
             // Verify that all specified categories exist
-            foreach (var categoryId in createBookDto.CategoryIds)
+            foreach (var categoryId in request.CategoryIds)
             {
                 var categoryExists = await _unitOfWork.Repository<Category>().ExistsAsync(c => c.Id == categoryId);
                 if (!categoryExists)
@@ -84,7 +63,7 @@ public class BookService : IBookService
             try
             {
                 // Map DTO to entity
-                var book = _mapper.Map<Book>(createBookDto);
+                var book = _mapper.Map<Book>(request);
                 
                 // Set initial status and timestamps
                 book.Status = BookStatus.Available;
@@ -94,26 +73,32 @@ public class BookService : IBookService
                 await _unitOfWork.Repository<Book>().AddAsync(book);
                 
                 // Add category relationships
-                if (createBookDto.CategoryIds.Any())
+                if (request.CategoryIds.Count != 0)
                 {
                     var categories = await _unitOfWork.Repository<Category>().ListAsync(
-                        c => createBookDto.CategoryIds.Contains(c.Id));
+                        c => request.CategoryIds.Contains(c.Id));
                     
-                    book.Categories = categories.ToList();
+                    book.Categories = [.. categories];
                 }
                 
                 // Save to get book ID
                 await _unitOfWork.SaveChangesAsync();
 
                 // Create initial copies
-                for (int i = 0; i < createBookDto.InitialCopies; i++)
+                for (int i = 0; i < request.InitialCopies; i++)
                 {
                     var copyNumber = await GenerateUniqueCopyNumberAsync(book.Id, i + 1);
-                    
-                    var copy = new BookCopy
+                    if (!copyNumber.IsSuccess)
+                    {
+                        _logger.LogError("Failed to generate unique copy number: {Error}", copyNumber.Error);
+                        await _unitOfWork.RollbackTransactionAsync();
+                        return Result.Failure<BookDetailDto>(copyNumber.Error);
+					}
+
+					var copy = new BookCopy
                     {
                         BookId = book.Id,
-                        CopyNumber = copyNumber,
+                        CopyNumber = copyNumber.Value,
                         Status = CopyStatus.Available,
                         CreatedAt = DateTime.UtcNow
                     };
@@ -127,22 +112,6 @@ public class BookService : IBookService
                 // Commit transaction
                 await _unitOfWork.CommitTransactionAsync();
 
-                // Log the action
-                await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-                {
-                    ActionType = AuditActionType.Create,
-                    EntityType = "Book",
-                    EntityId = book.Id.ToString(),
-                    EntityName = book.Title,
-                    Details = $"Created new book: {book.Title} by {book.Author} with {createBookDto.InitialCopies} initial copies",
-                    AfterState = System.Text.Json.JsonSerializer.Serialize(new { 
-                        Book = book,
-                        CategoryIds = createBookDto.CategoryIds,
-                        InitialCopies = createBookDto.InitialCopies
-                    }),
-                    IsSuccess = true
-                });
-
                 // Retrieve complete book with related data for mapping
                 var createdBook = await _unitOfWork.Repository<Book>().GetAsync(
                     b => b.Id == book.Id,
@@ -153,11 +122,11 @@ public class BookService : IBookService
                 var bookDetailDto = _mapper.Map<BookDetailDto>(createdBook);
                 
                 _logger.LogInformation("Book created successfully: {BookId} - {BookTitle} with {CopyCount} copies", 
-                    book.Id, book.Title, createBookDto.InitialCopies);
+                    book.Id, book.Title, request.InitialCopies);
                 
                 return Result.Success(bookDetailDto);
             }
-            catch (Exception ex)
+            catch
             {
                 // Rollback transaction on error
                 await _unitOfWork.RollbackTransactionAsync();
@@ -175,44 +144,35 @@ public class BookService : IBookService
     /// Updates an existing book
     /// Implements UC011 (Update Book)
     /// </summary>
-    public async Task<Result<BookDetailDto>> UpdateBookAsync(UpdateBookDto updateBookDto)
+    public async Task<Result<BookDetailDto>> UpdateBookAsync(UpdateBookRequest request)
     {
         try
         {
-            // Validate input
-            var validationResult = await _updateValidator.ValidateAsync(updateBookDto);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                _logger.LogWarning("Book update validation failed: {Errors}", errors);
-                return Result.Failure<BookDetailDto>(errors);
-            }
-
             // Retrieve existing book with categories
             var book = await _unitOfWork.Repository<Book>().GetAsync(
-                b => b.Id == updateBookDto.Id,
+                b => b.Id == request.Id,
                 b => b.Categories,
                 b => b.Copies);
 
             if (book == null)
             {
-                _logger.LogWarning("Book update failed: Book not found with ID {BookId}", updateBookDto.Id);
-                return Result.Failure<BookDetailDto>($"Book with ID {updateBookDto.Id} not found.");
+                _logger.LogWarning("Book update failed: Book not found with ID {BookId}", request.Id);
+                return Result.Failure<BookDetailDto>($"Book with ID {request.Id} not found.");
             }
 
             // Check if updated ISBN already exists (excluding current book)
-            if (book.ISBN != updateBookDto.ISBN)
+            if (book.ISBN != request.ISBN)
             {
-                var isbnExistsResult = await IsbnExistsAsync(updateBookDto.ISBN, updateBookDto.Id);
+                var isbnExistsResult = await IsbnExistsAsync(request.ISBN, request.Id);
                 if (isbnExistsResult.IsSuccess && isbnExistsResult.Value)
                 {
-                    _logger.LogWarning("Book update failed: ISBN '{ISBN}' already exists", updateBookDto.ISBN);
+                    _logger.LogWarning("Book update failed: ISBN '{ISBN}' already exists", request.ISBN);
                     return Result.Failure<BookDetailDto>("A book with this ISBN already exists.");
                 }
             }
 
             // Verify that all specified categories exist
-            foreach (var categoryId in updateBookDto.CategoryIds)
+            foreach (var categoryId in request.CategoryIds)
             {
                 var categoryExists = await _unitOfWork.Repository<Category>().ExistsAsync(c => c.Id == categoryId);
                 if (!categoryExists)
@@ -227,21 +187,15 @@ public class BookService : IBookService
 
             try
             {
-                // Save original state for audit
-                var originalState = System.Text.Json.JsonSerializer.Serialize(new {
-                    Book = book,
-                    CategoryIds = book.Categories.Select(c => c.Id).ToList()
-                });
-
                 // Update book properties
-                book.Title = updateBookDto.Title;
-                book.Author = updateBookDto.Author;
-                book.ISBN = updateBookDto.ISBN;
-                book.Publisher = updateBookDto.Publisher;
-                book.Description = updateBookDto.Description;
-                book.CoverImageUrl = updateBookDto.CoverImageUrl;
-                book.PublicationDate = updateBookDto.PublicationDate;
-                book.Status = updateBookDto.Status;
+                book.Title = request.Title;
+                book.Author = request.Author;
+                book.ISBN = request.ISBN;
+                book.Publisher = request.Publisher;
+                book.Description = request.Description;
+                book.CoverImageUrl = request.CoverImageUrl;
+                book.PublicationDate = request.PublicationDate;
+                book.Status = request.Status;
                 book.LastModifiedAt = DateTime.UtcNow;
 
                 // Update category relationships
@@ -250,7 +204,7 @@ public class BookService : IBookService
                 
                 // Get and add updated categories
                 var categories = await _unitOfWork.Repository<Category>().ListAsync(
-                    c => updateBookDto.CategoryIds.Contains(c.Id));
+                    c => request.CategoryIds.Contains(c.Id));
                 
                 foreach (var category in categories)
                 {
@@ -263,22 +217,6 @@ public class BookService : IBookService
 
                 // Commit transaction
                 await _unitOfWork.CommitTransactionAsync();
-
-                // Log the action
-                await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-                {
-                    ActionType = AuditActionType.Update,
-                    EntityType = "Book",
-                    EntityId = book.Id.ToString(),
-                    EntityName = book.Title,
-                    Details = $"Updated book: {book.Title} by {book.Author}",
-                    BeforeState = originalState,
-                    AfterState = System.Text.Json.JsonSerializer.Serialize(new {
-                        Book = book,
-                        CategoryIds = book.Categories.Select(c => c.Id).ToList()
-                    }),
-                    IsSuccess = true
-                });
 
                 // Retrieve updated book with related data for mapping
                 var updatedBook = await _unitOfWork.Repository<Book>().GetAsync(
@@ -348,13 +286,6 @@ public class BookService : IBookService
 
             try
             {
-                // Save original state for audit
-                var originalState = System.Text.Json.JsonSerializer.Serialize(new {
-                    Book = book,
-                    CategoryIds = book.Categories.Select(c => c.Id).ToList(),
-                    CopyCount = book.Copies.Count
-                });
-
                 // Delete all copies first
                 foreach (var copy in book.Copies.ToList())
                 {
@@ -370,18 +301,6 @@ public class BookService : IBookService
 
                 // Commit transaction
                 await _unitOfWork.CommitTransactionAsync();
-
-                // Log the action
-                await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-                {
-                    ActionType = AuditActionType.Delete,
-                    EntityType = "Book",
-                    EntityId = id.ToString(),
-                    EntityName = book.Title,
-                    Details = $"Deleted book: {book.Title} by {book.Author} with {book.Copies.Count} copies",
-                    BeforeState = originalState,
-                    IsSuccess = true
-                });
 
                 _logger.LogInformation("Book deleted successfully: {BookId} - {BookTitle}", id, book.Title);
                 return Result.Success(true);
@@ -437,54 +356,44 @@ public class BookService : IBookService
     /// Gets a paginated list of books based on search parameters
     /// Implements UC013 (Search Books) and UC014 (Browse by Category)
     /// </summary>
-    public async Task<Result<PaginatedBooksDto>> SearchBooksAsync(BookSearchParametersDto searchParams)
+    public async Task<Result<PagedResult<BookBasicDto>>> SearchBooksAsync(BookSearchRequest request)
     {
         try
         {
-            // Validate search parameters
-            var validationResult = await _searchValidator.ValidateAsync(searchParams);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                _logger.LogWarning("Book search validation failed: {Errors}", errors);
-                return Result.Failure<PaginatedBooksDto>(errors);
-            }
-
             // Set up predicate for filtering
             Expression<Func<Book, bool>>? predicate = null;
             
             // Combine search term and category filter if both are provided
-            if (!string.IsNullOrWhiteSpace(searchParams.SearchTerm) && searchParams.CategoryId.HasValue)
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm) && request.CategoryId.HasValue)
             {
-                var searchTerm = searchParams.SearchTerm.ToLower();
-                var categoryId = searchParams.CategoryId.Value;
-                
-                predicate = b => (b.Title.ToLower().Contains(searchTerm) || 
-                                 b.Author.ToLower().Contains(searchTerm) || 
-                                 b.ISBN.ToLower().Contains(searchTerm)) &&
+                var searchTerm = request.SearchTerm.ToLower();
+                var categoryId = request.CategoryId.Value;
+
+				predicate = b => (b.Title.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) ||
+								 b.Author.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) ||
+								 b.ISBN.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase)) &&
                                  b.Categories.Any(c => c.Id == categoryId);
             }
             // Filter by search term only
-            else if (!string.IsNullOrWhiteSpace(searchParams.SearchTerm))
+            else if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
-                var searchTerm = searchParams.SearchTerm.ToLower();
+                var searchTerm = request.SearchTerm.ToLower();
                 
-                predicate = b => b.Title.ToLower().Contains(searchTerm) || 
-                                b.Author.ToLower().Contains(searchTerm) || 
-                                b.ISBN.ToLower().Contains(searchTerm);
+                predicate = b => b.Title.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) || 
+                                b.Author.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) || 
+                                b.ISBN.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase);
             }
             // Filter by category only
-            else if (searchParams.CategoryId.HasValue)
+            else if (request.CategoryId.HasValue)
             {
-                var categoryId = searchParams.CategoryId.Value;
+                var categoryId = request.CategoryId.Value;
                 
                 predicate = b => b.Categories.Any(c => c.Id == categoryId);
             }
 
             // Apply pagination
-            var pagedRequest = new PagedRequest(searchParams.PageNumber, searchParams.PageSize);
             var pagedResult = await _unitOfWork.Repository<Book>().PagedListAsync(
-                pagedRequest,
+				request,
                 predicate,
                 q => q.OrderBy(b => b.Title),
                 true,
@@ -494,7 +403,7 @@ public class BookService : IBookService
             // Map to DTOs
             var bookDtoList = _mapper.Map<IEnumerable<BookBasicDto>>(pagedResult.Items);
             
-            var paginatedResult = new PaginatedBooksDto
+            var paginatedResult = new PagedResult<BookBasicDto>
             {
                 Items = [.. bookDtoList],
                 Count = pagedResult.Count,
@@ -507,15 +416,15 @@ public class BookService : IBookService
                 paginatedResult.Page, 
                 paginatedResult.PageSize, 
                 paginatedResult.Count,
-                searchParams.SearchTerm ?? "(none)",
-                searchParams.CategoryId?.ToString() ?? "(none)");
+                request.SearchTerm ?? "(none)",
+                request.CategoryId?.ToString() ?? "(none)");
             
             return Result.Success(paginatedResult);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error searching books: {Message}", ex.Message);
-            return Result.Failure<PaginatedBooksDto>($"Failed to search books: {ex.Message}");
+            return Result.Failure<PagedResult<BookBasicDto>>($"Failed to search books: {ex.Message}");
         }
     }
 
@@ -535,11 +444,11 @@ public class BookService : IBookService
             Expression<Func<Book, bool>> predicate;
             if (excludeId.HasValue)
             {
-                predicate = b => b.ISBN.ToLower() == isbn.ToLower() && b.Id != excludeId.Value;
+                predicate = b => b.ISBN.Equals(isbn, StringComparison.CurrentCultureIgnoreCase) && b.Id != excludeId.Value;
             }
             else
             {
-                predicate = b => b.ISBN.ToLower() == isbn.ToLower();
+                predicate = b => b.ISBN.Equals(isbn, StringComparison.CurrentCultureIgnoreCase);
             }
 
             var exists = await _unitOfWork.Repository<Book>().ExistsAsync(predicate);
@@ -595,13 +504,13 @@ public class BookService : IBookService
     /// <summary>
     /// Helper method to generate a unique copy number for a book
     /// </summary>
-    private async Task<string> GenerateUniqueCopyNumberAsync(int bookId, int copyIndex)
+    private async Task<Result<string>> GenerateUniqueCopyNumberAsync(int bookId, int copyIndex)
     {
         var book = await _unitOfWork.Repository<Book>().GetAsync(b => b.Id == bookId);
         if (book == null)
         {
-            throw new InvalidOperationException($"Book with ID {bookId} not found.");
-        }
+            return Result.Failure<string>($"Book with ID {bookId} not found.");
+		}
 
         // ISBN-XXX format (replace hyphens with empty string for cleaner copy numbers)
         var isbnBase = book.ISBN.Replace("-", "");
@@ -617,6 +526,6 @@ public class BookService : IBookService
             return await GenerateUniqueCopyNumberAsync(bookId, copyIndex + 1);
         }
 
-        return copyNumber;
-    }
+        return Result.Success(copyNumber);
+	}
 }

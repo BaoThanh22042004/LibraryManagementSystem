@@ -19,7 +19,6 @@ public class ProfileService : IProfileService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IEmailService _emailService;
-    private readonly IAuditService _auditService;
     private readonly ILogger<ProfileService> _logger;
 
     // Constants
@@ -29,18 +28,16 @@ public class ProfileService : IProfileService
         IUnitOfWork unitOfWork,
         IMapper mapper,
         IEmailService emailService,
-        IAuditService auditService,
         ILogger<ProfileService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _emailService = emailService;
-        _auditService = auditService;
         _logger = logger;
     }
 
     /// <inheritdoc/>
-    public async Task<Result<ProfileResponse>> GetProfileAsync(int userId)
+    public async Task<Result<ProfileDto>> GetProfileAsync(int userId)
     {
         try
         {
@@ -49,16 +46,16 @@ public class ProfileService : IProfileService
 
             if (user == null)
             {
-                return Result.Failure<ProfileResponse>("User not found");
+                return Result.Failure<ProfileDto>("User not found");
             }
 
-            var profileResponse = _mapper.Map<ProfileResponse>(user);
+            var profileResponse = _mapper.Map<ProfileDto>(user);
             return Result.Success(profileResponse);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving profile for user {UserId}", userId);
-            return Result.Failure<ProfileResponse>("An error occurred while retrieving your profile");
+            return Result.Failure<ProfileDto>("An error occurred while retrieving your profile");
         }
     }
 
@@ -75,15 +72,6 @@ public class ProfileService : IProfileService
             {
                 return Result.Failure("User not found");
             }
-
-            // Capture before state for audit
-            var beforeState = JsonSerializer.Serialize(new
-            {
-                user.FullName,
-                user.Email,
-                user.Phone,
-                user.Address
-            });
 
             // Update basic profile information
             user.FullName = request.FullName;
@@ -145,30 +133,6 @@ public class ProfileService : IProfileService
             userRepo.Update(user);
             await _unitOfWork.SaveChangesAsync();
 
-            // Capture after state for audit
-            var afterState = JsonSerializer.Serialize(new
-            {
-                user.FullName,
-                user.Email,
-                user.PendingEmail,
-                user.Phone,
-                user.Address
-            });
-
-            // Log profile update
-            await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-            {
-                UserId = user.Id,
-                ActionType = AuditActionType.Update,
-                EntityType = "User",
-                EntityId = user.Id.ToString(),
-                EntityName = user.FullName,
-                Details = "User updated their profile" + (emailChanged ? " (email change pending verification)" : ""),
-                BeforeState = beforeState,
-                AfterState = afterState,
-                IsSuccess = true
-            });
-
             return Result.Success();
         }
         catch (Exception ex)
@@ -219,7 +183,6 @@ public class ProfileService : IProfileService
             }
 
             // Update user email
-            var oldEmail = user.Email;
             user.Email = token.NewEmail;
             user.PendingEmail = null;
             user.LastModifiedAt = DateTime.UtcNow;
@@ -232,20 +195,6 @@ public class ProfileService : IProfileService
             tokenRepo.Update(token);
             await _unitOfWork.SaveChangesAsync();
 
-            // Log email verification
-            await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-            {
-                UserId = user.Id,
-                ActionType = AuditActionType.Update,
-                EntityType = "User",
-                EntityId = user.Id.ToString(),
-                EntityName = user.FullName,
-                Details = $"User verified email change from {oldEmail} to {user.Email}",
-                BeforeState = JsonSerializer.Serialize(new { Email = oldEmail }),
-                AfterState = JsonSerializer.Serialize(new { Email = user.Email }),
-                IsSuccess = true
-            });
-
             return Result.Success();
         }
         catch (Exception ex)
@@ -257,7 +206,7 @@ public class ProfileService : IProfileService
 
     #region Helper Methods
 
-    private string GenerateSecureToken()
+    private static string GenerateSecureToken()
     {
         // Generate a cryptographically secure random token
         byte[] tokenData = new byte[32]; // 256 bits

@@ -8,9 +8,9 @@ namespace Application.Validators;
 /// Validator for CreateBookDto
 /// Enforces business rules for book creation
 /// </summary>
-public class CreateBookDtoValidator : AbstractValidator<CreateBookDto>
+public class CreateBookRequestValidator : AbstractValidator<CreateBookRequest>
 {
-    public CreateBookDtoValidator()
+    public CreateBookRequestValidator()
     {
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Book title is required");
@@ -39,9 +39,9 @@ public class CreateBookDtoValidator : AbstractValidator<CreateBookDto>
 /// Validator for UpdateBookDto
 /// Enforces business rules for book updates
 /// </summary>
-public class UpdateBookDtoValidator : AbstractValidator<UpdateBookDto>
+public class UpdateBookRequestValidator : AbstractValidator<UpdateBookRequest>
 {
-    public UpdateBookDtoValidator()
+    public UpdateBookRequestValidator()
     {
         RuleFor(x => x.Id)
             .GreaterThan(0).WithMessage("Invalid book ID");
@@ -73,11 +73,11 @@ public class UpdateBookDtoValidator : AbstractValidator<UpdateBookDto>
 /// Validator for BookSearchParametersDto
 /// Enforces valid search parameters
 /// </summary>
-public class BookSearchParametersDtoValidator : AbstractValidator<BookSearchParametersDto>
+public class BookSearchRequestValidator : AbstractValidator<BookSearchRequest>
 {
-    public BookSearchParametersDtoValidator()
+    public BookSearchRequestValidator()
     {
-        RuleFor(x => x.PageNumber)
+        RuleFor(x => x.Page)
             .GreaterThan(0).WithMessage("Page number must be greater than 0");
 
         RuleFor(x => x.PageSize)

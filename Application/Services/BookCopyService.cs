@@ -18,27 +18,15 @@ public class BookCopyService : IBookCopyService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly IValidator<CreateBookCopyDto> _createValidator;
-    private readonly IValidator<CreateMultipleBookCopiesDto> _createMultipleValidator;
-    private readonly IValidator<UpdateBookCopyStatusDto> _updateStatusValidator;
-    private readonly IAuditService _auditService;
     private readonly ILogger<BookCopyService> _logger;
 
     public BookCopyService(
         IUnitOfWork unitOfWork,
         IMapper mapper,
-        IValidator<CreateBookCopyDto> createValidator,
-        IValidator<CreateMultipleBookCopiesDto> createMultipleValidator,
-        IValidator<UpdateBookCopyStatusDto> updateStatusValidator,
-        IAuditService auditService,
         ILogger<BookCopyService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _createValidator = createValidator;
-        _createMultipleValidator = createMultipleValidator;
-        _updateStatusValidator = updateStatusValidator;
-        _auditService = auditService;
         _logger = logger;
     }
 
@@ -46,35 +34,26 @@ public class BookCopyService : IBookCopyService
     /// Creates a new book copy
     /// Implements UC015 (Add Copy)
     /// </summary>
-    public async Task<Result<BookCopyDetailDto>> CreateBookCopyAsync(CreateBookCopyDto createBookCopyDto)
+    public async Task<Result<BookCopyDetailDto>> CreateBookCopyAsync(CreateBookCopyRequest request)
     {
         try
         {
-            // Validate input
-            var validationResult = await _createValidator.ValidateAsync(createBookCopyDto);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                _logger.LogWarning("Book copy creation validation failed: {Errors}", errors);
-                return Result.Failure<BookCopyDetailDto>(errors);
-            }
-
             // Check if book exists
             var book = await _unitOfWork.Repository<Book>().GetAsync(
-                b => b.Id == createBookCopyDto.BookId,
+                b => b.Id == request.BookId,
                 b => b.Copies);
                 
             if (book == null)
             {
-                _logger.LogWarning("Book copy creation failed: Book not found with ID {BookId}", createBookCopyDto.BookId);
-                return Result.Failure<BookCopyDetailDto>($"Book with ID {createBookCopyDto.BookId} not found.");
+                _logger.LogWarning("Book copy creation failed: Book not found with ID {BookId}", request.BookId);
+                return Result.Failure<BookCopyDetailDto>($"Book with ID {request.BookId} not found.");
             }
 
             // Generate copy number if not provided
-            string copyNumber = createBookCopyDto.CopyNumber ?? string.Empty;
+            string copyNumber = request.CopyNumber ?? string.Empty;
             if (string.IsNullOrWhiteSpace(copyNumber))
             {
-                var generateResult = await GenerateUniqueCopyNumberAsync(createBookCopyDto.BookId);
+                var generateResult = await GenerateUniqueCopyNumberAsync(request.BookId);
                 if (generateResult.IsFailure)
                 {
                     return Result.Failure<BookCopyDetailDto>(generateResult.Error);
@@ -85,35 +64,23 @@ public class BookCopyService : IBookCopyService
             else
             {
                 // Check if copy number is unique for this book
-                var exists = await CopyNumberExistsAsync(createBookCopyDto.BookId, copyNumber);
+                var exists = await CopyNumberExistsAsync(request.BookId, copyNumber);
                 if (exists.IsSuccess && exists.Value)
                 {
                     _logger.LogWarning("Book copy creation failed: Copy number '{CopyNumber}' already exists for book {BookId}", 
-                        copyNumber, createBookCopyDto.BookId);
+                        copyNumber, request.BookId);
                     return Result.Failure<BookCopyDetailDto>($"Copy number '{copyNumber}' already exists for this book.");
                 }
             }
 
             // Map DTO to entity
-            var bookCopy = _mapper.Map<BookCopy>(createBookCopyDto);
+            var bookCopy = _mapper.Map<BookCopy>(request);
             bookCopy.CopyNumber = copyNumber;
             bookCopy.CreatedAt = DateTime.UtcNow;
 
             // Add to repository
             await _unitOfWork.Repository<BookCopy>().AddAsync(bookCopy);
             await _unitOfWork.SaveChangesAsync();
-
-            // Log the action
-            await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-            {
-                ActionType = AuditActionType.Create,
-                EntityType = "BookCopy",
-                EntityId = bookCopy.Id.ToString(),
-                EntityName = $"Copy {copyNumber} of Book {book.Title}",
-                Details = $"Created new copy {copyNumber} for book: {book.Title} by {book.Author}",
-                AfterState = System.Text.Json.JsonSerializer.Serialize(bookCopy),
-                IsSuccess = true
-            });
 
             // Retrieve copy with related data for mapping
             var createdCopy = await _unitOfWork.Repository<BookCopy>().GetAsync(
@@ -126,7 +93,7 @@ public class BookCopyService : IBookCopyService
             var bookCopyDto = _mapper.Map<BookCopyDetailDto>(createdCopy);
             
             _logger.LogInformation("Book copy created successfully: {CopyId} - {CopyNumber} for Book {BookId}", 
-                bookCopy.Id, copyNumber, createBookCopyDto.BookId);
+                bookCopy.Id, copyNumber, request.BookId);
                 
             return Result.Success(bookCopyDto);
         }
@@ -141,28 +108,19 @@ public class BookCopyService : IBookCopyService
     /// Creates multiple book copies at once
     /// Implements UC015 (Add Copy) - bulk creation alternative flow
     /// </summary>
-    public async Task<Result<IEnumerable<int>>> CreateMultipleBookCopiesAsync(CreateMultipleBookCopiesDto createMultipleDto)
+    public async Task<Result<IEnumerable<int>>> CreateMultipleBookCopiesAsync(CreateMultipleBookCopiesRequest request)
     {
         try
         {
-            // Validate input
-            var validationResult = await _createMultipleValidator.ValidateAsync(createMultipleDto);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                _logger.LogWarning("Multiple book copies creation validation failed: {Errors}", errors);
-                return Result.Failure<IEnumerable<int>>(errors);
-            }
-
             // Check if book exists
             var book = await _unitOfWork.Repository<Book>().GetAsync(
-                b => b.Id == createMultipleDto.BookId,
+                b => b.Id == request.BookId,
                 b => b.Copies);
                 
             if (book == null)
             {
-                _logger.LogWarning("Multiple book copies creation failed: Book not found with ID {BookId}", createMultipleDto.BookId);
-                return Result.Failure<IEnumerable<int>>($"Book with ID {createMultipleDto.BookId} not found.");
+                _logger.LogWarning("Multiple book copies creation failed: Book not found with ID {BookId}", request.BookId);
+                return Result.Failure<IEnumerable<int>>($"Book with ID {request.BookId} not found.");
             }
 
             // Begin transaction to ensure atomic operation
@@ -172,10 +130,10 @@ public class BookCopyService : IBookCopyService
             
             try
             {
-                for (int i = 0; i < createMultipleDto.Quantity; i++)
+                for (int i = 0; i < request.Quantity; i++)
                 {
                     // Generate unique copy number
-                    var generateResult = await GenerateUniqueCopyNumberAsync(createMultipleDto.BookId);
+                    var generateResult = await GenerateUniqueCopyNumberAsync(request.BookId);
                     if (generateResult.IsFailure)
                     {
                         // Rollback if we can't generate copy numbers
@@ -188,9 +146,9 @@ public class BookCopyService : IBookCopyService
                     // Create copy
                     var bookCopy = new BookCopy
                     {
-                        BookId = createMultipleDto.BookId,
+                        BookId = request.BookId,
                         CopyNumber = copyNumber,
-                        Status = createMultipleDto.Status,
+                        Status = request.Status,
                         CreatedAt = DateTime.UtcNow
                     };
 
@@ -204,25 +162,8 @@ public class BookCopyService : IBookCopyService
                 // Commit transaction
                 await _unitOfWork.CommitTransactionAsync();
 
-                // Log the action
-                await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-                {
-                    ActionType = AuditActionType.Create,
-                    EntityType = "BookCopy",
-                    EntityId = createMultipleDto.BookId.ToString(), // Reference the book ID
-                    EntityName = $"Multiple copies of Book {book.Title}",
-                    Details = $"Created {createMultipleDto.Quantity} new copies for book: {book.Title} by {book.Author}",
-                    AfterState = System.Text.Json.JsonSerializer.Serialize(new {
-                        BookId = createMultipleDto.BookId,
-                        Quantity = createMultipleDto.Quantity,
-                        Status = createMultipleDto.Status,
-                        CreatedCopyIds = createdCopyIds
-                    }),
-                    IsSuccess = true
-                });
-
                 _logger.LogInformation("Created {Quantity} book copies successfully for Book {BookId}", 
-                    createMultipleDto.Quantity, createMultipleDto.BookId);
+                    request.Quantity, request.BookId);
                     
                 return Result.Success<IEnumerable<int>>(createdCopyIds);
             }
@@ -244,74 +185,48 @@ public class BookCopyService : IBookCopyService
     /// Updates a book copy's status
     /// Implements UC016 (Update Copy Status)
     /// </summary>
-    public async Task<Result<BookCopyDetailDto>> UpdateBookCopyStatusAsync(UpdateBookCopyStatusDto updateStatusDto)
+    public async Task<Result<BookCopyDetailDto>> UpdateBookCopyStatusAsync(UpdateBookCopyStatusRequest request)
     {
         try
         {
-            // Validate input
-            var validationResult = await _updateStatusValidator.ValidateAsync(updateStatusDto);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                _logger.LogWarning("Book copy status update validation failed: {Errors}", errors);
-                return Result.Failure<BookCopyDetailDto>(errors);
-            }
-
             // Retrieve copy with related data
             var copy = await _unitOfWork.Repository<BookCopy>().GetAsync(
-                c => c.Id == updateStatusDto.Id,
+                c => c.Id == request.Id,
                 c => c.Book,
                 c => c.Loans,
                 c => c.Reservations);
 
             if (copy == null)
             {
-                _logger.LogWarning("Book copy status update failed: Copy not found with ID {CopyId}", updateStatusDto.Id);
-                return Result.Failure<BookCopyDetailDto>($"Book copy with ID {updateStatusDto.Id} not found.");
+                _logger.LogWarning("Book copy status update failed: Copy not found with ID {CopyId}", request.Id);
+                return Result.Failure<BookCopyDetailDto>($"Book copy with ID {request.Id} not found.");
             }
 
             // Validate status change
-            if (updateStatusDto.Status == CopyStatus.Available)
+            if (request.Status == CopyStatus.Available)
             {
                 // Check BR-10: A copy cannot be marked as Available unless it has been properly returned
                 var hasActiveLoans = copy.Loans.Any(l => l.Status == LoanStatus.Active);
                 if (hasActiveLoans)
                 {
-                    _logger.LogWarning("Book copy status update failed: Cannot mark copy {CopyId} as Available while it has active loans", updateStatusDto.Id);
+                    _logger.LogWarning("Book copy status update failed: Cannot mark copy {CopyId} as Available while it has active loans", request.Id);
                     return Result.Failure<BookCopyDetailDto>("Cannot mark copy as Available while it has active loans. Process the return first.");
                 }
             }
 
-            // Save original state for audit
-            var originalState = System.Text.Json.JsonSerializer.Serialize(copy);
-
             // Update status
-            copy.Status = updateStatusDto.Status;
+            copy.Status = request.Status;
             copy.LastModifiedAt = DateTime.UtcNow;
 
             // Update in repository
             _unitOfWork.Repository<BookCopy>().Update(copy);
             await _unitOfWork.SaveChangesAsync();
 
-            // Log the action
-            await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-            {
-                ActionType = AuditActionType.Update,
-                EntityType = "BookCopy",
-                EntityId = copy.Id.ToString(),
-                EntityName = $"Copy {copy.CopyNumber} of Book {copy.Book.Title}",
-                Details = $"Updated status of copy {copy.CopyNumber} for book: {copy.Book.Title} to {updateStatusDto.Status}" + 
-                          (!string.IsNullOrEmpty(updateStatusDto.Notes) ? $" with notes: {updateStatusDto.Notes}" : ""),
-                BeforeState = originalState,
-                AfterState = System.Text.Json.JsonSerializer.Serialize(copy),
-                IsSuccess = true
-            });
-
             // Map to DTO
             var bookCopyDto = _mapper.Map<BookCopyDetailDto>(copy);
             
             _logger.LogInformation("Book copy status updated successfully: {CopyId} - {CopyNumber} to {Status}", 
-                copy.Id, copy.CopyNumber, updateStatusDto.Status);
+                copy.Id, copy.CopyNumber, request.Status);
                 
             return Result.Success(bookCopyDto);
         }
@@ -359,28 +274,11 @@ public class BookCopyService : IBookCopyService
                 return Result.Failure<bool>("Cannot delete book copy because it has active reservations.");
             }
 
-            // Save original state for audit
-            var originalState = System.Text.Json.JsonSerializer.Serialize(copy);
-            var copyNumber = copy.CopyNumber;
-            var bookTitle = copy.Book.Title;
-
             // Delete copy
             _unitOfWork.Repository<BookCopy>().Delete(copy);
             await _unitOfWork.SaveChangesAsync();
 
-            // Log the action
-            await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-            {
-                ActionType = AuditActionType.Delete,
-                EntityType = "BookCopy",
-                EntityId = id.ToString(),
-                EntityName = $"Copy {copyNumber} of Book {bookTitle}",
-                Details = $"Deleted copy {copyNumber} for book: {bookTitle}",
-                BeforeState = originalState,
-                IsSuccess = true
-            });
-
-            _logger.LogInformation("Book copy deleted successfully: {CopyId} - {CopyNumber}", id, copyNumber);
+            _logger.LogInformation("Book copy deleted successfully: {CopyId} - {CopyNumber}", id, copy.CopyNumber);
             return Result.Success(true);
         }
         catch (Exception ex)
@@ -477,7 +375,7 @@ public class BookCopyService : IBookCopyService
 
             // Get the next copy index
             int nextCopyIndex = 1;
-            if (book.Copies.Any())
+            if (book.Copies.Count != 0)
             {
                 nextCopyIndex = book.Copies.Count + 1;
             }

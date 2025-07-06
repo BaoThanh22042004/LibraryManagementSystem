@@ -1,7 +1,9 @@
+using Application.Common;
 using Application.DTOs;
 using Application.Interfaces;
 using Application.Validators;
 using Domain.Enums;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -18,16 +20,16 @@ namespace Web.Controllers
     {
         private readonly ICategoryService _categoryService;
         private readonly ILogger<CategoryController> _logger;
-		private readonly CreateCategoryDtoValidator _createCategoryValidator;
-		private readonly UpdateCategoryDtoValidator _updateCategoryValidator;
-		private readonly CategorySearchParametersDtoValidator _categorySearchValidator;
+		private readonly IValidator<CreateCategoryRequest> _createCategoryValidator;
+		private readonly IValidator<UpdateCategoryRequest> _updateCategoryValidator;
+		private readonly IValidator<CategorySearchRequest> _categorySearchValidator;
 
 		public CategoryController(
             ICategoryService categoryService,
             ILogger<CategoryController> logger,
-			CreateCategoryDtoValidator createCategoryValidator,
-            UpdateCategoryDtoValidator updateCategoryValidator,
-            CategorySearchParametersDtoValidator categorySearchValidator)
+			IValidator<CreateCategoryRequest> createCategoryValidator,
+			IValidator<UpdateCategoryRequest> updateCategoryValidator,
+			IValidator<CategorySearchRequest> categorySearchValidator)
 		{
             _categoryService = categoryService;
             _logger = logger;
@@ -41,7 +43,7 @@ namespace Web.Controllers
         /// Implements UC041 (Browse Categories).
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index(CategorySearchParametersDto searchParams)
+        public async Task<IActionResult> Index(CategorySearchRequest searchParams)
         {
             try
             {
@@ -49,17 +51,15 @@ namespace Web.Controllers
                 if (!validationResult.IsValid)
                 {
                     validationResult.AddToModelState(ModelState);
-                    return View(new PaginatedCategoriesDto 
+                    return View(new PagedResult<CategoryDto> 
                     { 
-                        Items = [],
-                        Page = searchParams.PageNumber,
+                        Page = searchParams.Page,
                         PageSize = searchParams.PageSize,
-                        Count = 0
                     });
 				}
 
 				// Set default values if not provided
-				searchParams.PageNumber = searchParams.PageNumber <= 0 ? 1 : searchParams.PageNumber;
+				searchParams.Page = searchParams.Page <= 0 ? 1 : searchParams.Page;
                 searchParams.PageSize = searchParams.PageSize <= 0 ? 10 : searchParams.PageSize;
 
                 var result = await _categoryService.GetCategoriesAsync(searchParams);
@@ -68,12 +68,10 @@ namespace Web.Controllers
                 {
                     _logger.LogWarning("Failed to retrieve categories: {Error}", result.Error);
                     TempData["ErrorMessage"] = "Failed to retrieve categories. Please try again later.";
-                    return View(new PaginatedCategoriesDto 
+                    return View(new PagedResult<CategoryDto> 
                     { 
-                        Items = [],
-                        Page = searchParams.PageNumber,
+                        Page = searchParams.Page,
                         PageSize = searchParams.PageSize,
-                        Count = 0
                     });
                 }
 
@@ -83,13 +81,7 @@ namespace Web.Controllers
             {
                 _logger.LogError(ex, "Error retrieving categories");
                 TempData["ErrorMessage"] = "An unexpected error occurred while retrieving categories.";
-                return View(new PaginatedCategoriesDto
-                {
-                    Items = [],
-                    Page = 1,
-                    PageSize = 10,
-                    Count = 0
-                });
+                return View();
             }
         }
 
@@ -129,7 +121,7 @@ namespace Web.Controllers
         [Authorize(Roles = "Admin,Librarian")]
         public IActionResult Create()
         {
-            return View(new CreateCategoryDto());
+            return View();
         }
 
         /// <summary>
@@ -139,7 +131,7 @@ namespace Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Create(CreateCategoryDto model)
+        public async Task<IActionResult> Create(CreateCategoryRequest model)
         {
             try
             {
@@ -201,7 +193,7 @@ namespace Web.Controllers
                 }
 
                 var category = result.Value;
-                var updateDto = new UpdateCategoryDto
+                var updateDto = new UpdateCategoryRequest
                 {
                     Id = category.Id,
                     Name = category.Name,
@@ -226,7 +218,7 @@ namespace Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Edit(UpdateCategoryDto model)
+        public async Task<IActionResult> Edit(UpdateCategoryRequest model)
         {
             try
             {
@@ -333,7 +325,6 @@ namespace Web.Controllers
 
                 _logger.LogInformation("Category deleted successfully: {CategoryId}", id);
                 TempData["SuccessMessage"] = "Category deleted successfully.";
-                
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)

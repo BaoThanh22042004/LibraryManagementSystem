@@ -12,23 +12,23 @@ public class UserProfile : Profile
     public UserProfile()
     {
         // User to UserDetailsResponse
-        CreateMap<User, UserDetailsResponse>()
+        CreateMap<User, UserDetailsDto>()
             .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.LastModifiedAt))
             .ForMember(dest => dest.MemberDetails, opt => opt.MapFrom(src => src.Member))
             .ForMember(dest => dest.LibrarianDetails, opt => opt.MapFrom(src => src.Librarian));
         
         // Member to MemberDetailsResponse
-        CreateMap<Member, MemberDetailsResponse>()
+        CreateMap<Member, MemberDetailsDto>()
             .ForMember(dest => dest.ActiveLoans, opt => opt.MapFrom(src => 
                 src.Loans.Count(l => l.Status == Domain.Enums.LoanStatus.Active)))
             .ForMember(dest => dest.ActiveReservations, opt => opt.MapFrom(src => 
                 src.Reservations.Count(r => r.Status == Domain.Enums.ReservationStatus.Active)));
         
         // Librarian to LibrarianDetailsResponse
-        CreateMap<Librarian, LibrarianDetailsResponse>();
+        CreateMap<Librarian, LibrarianDetailsDto>();
         
         // User to UserSummaryDto
-        CreateMap<User, UserSummaryDto>()
+        CreateMap<User, UserBasicDto>()
             .ForMember(dest => dest.MembershipNumber, opt => opt.MapFrom(src => 
                 src.Member != null ? src.Member.MembershipNumber : null))
             .ForMember(dest => dest.MembershipStatus, opt => opt.MapFrom(src => 

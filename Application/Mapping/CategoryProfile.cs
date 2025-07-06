@@ -15,11 +15,11 @@ public class CategoryProfile : Profile
     public CategoryProfile()
     {
         // Map from CreateCategoryDto to Category entity
-        CreateMap<CreateCategoryDto, Category>()
+        CreateMap<CreateCategoryRequest, Category>()
             .ForMember(dest => dest.Books, opt => opt.Ignore()); // Ignore Books collection
 
         // Map from UpdateCategoryDto to Category entity
-        CreateMap<UpdateCategoryDto, Category>()
+        CreateMap<UpdateCategoryRequest, Category>()
             .ForMember(dest => dest.Books, opt => opt.Ignore()); // Ignore Books collection
 
         // Map from Category entity to CategoryDto

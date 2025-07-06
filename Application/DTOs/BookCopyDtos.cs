@@ -6,7 +6,7 @@ namespace Application.DTOs;
 /// Data transfer object for creating a new book copy
 /// Supports UC015 (Add Copy)
 /// </summary>
-public class CreateBookCopyDto
+public record CreateBookCopyRequest
 {
     /// <summary>
     /// The ID of the parent book this copy belongs to
@@ -28,7 +28,7 @@ public class CreateBookCopyDto
 /// Data transfer object for creating multiple book copies at once
 /// Supports UC015 (Add Copy) - bulk creation alternative flow
 /// </summary>
-public class CreateMultipleBookCopiesDto
+public record CreateMultipleBookCopiesRequest
 {
     /// <summary>
     /// The ID of the parent book these copies belong to
@@ -50,7 +50,7 @@ public class CreateMultipleBookCopiesDto
 /// Data transfer object for updating a book copy's status
 /// Supports UC016 (Update Copy Status)
 /// </summary>
-public class UpdateBookCopyStatusDto
+public record UpdateBookCopyStatusRequest
 {
     /// <summary>
     /// The ID of the copy to update
@@ -72,7 +72,7 @@ public class UpdateBookCopyStatusDto
 /// Basic book copy information DTO
 /// Used in BookDetailDto and copy management operations
 /// </summary>
-public class BookCopyBasicDto
+public record BookCopyBasicDto
 {
     /// <summary>
     /// The unique identifier of the copy
@@ -109,7 +109,7 @@ public class BookCopyBasicDto
 /// Detailed book copy information DTO
 /// Supports copy management operations with complete information
 /// </summary>
-public class BookCopyDetailDto : BookCopyBasicDto
+public record BookCopyDetailDto : BookCopyBasicDto
 {
     /// <summary>
     /// Basic information about the parent book

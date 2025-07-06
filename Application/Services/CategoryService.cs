@@ -18,27 +18,15 @@ public class CategoryService : ICategoryService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly IValidator<CreateCategoryDto> _createValidator;
-    private readonly IValidator<UpdateCategoryDto> _updateValidator;
-    private readonly IValidator<CategorySearchParametersDto> _searchValidator;
-    private readonly IAuditService _auditService;
     private readonly ILogger<CategoryService> _logger;
 
     public CategoryService(
         IUnitOfWork unitOfWork,
         IMapper mapper,
-        IValidator<CreateCategoryDto> createValidator,
-        IValidator<UpdateCategoryDto> updateValidator,
-        IValidator<CategorySearchParametersDto> searchValidator,
-        IAuditService auditService,
         ILogger<CategoryService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _createValidator = createValidator;
-        _updateValidator = updateValidator;
-        _searchValidator = searchValidator;
-        _auditService = auditService;
         _logger = logger;
     }
 
@@ -46,29 +34,20 @@ public class CategoryService : ICategoryService
     /// Creates a new category
     /// Implements UC037 (Create Category)
     /// </summary>
-    public async Task<Result<CategoryDto>> CreateCategoryAsync(CreateCategoryDto createCategoryDto)
+    public async Task<Result<CategoryDto>> CreateCategoryAsync(CreateCategoryRequest request)
     {
         try
         {
-            // Validate input
-            var validationResult = await _createValidator.ValidateAsync(createCategoryDto);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                _logger.LogWarning("Category creation validation failed: {Errors}", errors);
-                return Result.Failure<CategoryDto>(errors);
-            }
-
             // Check if category name already exists
-            var nameExistsResult = await CategoryNameExistsAsync(createCategoryDto.Name);
+            var nameExistsResult = await CategoryNameExistsAsync(request.Name);
             if (nameExistsResult.IsSuccess && nameExistsResult.Value)
             {
-                _logger.LogWarning("Category creation failed: Category name '{Name}' already exists", createCategoryDto.Name);
+                _logger.LogWarning("Category creation failed: Category name '{Name}' already exists", request.Name);
                 return Result.Failure<CategoryDto>("A category with this name already exists.");
             }
 
             // Map DTO to entity
-            var category = _mapper.Map<Category>(createCategoryDto);
+            var category = _mapper.Map<Category>(request);
             
             // Set creation timestamp
             category.CreatedAt = DateTime.UtcNow;
@@ -76,18 +55,6 @@ public class CategoryService : ICategoryService
             // Add to repository
             await _unitOfWork.Repository<Category>().AddAsync(category);
             await _unitOfWork.SaveChangesAsync();
-
-            // Log the action
-            await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-            {
-                ActionType = AuditActionType.Create,
-                EntityType = "Category",
-                EntityId = category.Id.ToString(),
-                EntityName = category.Name,
-                Details = $"Created new category: {category.Name}",
-                AfterState = System.Text.Json.JsonSerializer.Serialize(category),
-                IsSuccess = true
-            });
 
             // Map entity to DTO and return
             var categoryDto = _mapper.Map<CategoryDto>(category);
@@ -105,63 +72,38 @@ public class CategoryService : ICategoryService
     /// Updates an existing category
     /// Implements UC038 (Update Category)
     /// </summary>
-    public async Task<Result<CategoryDto>> UpdateCategoryAsync(UpdateCategoryDto updateCategoryDto)
+    public async Task<Result<CategoryDto>> UpdateCategoryAsync(UpdateCategoryRequest request)
     {
         try
         {
-            // Validate input
-            var validationResult = await _updateValidator.ValidateAsync(updateCategoryDto);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                _logger.LogWarning("Category update validation failed: {Errors}", errors);
-                return Result.Failure<CategoryDto>(errors);
-            }
-
             // Retrieve existing category
-            var category = await _unitOfWork.Repository<Category>().GetAsync(c => c.Id == updateCategoryDto.Id);
+            var category = await _unitOfWork.Repository<Category>().GetAsync(c => c.Id == request.Id);
             if (category == null)
             {
-                _logger.LogWarning("Category update failed: Category not found with ID {CategoryId}", updateCategoryDto.Id);
-                return Result.Failure<CategoryDto>($"Category with ID {updateCategoryDto.Id} not found.");
+                _logger.LogWarning("Category update failed: Category not found with ID {CategoryId}", request.Id);
+                return Result.Failure<CategoryDto>($"Category with ID {request.Id} not found.");
             }
 
             // Check if updated name already exists (excluding current category)
-            if (category.Name.ToLower() != updateCategoryDto.Name.ToLower())
+            if (!category.Name.Equals(request.Name, StringComparison.CurrentCultureIgnoreCase))
             {
-                var nameExistsResult = await CategoryNameExistsAsync(updateCategoryDto.Name, updateCategoryDto.Id);
+                var nameExistsResult = await CategoryNameExistsAsync(request.Name, request.Id);
                 if (nameExistsResult.IsSuccess && nameExistsResult.Value)
                 {
-                    _logger.LogWarning("Category update failed: Category name '{Name}' already exists", updateCategoryDto.Name);
+                    _logger.LogWarning("Category update failed: Category name '{Name}' already exists", request.Name);
                     return Result.Failure<CategoryDto>("A category with this name already exists.");
                 }
             }
 
-            // Save original state for audit
-            var originalState = System.Text.Json.JsonSerializer.Serialize(category);
-
             // Update entity properties
-            category.Name = updateCategoryDto.Name;
-            category.Description = updateCategoryDto.Description;
-            category.CoverImageUrl = updateCategoryDto.CoverImageUrl;
+            category.Name = request.Name;
+            category.Description = request.Description;
+            category.CoverImageUrl = request.CoverImageUrl;
             category.LastModifiedAt = DateTime.UtcNow;
 
             // Save changes
             _unitOfWork.Repository<Category>().Update(category);
             await _unitOfWork.SaveChangesAsync();
-
-            // Log the action
-            await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-            {
-                ActionType = AuditActionType.Update,
-                EntityType = "Category",
-                EntityId = category.Id.ToString(),
-                EntityName = category.Name,
-                Details = $"Updated category: {category.Name}",
-                BeforeState = originalState,
-                AfterState = System.Text.Json.JsonSerializer.Serialize(category),
-                IsSuccess = true
-            });
 
             // Map entity to DTO and return
             var categoryDto = _mapper.Map<CategoryDto>(category);
@@ -195,34 +137,18 @@ public class CategoryService : ICategoryService
             }
 
             // Check if category has books
-            if (category.Books.Any())
+            if (category.Books.Count != 0)
             {
                 _logger.LogWarning("Category deletion failed: Category {CategoryId} has assigned books", id);
                 return Result.Failure<bool>("Cannot delete category because it has books assigned to it. Reassign books to other categories first.");
             }
 
-            // Save original state for audit
-            var originalState = System.Text.Json.JsonSerializer.Serialize(category);
-            var categoryName = category.Name;
-
             // Delete category
             _unitOfWork.Repository<Category>().Delete(category);
             await _unitOfWork.SaveChangesAsync();
 
-            // Log the action
-            await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-            {
-                ActionType = AuditActionType.Delete,
-                EntityType = "Category",
-                EntityId = id.ToString(),
-                EntityName = categoryName,
-                Details = $"Deleted category: {categoryName}",
-                BeforeState = originalState,
-                IsSuccess = true
-            });
-
-            _logger.LogInformation("Category deleted successfully: {CategoryId} - {CategoryName}", id, categoryName);
-            return Result.Success(true);
+            _logger.LogInformation("Category deleted successfully: {CategoryId} - {CategoryName}", id, category.Name);
+			return Result.Success(true);
         }
         catch (Exception ex)
         {
@@ -277,30 +203,21 @@ public class CategoryService : ICategoryService
     /// Gets a paginated list of categories based on search parameters
     /// Implements UC041 (Browse Categories)
     /// </summary>
-    public async Task<Result<PaginatedCategoriesDto>> GetCategoriesAsync(CategorySearchParametersDto searchParams)
+    public async Task<Result<PagedResult<CategoryDto>>> GetCategoriesAsync(CategorySearchRequest request)
     {
         try
         {
-            // Validate search parameters
-            var validationResult = await _searchValidator.ValidateAsync(searchParams);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                _logger.LogWarning("Category search validation failed: {Errors}", errors);
-                return Result.Failure<PaginatedCategoriesDto>(errors);
-            }
-
             // Set up predicate for filtering
             Expression<Func<Category, bool>>? predicate = null;
-            if (!string.IsNullOrWhiteSpace(searchParams.SearchTerm))
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
-                var searchTerm = searchParams.SearchTerm.ToLower();
-                predicate = c => c.Name.ToLower().Contains(searchTerm) || 
-                                (c.Description != null && c.Description.ToLower().Contains(searchTerm));
+                var searchTerm = request.SearchTerm.ToLower();
+                predicate = c => c.Name.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) || 
+                                (c.Description != null && c.Description.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase));
             }
 
             // If pagination is not applied, get all categories
-            if (!searchParams.ApplyPagination)
+            if (!request.ApplyPagination)
             {
                 var allCategories = await _unitOfWork.Repository<Category>().ListAsync(
                     predicate,
@@ -308,7 +225,7 @@ public class CategoryService : ICategoryService
                 
                 var categoryDtos = _mapper.Map<IEnumerable<CategoryDto>>(allCategories);
                 
-                var result = new PaginatedCategoriesDto
+                var result = new PagedResult<CategoryDto>
                 {
                     Items = [..categoryDtos],
                     Count = categoryDtos.Count(),
@@ -321,16 +238,15 @@ public class CategoryService : ICategoryService
             }
 
             // Apply pagination
-            var pagedRequest = new PagedRequest(searchParams.PageNumber, searchParams.PageSize);
             var pagedResult = await _unitOfWork.Repository<Category>().PagedListAsync(
-                pagedRequest,
+				request,
                 predicate,
                 q => q.OrderBy(c => c.Name));
 
             // Map to DTOs
             var categoryDtoList = _mapper.Map<IEnumerable<CategoryDto>>(pagedResult.Items);
             
-            var paginatedResult = new PaginatedCategoriesDto
+            var paginatedResult = new PagedResult<CategoryDto>
             {
                 Items = [..categoryDtoList],
                 Count = pagedResult.Count,
@@ -346,7 +262,7 @@ public class CategoryService : ICategoryService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving categories: {Message}", ex.Message);
-            return Result.Failure<PaginatedCategoriesDto>($"Failed to retrieve categories: {ex.Message}");
+            return Result.Failure<PagedResult<CategoryDto>>($"Failed to retrieve categories: {ex.Message}");
         }
     }
 
@@ -389,11 +305,11 @@ public class CategoryService : ICategoryService
             Expression<Func<Category, bool>> predicate;
             if (excludeId.HasValue)
             {
-                predicate = c => c.Name.ToLower() == name.ToLower() && c.Id != excludeId.Value;
+                predicate = c => c.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase) && c.Id != excludeId.Value;
             }
             else
             {
-                predicate = c => c.Name.ToLower() == name.ToLower();
+                predicate = c => c.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase);
             }
 
             var exists = await _unitOfWork.Repository<Category>().ExistsAsync(predicate);
@@ -423,7 +339,7 @@ public class CategoryService : ICategoryService
                 return Result.Failure<bool>($"Category with ID {id} not found.");
             }
 
-            return Result.Success(category.Books.Any());
+            return Result.Success(category.Books.Count != 0);
         }
         catch (Exception ex)
         {

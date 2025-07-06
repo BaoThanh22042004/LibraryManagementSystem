@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Domain.Enums;
 using Application.Validators;
 using Web.Extensions;
+using Application.Common;
+using FluentValidation;
 
 namespace Web.Controllers
 {
@@ -18,17 +20,17 @@ namespace Web.Controllers
         private readonly IBookService _bookService;
         private readonly ICategoryService _categoryService;
         private readonly ILogger<BookController> _logger;
-        private readonly BookSearchParametersDtoValidator _searchParametersValidator;
-        private readonly CreateBookDtoValidator _createBookValidator;
-        private readonly UpdateBookDtoValidator _updateBookValidator;
+        private readonly IValidator<BookSearchRequest> _searchParametersValidator;
+        private readonly IValidator<CreateBookRequest> _createBookValidator;
+        private readonly IValidator<UpdateBookRequest> _updateBookValidator;
 
 		public BookController(
             IBookService bookService,
             ICategoryService categoryService,
             ILogger<BookController> logger,
-            BookSearchParametersDtoValidator searchParametersValidator,
-            CreateBookDtoValidator createBookValidator,
-			UpdateBookDtoValidator updateBookValidator)
+			IValidator<BookSearchRequest> searchParametersValidator,
+			IValidator<CreateBookRequest> createBookValidator,
+			IValidator<UpdateBookRequest> updateBookValidator)
 		{
             _bookService = bookService;
             _categoryService = categoryService;
@@ -43,7 +45,7 @@ namespace Web.Controllers
         /// Implements UC013 (Search Books) and UC014 (Browse by Category).
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index(BookSearchParametersDto searchParams)
+        public async Task<IActionResult> Index(BookSearchRequest searchParams)
         {
             try
             {
@@ -52,17 +54,15 @@ namespace Web.Controllers
                 {
                     validationResult.AddToModelState(ModelState);
 
-                    return View(new PaginatedBooksDto 
+                    return View(new PagedResult<BookBasicDto> 
                     { 
-                        Items = [],
-                        Page = searchParams.PageNumber,
+                        Page = searchParams.Page,
                         PageSize = searchParams.PageSize,
-                        Count = 0
                     });
 				}
 
 				// Set default values if not provided
-				searchParams.PageNumber = searchParams.PageNumber <= 0 ? 1 : searchParams.PageNumber;
+				searchParams.Page = searchParams.Page <= 0 ? 1 : searchParams.Page;
                 searchParams.PageSize = searchParams.PageSize <= 0 ? 10 : searchParams.PageSize;
 
                 // Get books based on search parameters
@@ -72,12 +72,10 @@ namespace Web.Controllers
                 {
                     _logger.LogWarning("Failed to retrieve books: {Error}", booksResult.Error);
                     TempData["ErrorMessage"] = "Failed to retrieve books. Please try again later.";
-                    return View(new PaginatedBooksDto 
+                    return View(new PagedResult<BookBasicDto> 
                     { 
-                        Items = [],
-                        Page = searchParams.PageNumber,
+                        Page = searchParams.Page,
                         PageSize = searchParams.PageSize,
-                        Count = 0
                     });
                 }
 
@@ -103,13 +101,7 @@ namespace Web.Controllers
             {
                 _logger.LogError(ex, "Error retrieving books");
                 TempData["ErrorMessage"] = "An unexpected error occurred while retrieving books.";
-                return View(new PaginatedBooksDto
-                {
-                    Items = [],
-                    Page = 1,
-                    PageSize = 10,
-                    Count = 0
-                });
+                return View();
             }
         }
 
@@ -164,7 +156,7 @@ namespace Web.Controllers
                     TempData["WarningMessage"] = "Could not load categories. You can add categories to the book later.";
                 }
 
-                return View(new CreateBookDto { InitialCopies = 1 });
+                return View(new CreateBookRequest { InitialCopies = 1 });
             }
             catch (Exception ex)
             {
@@ -181,7 +173,7 @@ namespace Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Create(CreateBookDto model)
+        public async Task<IActionResult> Create(CreateBookRequest model)
         {
             try
             {
@@ -290,7 +282,7 @@ namespace Web.Controllers
                 }
 
                 var book = result.Value;
-                var updateDto = new UpdateBookDto
+                var updateDto = new UpdateBookRequest
                 {
                     Id = book.Id,
                     Title = book.Title,
@@ -333,7 +325,7 @@ namespace Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Edit(UpdateBookDto model)
+        public async Task<IActionResult> Edit(UpdateBookRequest model)
         {
             try
             {

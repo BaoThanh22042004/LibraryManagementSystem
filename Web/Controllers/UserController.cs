@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
 using Application.Validators;
 using Domain.Enums;
@@ -42,7 +43,7 @@ namespace Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(UserSearchRequest? searchRequest = null)
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            if (!User.TryGetUserId(out int userId))
             {
                 return RedirectToAction("Login", "Auth");
             }
@@ -55,25 +56,23 @@ namespace Web.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            searchRequest ??= new UserSearchRequest { PageNumber = 1, PageSize = 10 };
+            searchRequest ??= new();
 
             var validationResult = await _searchValidator.ValidateAsync(searchRequest);
             if (!validationResult.IsValid)
             {
                 TempData["ErrorMessage"] = "Invalid search parameters. Please try again.";
-                searchRequest = new UserSearchRequest { PageNumber = 1, PageSize = 10 };
+                searchRequest = new();
             }
 
-            var result = await _userService.SearchUsersAsync(searchRequest, userId);
+            var result = await _userService.SearchUsersAsync(searchRequest);
             if (!result.IsSuccess)
             {
                 TempData["ErrorMessage"] = result.Error;
-                return View(new UserSearchResponse
+                return View(new PagedResult<UserBasicDto>
                 {
-                    Items = [],
-                    Page = searchRequest.PageNumber,
+                    Page = searchRequest.Page,
                     PageSize = searchRequest.PageSize,
-                    Count = 0
                 });
             }
 
@@ -90,7 +89,7 @@ namespace Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            if (!User.TryGetUserId(out int userId))
             {
                 return RedirectToAction("Login", "Auth");
             }
@@ -102,7 +101,7 @@ namespace Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var result = await _userService.GetUserDetailsAsync(id, userId);
+            var result = await _userService.GetUserDetailsAsync(id);
             if (!result.IsSuccess)
             {
                 TempData["ErrorMessage"] = result.Error;
@@ -118,7 +117,7 @@ namespace Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            if (!User.TryGetUserId(out int userId))
             {
                 return RedirectToAction("Login", "Auth");
             }
@@ -145,7 +144,7 @@ namespace Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateUserRequest model)
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            if (!User.TryGetUserId(out int userId))
             {
                 return RedirectToAction("Login", "Auth");
             }
@@ -184,7 +183,7 @@ namespace Web.Controllers
                 return View(model);
             }
 
-            var result = await _userService.CreateUserAsync(model, userId);
+            var result = await _userService.CreateUserAsync(model);
             if (!result.IsSuccess)
             {
                 ModelState.AddModelError(string.Empty, result.Error);
@@ -209,7 +208,7 @@ namespace Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            if (!User.TryGetUserId(out int userId))
             {
                 return RedirectToAction("Login", "Auth");
             }
@@ -221,7 +220,7 @@ namespace Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var result = await _userService.GetUserDetailsAsync(id, userId);
+            var result = await _userService.GetUserDetailsAsync(id);
             if (!result.IsSuccess)
             {
                 TempData["ErrorMessage"] = result.Error;
@@ -248,7 +247,7 @@ namespace Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(UpdateUserRequest model)
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            if (!User.TryGetUserId(out int userId))
             {
                 return RedirectToAction("Login", "Auth");
             }
@@ -267,7 +266,7 @@ namespace Web.Controllers
                 return View(model);
             }
 
-            var result = await _userService.UpdateUserAsync(model, userId);
+            var result = await _userService.UpdateUserAsync(model);
             if (!result.IsSuccess)
             {
                 ModelState.AddModelError(string.Empty, result.Error);
@@ -287,7 +286,7 @@ namespace Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            if (!User.TryGetUserId(out int userId))
             {
                 return RedirectToAction("Login", "Auth");
             }
@@ -299,7 +298,7 @@ namespace Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var result = await _userService.GetUserDetailsAsync(id, userId);
+            var result = await _userService.GetUserDetailsAsync(id);
             if (!result.IsSuccess)
             {
                 TempData["ErrorMessage"] = result.Error;
@@ -335,7 +334,7 @@ namespace Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            if (!User.TryGetUserId(out int userId))
             {
                 return RedirectToAction("Login", "Auth");
             }
@@ -354,7 +353,7 @@ namespace Web.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
-            var result = await _userService.DeleteUserAsync(id, userId);
+            var result = await _userService.DeleteUserAsync(id);
             if (!result.IsSuccess)
             {
                 TempData["ErrorMessage"] = result.Error;

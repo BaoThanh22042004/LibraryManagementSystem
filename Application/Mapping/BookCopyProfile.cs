@@ -15,7 +15,7 @@ public class BookCopyProfile : Profile
     public BookCopyProfile()
     {
         // Map from CreateBookCopyDto to BookCopy entity
-        CreateMap<CreateBookCopyDto, BookCopy>()
+        CreateMap<CreateBookCopyRequest, BookCopy>()
             .ForMember(dest => dest.Book, opt => opt.Ignore())
             .ForMember(dest => dest.Loans, opt => opt.Ignore())
             .ForMember(dest => dest.Reservations, opt => opt.Ignore());

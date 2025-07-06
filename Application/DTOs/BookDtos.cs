@@ -7,7 +7,7 @@ namespace Application.DTOs;
 /// Data transfer object for creating a new book
 /// Supports UC010 (Add Book)
 /// </summary>
-public class CreateBookDto
+public record CreateBookRequest
 {
     /// <summary>
     /// The title of the book (required)
@@ -59,7 +59,7 @@ public class CreateBookDto
 /// Data transfer object for updating an existing book
 /// Supports UC011 (Update Book)
 /// </summary>
-public class UpdateBookDto
+public record UpdateBookRequest
 {
     /// <summary>
     /// The ID of the book to update
@@ -116,7 +116,7 @@ public class UpdateBookDto
 /// Basic book information DTO for list views
 /// Supports UC013 (Search Books), UC014 (Browse by Category)
 /// </summary>
-public class BookBasicDto
+public record BookBasicDto
 {
     /// <summary>
     /// The unique identifier of the book
@@ -163,7 +163,7 @@ public class BookBasicDto
 /// Detailed book information DTO
 /// Supports UC013 (Search Books) for detailed view
 /// </summary>
-public class BookDetailDto : BookBasicDto
+public record BookDetailDto : BookBasicDto
 {
     /// <summary>
     /// The publisher of the book
@@ -202,16 +202,10 @@ public class BookDetailDto : BookBasicDto
 }
 
 /// <summary>
-/// Data transfer object for providing a paginated list of books
-/// Supports UC013 (Search Books), UC014 (Browse by Category)
-/// </summary>
-public class PaginatedBooksDto : PagedResult<BookBasicDto>;
-
-/// <summary>
 /// Data transfer object for providing book search parameters
 /// Supports UC013 (Search Books)
 /// </summary>
-public class BookSearchParametersDto
+public record BookSearchRequest : PagedRequest
 {
     /// <summary>
     /// Optional search term to filter books by title, author, or ISBN
@@ -222,14 +216,4 @@ public class BookSearchParametersDto
     /// Optional category ID to filter books by category
     /// </summary>
     public int? CategoryId { get; set; }
-    
-    /// <summary>
-    /// Page number for pagination (default: 1)
-    /// </summary>
-    public int PageNumber { get; set; } = 1;
-    
-    /// <summary>
-    /// Page size for pagination (default: 10)
-    /// </summary>
-    public int PageSize { get; set; } = 10;
 }

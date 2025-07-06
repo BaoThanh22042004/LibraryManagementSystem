@@ -18,35 +18,25 @@ public class UserService : IUserService
 	private readonly IUnitOfWork _unitOfWork;
 	private readonly IMapper _mapper;
 	private readonly IAuthService _authService;
-	private readonly IAuditService _auditService;
 	private readonly ILogger<UserService> _logger;
 
 	public UserService(
 		IUnitOfWork unitOfWork,
 		IMapper mapper,
 		IAuthService authService,
-		IAuditService auditService,
 		ILogger<UserService> logger)
 	{
 		_unitOfWork = unitOfWork;
 		_mapper = mapper;
 		_authService = authService;
-		_auditService = auditService;
 		_logger = logger;
 	}
 
 	/// <inheritdoc/>
-	public async Task<Result<int>> CreateUserAsync(CreateUserRequest request, int creatorId)
+	public async Task<Result<int>> CreateUserAsync(CreateUserRequest request)
 	{
 		try
 		{
-			// Check if creator has permission to create this type of user
-			var permissionCheck = await CheckUserPermissionForRoleCreationAsync(creatorId, request.Role);
-			if (permissionCheck.IsFailure)
-			{
-				return Result.Failure<int>(permissionCheck.Error);
-			}
-
 			// Validate the password
 			var passwordValidation = _authService.ValidatePassword(request.Password);
 			if (passwordValidation.IsFailure)
@@ -121,16 +111,6 @@ public class UserService : IUserService
 			await _unitOfWork.SaveChangesAsync();
 			await _unitOfWork.CommitTransactionAsync();
 
-			// Log user creation
-			await _auditService.LogUserManagementAsync(
-				creatorId,
-				user.Id,
-				AuditActionType.Create,
-				true,
-				$"Created new {user.Role} user: {user.FullName} ({user.Email})",
-				null,
-				JsonSerializer.Serialize(new { user.Id, user.Email, user.FullName, user.Role, user.Status }));
-
 			return Result.Success(user.Id);
 		}
 		catch (Exception ex)
@@ -142,24 +122,17 @@ public class UserService : IUserService
 	}
 
 	/// <inheritdoc/>
-	public async Task<Result<UserDetailsResponse>> GetUserDetailsAsync(int id, int requesterId)
+	public async Task<Result<UserDetailsDto>> GetUserDetailsAsync(int id)
 	{
 		try
 		{
-			// Check permission
-			var permissionCheck = await CheckUserPermissionAsync(requesterId, id, UserAction.View);
-			if (permissionCheck.IsFailure)
-			{
-				return Result.Failure<UserDetailsResponse>(permissionCheck.Error);
-			}
-
 			// Get user with role-specific details
 			var userRepo = _unitOfWork.Repository<User>();
 			var user = await userRepo.GetAsync(u => u.Id == id);
 
 			if (user == null)
 			{
-				return Result.Failure<UserDetailsResponse>("User not found");
+				return Result.Failure<UserDetailsDto>("User not found");
 			}
 
 			// Get member or librarian details if needed
@@ -175,7 +148,7 @@ public class UserService : IUserService
 			}
 
 			// Map to response
-			var response = _mapper.Map<UserDetailsResponse>(user);
+			var response = _mapper.Map<UserDetailsDto>(user);
 
 			// Get additional information for Member
 			if (user.Role == UserRole.Member && user.Member != null)
@@ -198,38 +171,20 @@ public class UserService : IUserService
 				}
 			}
 
-			// Log access
-			if (requesterId != id)  // Don't log when users view their own profile
-			{
-				await _auditService.LogUserManagementAsync(
-					requesterId,
-					id,
-					AuditActionType.AccessSensitiveData,
-					true,
-					$"User {requesterId} viewed details of user {id}");
-			}
-
 			return Result.Success(response);
 		}
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Error retrieving user details for ID {Id}", id);
-			return Result.Failure<UserDetailsResponse>("An error occurred while retrieving user details");
+			return Result.Failure<UserDetailsDto>("An error occurred while retrieving user details");
 		}
 	}
 
 	/// <inheritdoc/>
-	public async Task<Result> UpdateUserAsync(UpdateUserRequest request, int updaterId)
+	public async Task<Result> UpdateUserAsync(UpdateUserRequest request)
 	{
 		try
 		{
-			// Check permission
-			var permissionCheck = await CheckUserPermissionAsync(updaterId, request.Id, UserAction.Update);
-			if (permissionCheck.IsFailure)
-			{
-				return Result.Failure(permissionCheck.Error);
-			}
-
 			// Get user
 			var userRepo = _unitOfWork.Repository<User>();
 			var user = await userRepo.GetAsync(u => u.Id == request.Id);
@@ -238,16 +193,6 @@ public class UserService : IUserService
 			{
 				return Result.Failure("User not found");
 			}
-
-			// Capture before state for audit
-			var beforeState = JsonSerializer.Serialize(new
-			{
-				user.FullName,
-				user.Email,
-				user.Phone,
-				user.Address,
-				user.Status
-			});
 
 			// Check if email is being changed
 			var emailChanged = !string.IsNullOrEmpty(request.Email) &&
@@ -279,39 +224,11 @@ public class UserService : IUserService
 			// Update status if provided and changed
 			if (request.Status.HasValue && request.Status.Value != user.Status)
 			{
-				// Check if status change reason is provided (required for status changes)
-				if (string.IsNullOrWhiteSpace(request.StatusChangeReason) && updaterId != request.Id)
-				{
-					return Result.Failure("Status change reason is required");
-				}
-
 				user.Status = request.Status.Value;
 			}
 
 			userRepo.Update(user);
 			await _unitOfWork.SaveChangesAsync();
-
-			// Capture after state for audit
-			var afterState = JsonSerializer.Serialize(new
-			{
-				user.FullName,
-				user.Email,
-				user.Phone,
-				user.Address,
-				user.Status
-			});
-
-			// Log update
-			await _auditService.LogUserManagementAsync(
-				updaterId,
-				request.Id,
-				AuditActionType.Update,
-				true,
-				!string.IsNullOrWhiteSpace(request.StatusChangeReason)
-					? $"Updated user {request.Id} with status change reason: {request.StatusChangeReason}"
-					: $"Updated user {request.Id}",
-				beforeState,
-				afterState);
 
 			return Result.Success();
 		}
@@ -323,17 +240,10 @@ public class UserService : IUserService
 	}
 
 	/// <inheritdoc/>
-	public async Task<Result> DeleteUserAsync(int id, int deleterId)
+	public async Task<Result> DeleteUserAsync(int id)
 	{
 		try
 		{
-			// Check permission
-			var permissionCheck = await CheckUserPermissionAsync(deleterId, id, UserAction.Delete);
-			if (permissionCheck.IsFailure)
-			{
-				return Result.Failure(permissionCheck.Error);
-			}
-
 			// Get user
 			var userRepo = _unitOfWork.Repository<User>();
 			var user = await userRepo.GetAsync(u => u.Id == id);
@@ -382,28 +292,10 @@ public class UserService : IUserService
 				}
 			}
 
-			// Capture user info for audit log
-			var userInfo = new
-			{
-				user.Id,
-				user.FullName,
-				user.Email,
-				user.Role
-			};
-
 			// Delete user
 			userRepo.Delete(user);
 			await _unitOfWork.SaveChangesAsync();
 			await _unitOfWork.CommitTransactionAsync();
-
-			// Log deletion
-			await _auditService.LogUserManagementAsync(
-				deleterId,
-				id,
-				AuditActionType.Delete,
-				true,
-				$"Deleted {user.Role} user: {user.FullName} ({user.Email})",
-				JsonSerializer.Serialize(userInfo));
 
 			return Result.Success();
 		}
@@ -416,33 +308,13 @@ public class UserService : IUserService
 	}
 
 	/// <inheritdoc/>
-	public async Task<Result<UserSearchResponse>> SearchUsersAsync(UserSearchRequest request, int requesterId)
+	public async Task<Result<PagedResult<UserBasicDto>>> SearchUsersAsync(UserSearchRequest request)
 	{
 		try
 		{
-			// Get requester role
-			var requesterRole = await GetUserRoleAsync(requesterId);
-			if (requesterRole == null)
-			{
-				return Result.Failure<UserSearchResponse>("User not found");
-			}
-
 			// Validate search permissions based on role
 			var userRepo = _unitOfWork.Repository<User>();
 			var query = userRepo.Query();
-
-			// Apply role-based filtering
-			if (requesterRole == UserRole.Member)
-			{
-				// Members can only see their own profile
-				query = query.Where(u => u.Id == requesterId);
-			}
-			else if (requesterRole == UserRole.Librarian)
-			{
-				// Librarians can see Members and themselves
-				query = query.Where(u => u.Role == UserRole.Member || u.Id == requesterId);
-			}
-			// Admins can see everyone, so no additional filtering needed
 
 			// Apply search filters
 			if (request.Role.HasValue)
@@ -457,26 +329,18 @@ public class UserService : IUserService
 
 			if (!string.IsNullOrWhiteSpace(request.SearchTerm))
 			{
-				var searchTerm = request.SearchTerm;
 				query = query.Where(u =>
-					u.FullName.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) ||
-					u.Email.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) ||
-					(u.Phone != null && u.Phone.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase)));
+					u.FullName.Contains(request.SearchTerm, StringComparison.CurrentCultureIgnoreCase) ||
+					u.Email.Contains(request.SearchTerm, StringComparison.CurrentCultureIgnoreCase) ||
+					(u.Phone != null && u.Phone.Contains(request.SearchTerm, StringComparison.CurrentCultureIgnoreCase)));
 
 				// Note: The following complex conditions would be handled in the database query
 				// This is a simplified version for the repository pattern
 			}
 
-			// Create paged request
-			var pagedRequest = new PagedRequest
-			{
-				Page = request.PageNumber,
-				PageSize = request.PageSize
-			};
-
 			// Execute query with paging
 			var pagedResult = await userRepo.PagedListAsync(
-				pagedRequest,
+				request,
 				null, // predicate is applied directly in the query
 				query => query.OrderBy(u => u.Id),
 				true); // asNoTracking
@@ -505,34 +369,20 @@ public class UserService : IUserService
 			}
 
 			// Map to response DTOs
-			var response = new UserSearchResponse
+			var response = new PagedResult<UserBasicDto>
 			{
-				Items = _mapper.Map<List<UserSummaryDto>>(users),
+				Items = _mapper.Map<List<UserBasicDto>>(users),
 				Count = pagedResult.Count,
 				Page = pagedResult.Page,
 				PageSize = pagedResult.PageSize
 			};
-
-			// Log search if not done by a member (to avoid excessive logging)
-			if (requesterRole != UserRole.Member)
-			{
-				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-				{
-					UserId = requesterId,
-					ActionType = AuditActionType.AccessSensitiveData,
-					EntityType = "User",
-					EntityId = null, // Multiple users
-					Details = $"Searched users with filters: Role={request.Role}, Status={request.Status}, Term={request.SearchTerm}",
-					IsSuccess = true
-				});
-			}
 
 			return Result.Success(response);
 		}
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Error searching users with request {@Request}", request);
-			return Result.Failure<UserSearchResponse>("An error occurred while searching users");
+			return Result.Failure<PagedResult<UserBasicDto>>("An error occurred while searching users");
 		}
 	}
 
@@ -632,7 +482,7 @@ public class UserService : IUserService
 	}
 
 	/// <inheritdoc/>
-	public async Task<Result<MemberDeletionValidationResult>> CanDeleteMemberAsync(int memberId)
+	public async Task<Result<MemberDeletionValidationDto>> CanDeleteMemberAsync(int memberId)
 	{
 		try
 		{
@@ -641,10 +491,10 @@ public class UserService : IUserService
 
 			if (member == null)
 			{
-				return Result.Failure<MemberDeletionValidationResult>("Member not found");
+				return Result.Failure<MemberDeletionValidationDto>("Member not found");
 			}
 
-			var result = new MemberDeletionValidationResult
+			var result = new MemberDeletionValidationDto
 			{
 				CanDelete = true,
 				HasActiveLoans = false,
@@ -696,44 +546,38 @@ public class UserService : IUserService
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Error checking if member {MemberId} can be deleted", memberId);
-			return Result.Failure<MemberDeletionValidationResult>("An error occurred while validating member deletion");
+			return Result.Failure<MemberDeletionValidationDto>("An error occurred while validating member deletion");
+		}
+	}
+
+	public async Task<Result<UserDetailsDto>> GetUserDetailsByMemberIdAsync(int memberId)
+	{
+		try
+		{
+			var memberRepo = _unitOfWork.Repository<Member>();
+			var member = await memberRepo.GetAsync(m => m.Id == memberId);
+			if (member == null)
+			{
+				return Result.Failure<UserDetailsDto>("Member not found");
+			}
+			var userRepo = _unitOfWork.Repository<User>();
+			var user = await userRepo.GetAsync(u => u.Id == member.UserId);
+			if (user == null)
+			{
+				return Result.Failure<UserDetailsDto>("User not found for the given member");
+			}
+			var userDetails = _mapper.Map<UserDetailsDto>(user);
+			userDetails.MemberDetails = _mapper.Map<MemberDetailsDto>(member);
+			return Result.Success(userDetails);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Error retrieving user details for member {MemberId}", memberId);
+			return Result.Failure<UserDetailsDto>("An error occurred while retrieving user details by member ID");
 		}
 	}
 
 	#region Helper Methods
-
-	private async Task<Result> CheckUserPermissionForRoleCreationAsync(int creatorId, UserRole roleToCreate)
-	{
-		var userRepo = _unitOfWork.Repository<User>();
-		var creator = await userRepo.GetAsync(u => u.Id == creatorId);
-
-		if (creator == null)
-		{
-			return Result.Failure("Creator user not found");
-		}
-
-		switch (creator.Role)
-		{
-			case UserRole.Member:
-				// Members cannot create any users
-				return Result.Failure("Members cannot create user accounts");
-
-			case UserRole.Librarian:
-				// Librarians can only create Members
-				if (roleToCreate != UserRole.Member)
-				{
-					return Result.Failure("Librarians can only create Member accounts");
-				}
-				return Result.Success();
-
-			case UserRole.Admin:
-				// Admins can create any type of user
-				return Result.Success();
-
-			default:
-				return Result.Failure("Unknown role");
-		}
-	}
 
 	private async Task<UserRole?> GetUserRoleAsync(int userId)
 	{
@@ -742,7 +586,7 @@ public class UserService : IUserService
 		return user?.Role;
 	}
 
-	private string GenerateMembershipNumber()
+	private static string GenerateMembershipNumber()
 	{
 		// Generate a random membership number with format: LIB-YYYYMMDD-XXXX
 		// Where YYYYMMDD is the current date and XXXX is a random number
@@ -753,7 +597,7 @@ public class UserService : IUserService
 		return $"LIB-{date}-{randomPart}";
 	}
 
-	private string GenerateEmployeeId()
+	private static string GenerateEmployeeId()
 	{
 		// Generate a random employee ID with format: EMP-YYYYMM-XXXX
 		// Where YYYYMM is the current year and month and XXXX is a random number

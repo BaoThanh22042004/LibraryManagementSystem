@@ -35,7 +35,7 @@ namespace Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            if (!User.TryGetUserId(out int userId))
             {
                 return RedirectToAction("Login", "Auth");
             }
@@ -56,7 +56,7 @@ namespace Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit()
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            if (!User.TryGetUserId(out int userId))
             {
                 return RedirectToAction("Login", "Auth");
             }
@@ -87,7 +87,7 @@ namespace Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(UpdateProfileRequest model)
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int userId))
+            if (!User.TryGetUserId(out int userId))
             {
                 return RedirectToAction("Login", "Auth");
             }

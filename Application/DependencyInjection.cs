@@ -29,14 +29,15 @@ public static class DependencyInjection
         // Register services
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IEmailService, EmailService>();
-        services.AddScoped<IProfileService, ProfileService>();
-        services.AddScoped<IUserService, UserService>();
-        
-        // Register book and category management services
-        services.AddScoped<ICategoryService, CategoryService>();
-        services.AddScoped<IBookService, BookService>();
         services.AddScoped<IBookCopyService, BookCopyService>();
+        services.AddScoped<IBookService, BookService>();
+        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IFineService, FineService>();
+        services.AddScoped<ILoanService, LoanService>();
+        services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<IReservationService, ReservationService>();
+        services.AddScoped<IUserService, UserService>();
         
         return services;
     }

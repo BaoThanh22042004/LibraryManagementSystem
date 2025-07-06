@@ -7,8 +7,6 @@ using Domain.Entities;
 using Domain.Enums;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Application.Services;
 
@@ -20,7 +18,6 @@ public class AuthService : IAuthService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IEmailService _emailService;
-    private readonly IAuditService _auditService;
     private readonly ILogger<AuthService> _logger;
 
     // Constants
@@ -33,13 +30,11 @@ public class AuthService : IAuthService
         IUnitOfWork unitOfWork,
         IMapper mapper,
         IEmailService emailService,
-        IAuditService auditService,
         ILogger<AuthService> logger)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _emailService = emailService;
-        _auditService = auditService;
         _logger = logger;
     }
 
@@ -54,28 +49,12 @@ public class AuthService : IAuthService
 
             if (user == null)
             {
-                await _auditService.LogAuthenticationAsync(
-                    null,
-                    AuditActionType.LoginFailed,
-                    false,
-                    $"Login failed for email {request.Email}: User not found",
-                    null,
-                    "User not found");
-
                 return Result.Failure<LoginResponse>("Invalid email or password");
             }
 
             // Check account status
             if (user.Status != UserStatus.Active)
             {
-                await _auditService.LogAuthenticationAsync(
-                    user.Id,
-                    AuditActionType.LoginFailed,
-                    false,
-                    $"Login failed for user {user.Id}: Account not active",
-                    null,
-                    $"Account status is {user.Status}");
-
                 return Result.Failure<LoginResponse>($"Account is {user.Status.ToString().ToLower()}");
             }
 
@@ -83,14 +62,6 @@ public class AuthService : IAuthService
             var lockoutResult = await CheckAccountLockoutStatusAsync(request.Email);
             if (lockoutResult.IsSuccess && lockoutResult.Value.HasValue)
             {
-                await _auditService.LogAuthenticationAsync(
-                    user.Id,
-                    AuditActionType.LoginFailed,
-                    false,
-                    $"Login failed for user {user.Id}: Account locked",
-                    null,
-                    $"Account locked until {lockoutResult.Value}");
-
                 var remainingMinutes = Math.Ceiling((lockoutResult.Value.Value - DateTime.UtcNow).TotalMinutes);
                 return Result.Failure<LoginResponse>($"Account is temporarily locked. Try again in {remainingMinutes} minutes");
             }
@@ -100,14 +71,6 @@ public class AuthService : IAuthService
             {
                 var failedResult = await RecordFailedLoginAttemptAsync(request.Email);
                 
-                await _auditService.LogAuthenticationAsync(
-                    user.Id,
-                    AuditActionType.LoginFailed,
-                    false,
-                    $"Login failed for user {user.Id}: Invalid password",
-                    null,
-                    "Invalid password");
-
                 if (failedResult.IsSuccess && failedResult.Value.HasValue)
                 {
                     var remainingMinutes = Math.Ceiling((failedResult.Value.Value - DateTime.UtcNow).TotalMinutes);
@@ -122,13 +85,6 @@ public class AuthService : IAuthService
 
             // Create login response
             var loginResponse = _mapper.Map<LoginResponse>(user);
-
-            // Log successful login
-            await _auditService.LogAuthenticationAsync(
-                user.Id,
-                AuditActionType.Login,
-                true,
-                $"User {user.Id} logged in successfully");
 
             return Result.Success(loginResponse);
         }
@@ -192,18 +148,6 @@ public class AuthService : IAuthService
             await _unitOfWork.SaveChangesAsync();
             await _unitOfWork.CommitTransactionAsync();
 
-            // Log registration
-            await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
-            {
-                UserId = user.Id,
-                ActionType = AuditActionType.Create,
-                EntityType = "User",
-                EntityId = user.Id.ToString(),
-                EntityName = user.FullName,
-                Details = "User self-registered as Member",
-                IsSuccess = true
-            });
-
             return Result.Success(user.Id);
         }
         catch (Exception ex)
@@ -230,30 +174,14 @@ public class AuthService : IAuthService
             // Verify current password
             if (!PasswordHasher.VerifyPassword(request.CurrentPassword, user.PasswordHash))
             {
-                await _auditService.LogAuthenticationAsync(
-                    user.Id,
-                    AuditActionType.PasswordChangeFailed,
-                    false,
-                    $"Password change failed for user {user.Id}: Current password invalid",
-                    null,
-                    "Current password is incorrect");
-
-                return Result.Failure("Current password is incorrect");
+				return Result.Failure("Current password is incorrect");
             }
 
             // Validate new password
             var passwordValidation = ValidatePassword(request.NewPassword);
             if (passwordValidation.IsFailure)
             {
-                await _auditService.LogAuthenticationAsync(
-                    user.Id,
-                    AuditActionType.PasswordChangeFailed,
-                    false,
-                    $"Password change failed for user {user.Id}: New password invalid",
-                    null,
-                    passwordValidation.Error);
-
-                return Result.Failure(passwordValidation.Error);
+				return Result.Failure(passwordValidation.Error);
             }
 
             // Change password
@@ -262,14 +190,7 @@ public class AuthService : IAuthService
             userRepo.Update(user);
             await _unitOfWork.SaveChangesAsync();
 
-            // Log password change
-            await _auditService.LogAuthenticationAsync(
-                user.Id,
-                AuditActionType.PasswordChanged,
-                true,
-                $"Password changed for user {user.Id}");
-
-            return Result.Success();
+			return Result.Success();
         }
         catch (Exception ex)
         {
@@ -302,15 +223,7 @@ public class AuthService : IAuthService
 
             if (recentRequests >= MAX_RESET_REQUESTS_PER_HOUR)
             {
-                await _auditService.LogAuthenticationAsync(
-                    user.Id,
-                    AuditActionType.PasswordReset,
-                    false,
-                    $"Password reset rate limit exceeded for user {user.Id}",
-                    null,
-                    "Rate limit exceeded");
-
-                return Result.Failure($"Too many reset requests. Please try again later.");
+				return Result.Failure($"Too many reset requests. Please try again later.");
             }
 
             // Invalidate existing tokens
@@ -337,14 +250,7 @@ public class AuthService : IAuthService
             // Send email
             await _emailService.SendPasswordResetEmailAsync(user.Email, user.FullName, resetToken.Token);
 
-            // Log token creation
-            await _auditService.LogAuthenticationAsync(
-                user.Id,
-                AuditActionType.PasswordReset,
-                true,
-                $"Password reset requested for user {user.Id}");
-
-            return Result.Success();
+			return Result.Success();
         }
         catch (Exception ex)
         {
@@ -399,14 +305,7 @@ public class AuthService : IAuthService
             
             await _unitOfWork.SaveChangesAsync();
 
-            // Log password reset
-            await _auditService.LogAuthenticationAsync(
-                user.Id,
-                AuditActionType.PasswordChanged,
-                true,
-                $"Password reset completed for user {user.Id}");
-
-            return Result.Success();
+			return Result.Success();
         }
         catch (Exception ex)
         {
@@ -434,14 +333,7 @@ public class AuthService : IAuthService
             if (user.FailedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS)
             {
                 user.LockoutEndTime = DateTime.UtcNow.AddMinutes(LOCKOUT_DURATION_MINUTES);
-                
-                await _auditService.LogAuthenticationAsync(
-                    user.Id,
-                    AuditActionType.AccountLocked,
-                    true,
-                    $"Account locked for user {user.Id} due to too many failed login attempts",
-                    null);
-            }
+			}
 
             userRepo.Update(user);
             await _unitOfWork.SaveChangesAsync();
@@ -487,7 +379,7 @@ public class AuthService : IAuthService
     }
 
     /// <inheritdoc/>
-    public async Task ClearFailedLoginAttemptsAsync(int userId)
+    public async Task<Result> ClearFailedLoginAttemptsAsync(int userId)
     {
         try
         {
@@ -496,7 +388,7 @@ public class AuthService : IAuthService
 
             if (user == null)
             {
-                return;
+                return Result.Failure("User not found");
             }
 
             if (user.FailedLoginAttempts > 0 || user.LockoutEndTime.HasValue)
@@ -506,11 +398,13 @@ public class AuthService : IAuthService
                 userRepo.Update(user);
                 await _unitOfWork.SaveChangesAsync();
             }
-        }
+            return Result.Success();
+		}
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error clearing failed login attempts for user {UserId}", userId);
-        }
+            return Result.Failure("An error occurred while clearing failed login attempts");
+		}
     }
 
     /// <inheritdoc/>

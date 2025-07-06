@@ -7,9 +7,9 @@ namespace Application.Validators;
 /// Validator for CreateCategoryDto
 /// Enforces business rules for category creation
 /// </summary>
-public class CreateCategoryDtoValidator : AbstractValidator<CreateCategoryDto>
+public class CreateCategoryRequestValidator : AbstractValidator<CreateCategoryRequest>
 {
-    public CreateCategoryDtoValidator()
+    public CreateCategoryRequestValidator()
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Category name is required")
@@ -24,9 +24,9 @@ public class CreateCategoryDtoValidator : AbstractValidator<CreateCategoryDto>
 /// Validator for UpdateCategoryDto
 /// Enforces business rules for category updates
 /// </summary>
-public class UpdateCategoryDtoValidator : AbstractValidator<UpdateCategoryDto>
+public class UpdateCategoryRequestValidator : AbstractValidator<UpdateCategoryRequest>
 {
-    public UpdateCategoryDtoValidator()
+    public UpdateCategoryRequestValidator()
     {
         RuleFor(x => x.Id)
             .GreaterThan(0).WithMessage("Invalid category ID");
@@ -44,11 +44,11 @@ public class UpdateCategoryDtoValidator : AbstractValidator<UpdateCategoryDto>
 /// Validator for CategorySearchParametersDto
 /// Enforces valid search parameters
 /// </summary>
-public class CategorySearchParametersDtoValidator : AbstractValidator<CategorySearchParametersDto>
+public class CategorySearchRequestValidator : AbstractValidator<CategorySearchRequest>
 {
-    public CategorySearchParametersDtoValidator()
+    public CategorySearchRequestValidator()
     {
-        RuleFor(x => x.PageNumber)
+        RuleFor(x => x.Page)
             .GreaterThan(0).WithMessage("Page number must be greater than 0");
 
         RuleFor(x => x.PageSize)

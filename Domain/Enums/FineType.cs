@@ -17,5 +17,9 @@ public enum FineType
 	/// <summary>
 	/// Fine for damaged books.
 	/// </summary>
-	Damaged = 3
+	Damaged = 3,
+	/// <summary>
+	///	Fine for other types of violations (e.g., policy breaches).
+	///	</summary>
+	Other = 4
 }
