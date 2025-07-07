@@ -615,7 +615,7 @@ namespace Web.Controllers
                     TempData["ErrorMessage"] = result.Error;
                     return RedirectToAction(nameof(OverdueReport));
                 }
-                var csv = Web.Extensions.CsvExportExtensions.ToCsv(result.Value);
+                var csv = CsvExportExtensions.ToCsv(result.Value);
                 var fileName = $"OverdueLoans_{DateTime.UtcNow:yyyyMMdd}.csv";
                 // Audit log
                 if (User.TryGetUserId(out int staffId))

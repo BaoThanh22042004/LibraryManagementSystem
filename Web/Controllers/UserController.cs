@@ -116,6 +116,17 @@ namespace Web.Controllers
                 if (!permissionResult.IsSuccess)
                 {
                     TempData["ErrorMessage"] = permissionResult.Error;
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Read,
+                        EntityType = "User",
+                        EntityId = id.ToString(),
+                        EntityName = null,
+                        Details = "Attempted to view user info without permission: " + permissionResult.Error,
+                        IsSuccess = false,
+                        ErrorMessage = permissionResult.Error
+                    });
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -123,8 +134,31 @@ namespace Web.Controllers
                 if (!result.IsSuccess)
                 {
                     TempData["ErrorMessage"] = result.Error;
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Read,
+                        EntityType = "User",
+                        EntityId = id.ToString(),
+                        EntityName = null,
+                        Details = "User info view failed: " + result.Error,
+                        IsSuccess = false,
+                        ErrorMessage = result.Error
+                    });
                     return RedirectToAction(nameof(Index));
                 }
+
+                // Audit successful user info view
+                await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                {
+                    UserId = userId,
+                    ActionType = AuditActionType.Read,
+                    EntityType = "User",
+                    EntityId = id.ToString(),
+                    EntityName = result.Value.FullName,
+                    Details = "User info viewed successfully.",
+                    IsSuccess = true
+                });
 
                 return View(result.Value);
             }
@@ -192,18 +226,53 @@ namespace Web.Controllers
                 if (!roleCheckResult.IsSuccess)
                 {
                     TempData["ErrorMessage"] = "Access denied. Only librarians and administrators can create users.";
+                    // Audit failed attempt
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Create,
+                        EntityType = "User",
+                        EntityId = null,
+                        EntityName = model.FullName,
+                        Details = "Attempted to create user but lacked permissions.",
+                        IsSuccess = false
+                    });
                     return RedirectToAction("Index", "Home");
                 }
 
-                // BR-01: Verify admin role for creating librarians
-                if (model.Role != UserRole.Member)
+                // BR-01/Role logic: Only Admin can create Librarians, no one can create Admins
+                if (model.Role == UserRole.Admin)
+                {
+                    ModelState.AddModelError(string.Empty, "Creating Admin users via the UI is not allowed.");
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Create,
+                        EntityType = "User",
+                        EntityId = null,
+                        EntityName = model.FullName,
+                        Details = "Attempted to create Admin user via UI.",
+                        IsSuccess = false
+                    });
+                    ViewData["CanCreateLibrarian"] = await _userService.CheckUserRoleAsync(userId, UserRole.Admin).ContinueWith(t => t.Result.IsSuccess);
+                    return View(model);
+                }
+                if (model.Role == UserRole.Librarian)
                 {
                     var adminCheckResult = await _userService.CheckUserRoleAsync(userId, UserRole.Admin);
                     if (!adminCheckResult.IsSuccess)
                     {
                         ModelState.AddModelError(string.Empty, "Access denied. Only administrators can create librarian accounts.");
-                        
-                        // Set ViewData for rendering
+                        await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                        {
+                            UserId = userId,
+                            ActionType = AuditActionType.Create,
+                            EntityType = "User",
+                            EntityId = null,
+                            EntityName = model.FullName,
+                            Details = "Attempted to create Librarian without Admin rights.",
+                            IsSuccess = false
+                        });
                         ViewData["CanCreateLibrarian"] = false;
                         return View(model);
                     }
@@ -213,11 +282,17 @@ namespace Web.Controllers
                 if (!validationResult.IsValid)
                 {
                     validationResult.AddToModelState(ModelState);
-                    
-                    // Set ViewData for rendering
-                    var adminCheckResult = await _userService.CheckUserRoleAsync(userId, UserRole.Admin);
-                    ViewData["CanCreateLibrarian"] = adminCheckResult.IsSuccess;
-                    
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Create,
+                        EntityType = "User",
+                        EntityId = null,
+                        EntityName = model.FullName,
+                        Details = "Validation failed: " + string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)),
+                        IsSuccess = false
+                    });
+                    ViewData["CanCreateLibrarian"] = await _userService.CheckUserRoleAsync(userId, UserRole.Admin).ContinueWith(t => t.Result.IsSuccess);
                     return View(model);
                 }
 
@@ -225,11 +300,17 @@ namespace Web.Controllers
                 if (!result.IsSuccess)
                 {
                     ModelState.AddModelError(string.Empty, result.Error);
-                    
-                    // Set ViewData for rendering
-                    var adminCheckResult = await _userService.CheckUserRoleAsync(userId, UserRole.Admin);
-                    ViewData["CanCreateLibrarian"] = adminCheckResult.IsSuccess;
-                    
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Create,
+                        EntityType = "User",
+                        EntityId = null,
+                        EntityName = model.FullName,
+                        Details = "User creation failed: " + result.Error,
+                        IsSuccess = false
+                    });
+                    ViewData["CanCreateLibrarian"] = await _userService.CheckUserRoleAsync(userId, UserRole.Admin).ContinueWith(t => t.Result.IsSuccess);
                     return View(model);
                 }
 
@@ -245,9 +326,9 @@ namespace Web.Controllers
                     IsSuccess = true
                 });
 
-                _logger.LogInformation("User {CreatorId} created new user {NewUserId} with role {Role} at {Time}", 
+                _logger.LogInformation("User {CreatorId} created new user {NewUserId} with role {Role} at {Time}",
                     userId, result.Value, model.Role, DateTime.UtcNow);
-                
+
                 TempData["SuccessMessage"] = $"User created successfully with ID: {result.Value}";
                 return RedirectToAction(nameof(Details), new { id = result.Value });
             }
@@ -326,6 +407,17 @@ namespace Web.Controllers
                 if (!permissionResult.IsSuccess)
                 {
                     TempData["ErrorMessage"] = permissionResult.Error;
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Update,
+                        EntityType = "User",
+                        EntityId = model.Id.ToString(),
+                        EntityName = model.FullName,
+                        Details = "Attempted to update user info without permission: " + permissionResult.Error,
+                        IsSuccess = false,
+                        ErrorMessage = permissionResult.Error
+                    });
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -333,6 +425,17 @@ namespace Web.Controllers
                 if (!validationResult.IsValid)
                 {
                     validationResult.AddToModelState(ModelState);
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Update,
+                        EntityType = "User",
+                        EntityId = model.Id.ToString(),
+                        EntityName = model.FullName,
+                        Details = "User info update validation failed: " + string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)),
+                        IsSuccess = false,
+                        ErrorMessage = "Validation failed"
+                    });
                     return View(model);
                 }
 
@@ -340,6 +443,17 @@ namespace Web.Controllers
                 if (!result.IsSuccess)
                 {
                     ModelState.AddModelError(string.Empty, result.Error);
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Update,
+                        EntityType = "User",
+                        EntityId = model.Id.ToString(),
+                        EntityName = model.FullName,
+                        Details = "User info update failed: " + result.Error,
+                        IsSuccess = false,
+                        ErrorMessage = result.Error
+                    });
                     return View(model);
                 }
 
@@ -355,9 +469,9 @@ namespace Web.Controllers
                     IsSuccess = true
                 });
 
-                _logger.LogInformation("User {UpdaterId} updated user {TargetId} at {Time}", 
+                _logger.LogInformation("User {UpdaterId} updated user {TargetId} at {Time}",
                     userId, model.Id, DateTime.UtcNow);
-                
+
                 TempData["SuccessMessage"] = "User updated successfully";
                 return RedirectToAction(nameof(Details), new { id = model.Id });
             }
@@ -445,6 +559,17 @@ namespace Web.Controllers
                 if (!permissionResult.IsSuccess)
                 {
                     TempData["ErrorMessage"] = permissionResult.Error;
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Delete,
+                        EntityType = "User",
+                        EntityId = id.ToString(),
+                        EntityName = null,
+                        Details = "Attempted to delete user without permission: " + permissionResult.Error,
+                        IsSuccess = false,
+                        ErrorMessage = permissionResult.Error
+                    });
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -452,6 +577,17 @@ namespace Web.Controllers
                 if (id == userId)
                 {
                     TempData["ErrorMessage"] = "You cannot delete your own account.";
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Delete,
+                        EntityType = "User",
+                        EntityId = id.ToString(),
+                        EntityName = null,
+                        Details = "Attempted to delete own account.",
+                        IsSuccess = false,
+                        ErrorMessage = "Self-deletion is not allowed"
+                    });
                     return RedirectToAction(nameof(Details), new { id });
                 }
 
@@ -463,6 +599,17 @@ namespace Web.Controllers
                 if (!result.IsSuccess)
                 {
                     TempData["ErrorMessage"] = result.Error;
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = userId,
+                        ActionType = AuditActionType.Delete,
+                        EntityType = "User",
+                        EntityId = id.ToString(),
+                        EntityName = targetUserName,
+                        Details = "User deletion failed: " + result.Error,
+                        IsSuccess = false,
+                        ErrorMessage = result.Error
+                    });
                     return RedirectToAction(nameof(Details), new { id });
                 }
 
@@ -478,9 +625,9 @@ namespace Web.Controllers
                     IsSuccess = true
                 });
 
-                _logger.LogInformation("User {DeleterId} deleted user {TargetId} at {Time}", 
+                _logger.LogInformation("User {DeleterId} deleted user {TargetId} at {Time}",
                     userId, id, DateTime.UtcNow);
-                
+
                 TempData["SuccessMessage"] = "User deleted successfully";
                 return RedirectToAction(nameof(Index));
             }

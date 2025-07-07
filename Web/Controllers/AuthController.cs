@@ -87,11 +87,23 @@ namespace Web.Controllers
 			try
 			{
 				ViewData["ReturnUrl"] = returnUrl;
+				var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
 				var validationResult = await _loginValidator.ValidateAsync(model);
 				if (!validationResult.IsValid)
 				{
 					validationResult.AddToModelState(ModelState);
+					await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+					{
+						ActionType = AuditActionType.Login,
+						EntityType = "User",
+						EntityId = model.Email,
+						EntityName = model.Email,
+						Details = "Login validation failed: " + string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)),
+						IpAddress = ipAddress,
+						IsSuccess = false,
+						ErrorMessage = "Validation failed"
+					});
 					return View(model);
 				}
 
@@ -103,8 +115,6 @@ namespace Web.Controllers
 					if (lockoutEnd > DateTime.UtcNow)
 					{
 						var remainingTime = lockoutEnd - DateTime.UtcNow;
-						
-						// Audit lockout attempt
 						await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
 						{
 							ActionType = AuditActionType.Login,
@@ -112,11 +122,10 @@ namespace Web.Controllers
 							EntityId = model.Email,
 							EntityName = model.Email,
 							Details = $"Login attempt blocked due to account lockout. Remaining time: {Math.Ceiling(remainingTime.TotalMinutes)} minutes",
-							IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+							IpAddress = ipAddress,
 							IsSuccess = false,
 							ErrorMessage = "Account temporarily locked"
 						});
-
 						ModelState.AddModelError(string.Empty, $"Account temporarily locked. Please try again in {Math.Ceiling(remainingTime.TotalMinutes)} minutes.");
 						return View(model);
 					}
@@ -126,7 +135,40 @@ namespace Web.Controllers
 				if (!result.IsSuccess)
 				{
 					await _authService.RecordFailedLoginAttemptAsync(model.Email);
-					ModelState.AddModelError(string.Empty, "Invalid email or password");
+					// Check if the error is an account status error (e.g., suspended, expired)
+					var statusErrors = new[] { "suspended", "expired", "inactive" };
+					var errorLower = result.Error?.ToLower() ?? string.Empty;
+					bool isStatusError = statusErrors.Any(s => errorLower.Contains(s));
+					if (isStatusError)
+					{
+						await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+						{
+							ActionType = AuditActionType.Login,
+							EntityType = "User",
+							EntityId = model.Email,
+							EntityName = model.Email,
+							Details = $"Login failed due to account status: {result.Error}",
+							IpAddress = ipAddress,
+							IsSuccess = false,
+							ErrorMessage = result.Error
+						});
+						ModelState.AddModelError(string.Empty, result.Error!);
+					}
+					else
+					{
+						await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+						{
+							ActionType = AuditActionType.Login,
+							EntityType = "User",
+							EntityId = model.Email,
+							EntityName = model.Email,
+							Details = "Login failed: Invalid credentials or account does not exist.",
+							IpAddress = ipAddress,
+							IsSuccess = false,
+							ErrorMessage = "Invalid email or password"
+						});
+						ModelState.AddModelError(string.Empty, "Invalid email or password");
+					}
 					return View(model);
 				}
 
@@ -150,9 +192,32 @@ namespace Web.Controllers
 
 				await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
 
-				return !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)
-					? Redirect(returnUrl)
-					: RedirectToAction("Index", "Home");
+				// Audit successful login
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					ActionType = AuditActionType.Login,
+					EntityType = "User",
+					EntityId = result.Value.UserId.ToString(),
+					EntityName = result.Value.FullName,
+					Details = $"Login successful. Role: {result.Value.Role}, Email: {result.Value.Email}",
+					IpAddress = ipAddress,
+					IsSuccess = true
+				});
+
+				// Role-based dashboard redirection
+				string dashboardAction = "Index";
+				string dashboardController = result.Value.Role switch
+				{
+					UserRole.Member => "Home", // or "MemberDashboard" if exists
+					UserRole.Librarian => "Home", // or "StaffDashboard" if exists
+					UserRole.Admin => "Home", // or "AdminDashboard" if exists
+					_ => "Home"
+				};
+				// You can customize the controller/action above as needed
+
+				if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+					return Redirect(returnUrl);
+				return RedirectToAction(dashboardAction, dashboardController);
 			}
 			catch (Exception ex)
 			{
@@ -227,6 +292,17 @@ namespace Web.Controllers
 				if (!validationResult.IsValid)
 				{
 					validationResult.AddToModelState(ModelState);
+					await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+					{
+						ActionType = AuditActionType.Register,
+						EntityType = "Member",
+						EntityId = null,
+						EntityName = model.FullName,
+						Details = "Registration validation failed: " + string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)),
+						IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+						IsSuccess = false,
+						ErrorMessage = "Validation failed"
+					});
 					return View(model);
 				}
 
@@ -235,6 +311,17 @@ namespace Web.Controllers
 				if (!result.IsSuccess)
 				{
 					ModelState.AddModelError(string.Empty, result.Error);
+					await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+					{
+						ActionType = AuditActionType.Register,
+						EntityType = "Member",
+						EntityId = null,
+						EntityName = model.FullName,
+						Details = "Registration failed: " + result.Error,
+						IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+						IsSuccess = false,
+						ErrorMessage = result.Error
+					});
 					return View(model);
 				}
 
@@ -247,9 +334,10 @@ namespace Web.Controllers
 					EntityName = model.FullName,
 					Details = $"Member registered successfully. Email: {model.Email}, PreferredMembershipNumber: {model.PreferredMembershipNumber}",
 					IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+					IsSuccess = true
 				});
 
-				_logger.LogInformation("Member registered successfully: {UserId} - {Email}", 
+				_logger.LogInformation("Member registered successfully: {UserId} - {Email}",
 					result.Value, model.Email);
 
 				// Redirect to login page with success message
@@ -375,6 +463,17 @@ namespace Web.Controllers
 				if (!validationResult.IsValid)
 				{
 					validationResult.AddToModelState(ModelState);
+					await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+					{
+						ActionType = AuditActionType.PasswordReset,
+						EntityType = "User",
+						EntityId = model.Email,
+						EntityName = model.Email,
+						Details = "Password reset validation failed: " + string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)),
+						IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+						IsSuccess = false,
+						ErrorMessage = "Validation failed"
+					});
 					return View(model);
 				}
 
@@ -382,6 +481,17 @@ namespace Web.Controllers
 				if (!result.IsSuccess)
 				{
 					ModelState.AddModelError(string.Empty, result.Error);
+					await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+					{
+						ActionType = AuditActionType.PasswordReset,
+						EntityType = "User",
+						EntityId = model.Email,
+						EntityName = model.Email,
+						Details = "Password reset failed: " + result.Error,
+						IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+						IsSuccess = false,
+						ErrorMessage = result.Error
+					});
 					return View(model);
 				}
 
@@ -462,6 +572,17 @@ namespace Web.Controllers
 				if (!validationResult.IsValid)
 				{
 					validationResult.AddToModelState(ModelState);
+					await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+					{
+						UserId = userId,
+						ActionType = AuditActionType.PasswordChange,
+						EntityType = "User",
+						EntityId = userId.ToString(),
+						EntityName = User.Identity.Name ?? "Unknown",
+						Details = "Password change validation failed: " + string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)),
+						IsSuccess = false,
+						ErrorMessage = "Validation failed"
+					});
 					return View(model);
 				}
 
@@ -469,6 +590,17 @@ namespace Web.Controllers
 				if (!result.IsSuccess)
 				{
 					ModelState.AddModelError(string.Empty, result.Error);
+					await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+					{
+						UserId = userId,
+						ActionType = AuditActionType.PasswordChange,
+						EntityType = "User",
+						EntityId = userId.ToString(),
+						EntityName = User.Identity.Name ?? "Unknown",
+						Details = "Password change failed: " + result.Error,
+						IsSuccess = false,
+						ErrorMessage = result.Error
+					});
 					return View(model);
 				}
 

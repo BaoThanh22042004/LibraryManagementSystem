@@ -137,6 +137,17 @@ namespace Web.Controllers
 				if (model.UserId != userId)
 				{
 					ModelState.AddModelError(string.Empty, "Invalid user ID");
+					await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+					{
+						UserId = userId,
+						ActionType = AuditActionType.Update,
+						EntityType = "UserProfile",
+						EntityId = model.UserId.ToString(),
+						EntityName = model.FullName,
+						Details = "Attempted to update profile with invalid user ID.",
+						IsSuccess = false,
+						ErrorMessage = "Invalid user ID"
+					});
 					return View(model);
 				}
 
@@ -144,6 +155,17 @@ namespace Web.Controllers
 				if (!validationResult.IsValid)
 				{
 					validationResult.AddToModelState(ModelState);
+					await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+					{
+						UserId = userId,
+						ActionType = AuditActionType.Update,
+						EntityType = "UserProfile",
+						EntityId = model.UserId.ToString(),
+						EntityName = model.FullName,
+						Details = "Profile update validation failed: " + string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)),
+						IsSuccess = false,
+						ErrorMessage = "Validation failed"
+					});
 					return View(model);
 				}
 
@@ -151,6 +173,17 @@ namespace Web.Controllers
 				if (!result.IsSuccess)
 				{
 					ModelState.AddModelError(string.Empty, result.Error);
+					await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+					{
+						UserId = userId,
+						ActionType = AuditActionType.Update,
+						EntityType = "UserProfile",
+						EntityId = model.UserId.ToString(),
+						EntityName = model.FullName,
+						Details = "Profile update failed: " + result.Error,
+						IsSuccess = false,
+						ErrorMessage = result.Error
+					});
 					return View(model);
 				}
 

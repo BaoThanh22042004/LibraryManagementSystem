@@ -37,6 +37,12 @@ public class UserService : IUserService
 	{
 		try
 		{
+			// Block creation of Admin users via UI
+			if (request.Role == UserRole.Admin)
+			{
+				return Result.Failure<int>("Creating Admin users via the UI is not allowed.");
+			}
+
 			// Validate the password
 			var passwordValidation = _authService.ValidatePassword(request.Password);
 			if (passwordValidation.IsFailure)
@@ -68,43 +74,69 @@ public class UserService : IUserService
 			if (request.Role == UserRole.Member)
 			{
 				var memberRepo = _unitOfWork.Repository<Member>();
+				string membershipNumber = !string.IsNullOrWhiteSpace(request.MembershipNumber)
+					? request.MembershipNumber
+					: GenerateMembershipNumber();
+
+				// If custom membership number is provided and duplicate, return error
+				if (!string.IsNullOrWhiteSpace(request.MembershipNumber))
+				{
+					if (await memberRepo.ExistsAsync(m => m.MembershipNumber == membershipNumber))
+					{
+						await _unitOfWork.RollbackTransactionAsync();
+						return Result.Failure<int>("Membership number already exists");
+					}
+				}
+				else
+				{
+					// Auto-generate until unique
+					while (await memberRepo.ExistsAsync(m => m.MembershipNumber == membershipNumber))
+					{
+						membershipNumber = GenerateMembershipNumber();
+					}
+				}
+
 				var member = new Member
 				{
 					UserId = user.Id,
-					MembershipNumber = !string.IsNullOrWhiteSpace(request.MembershipNumber)
-						? request.MembershipNumber
-						: GenerateMembershipNumber(),
+					MembershipNumber = membershipNumber,
 					MembershipStartDate = DateTime.UtcNow,
 					MembershipStatus = MembershipStatus.Active,
 					OutstandingFines = 0
 				};
-
-				// Ensure membership number is unique
-				while (await memberRepo.ExistsAsync(m => m.MembershipNumber == member.MembershipNumber))
-				{
-					member.MembershipNumber = GenerateMembershipNumber();
-				}
-
 				await memberRepo.AddAsync(member);
 			}
 			else if (request.Role == UserRole.Librarian)
 			{
 				var librarianRepo = _unitOfWork.Repository<Librarian>();
+				string employeeId = !string.IsNullOrWhiteSpace(request.EmployeeId)
+					? request.EmployeeId
+					: GenerateEmployeeId();
+
+				// If custom employee ID is provided and duplicate, return error
+				if (!string.IsNullOrWhiteSpace(request.EmployeeId))
+				{
+					if (await librarianRepo.ExistsAsync(l => l.EmployeeId == employeeId))
+					{
+						await _unitOfWork.RollbackTransactionAsync();
+						return Result.Failure<int>("Employee ID already exists");
+					}
+				}
+				else
+				{
+					// Auto-generate until unique
+					while (await librarianRepo.ExistsAsync(l => l.EmployeeId == employeeId))
+					{
+						employeeId = GenerateEmployeeId();
+					}
+				}
+
 				var librarian = new Librarian
 				{
 					UserId = user.Id,
-					EmployeeId = !string.IsNullOrWhiteSpace(request.EmployeeId)
-						? request.EmployeeId
-						: GenerateEmployeeId(),
+					EmployeeId = employeeId,
 					HireDate = DateTime.UtcNow
 				};
-
-				// Ensure employee ID is unique
-				while (await librarianRepo.ExistsAsync(l => l.EmployeeId == librarian.EmployeeId))
-				{
-					librarian.EmployeeId = GenerateEmployeeId();
-				}
-
 				await librarianRepo.AddAsync(librarian);
 			}
 
