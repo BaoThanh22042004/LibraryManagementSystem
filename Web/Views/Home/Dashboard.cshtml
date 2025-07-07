@@ -1,0 +1,67 @@
+@model Application.DTOs.DashboardStatsDto
+@{
+    ViewData["Title"] = "Dashboard";
+}
+@if (Model == null)
+{
+    <div class="alert alert-warning">Insufficient data for statistics.</div>
+    return;
+}
+<h2>Library Dashboard</h2>
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header">Members</div>
+            <div class="card-body"><h3>@Model.TotalMembers</h3></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-header">Books</div>
+            <div class="card-body"><h3>@Model.TotalBooks</h3></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-header">Book Copies</div>
+            <div class="card-body"><h3>@Model.TotalBookCopies</h3></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-header">Active Loans</div>
+            <div class="card-body"><h3>@Model.ActiveLoans</h3></div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-3">
+        <div class="card text-white bg-danger mb-3">
+            <div class="card-header">Overdue Loans</div>
+            <div class="card-body"><h3>@Model.OverdueLoans</h3></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-secondary mb-3">
+            <div class="card-header">Pending Fines</div>
+            <div class="card-body"><h3>@Model.PendingFines</h3></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-dark mb-3">
+            <div class="card-header">Reservations</div>
+            <div class="card-body"><h3>@Model.Reservations</h3></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header">Notifications Sent</div>
+            <div class="card-body"><h3>@Model.NotificationsSent</h3></div>
+        </div>
+    </div>
+</div>
+<p class="text-muted">Last updated: @Model.StatsGeneratedAt.ToString("g")</p> 

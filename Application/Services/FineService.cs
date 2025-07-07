@@ -686,6 +686,44 @@ public class FineService : IFineService
 		}
 	}
 
+	/// <summary>
+	/// Gets a paged report of unpaid fines for staff (UC043)
+	/// </summary>
+	public async Task<Result<PagedResult<FineBasicDto>>> GetFinesReportPagedAsync(PagedRequest request)
+	{
+		var pagedFines = await _unitOfWork.FineRepository.GetUnpaidFinesPagedAsync(request);
+		var dtos = pagedFines.Items.Select(_mapper.Map<FineBasicDto>).ToList();
+		return Result.Success(new PagedResult<FineBasicDto>(dtos, pagedFines.Count, pagedFines.Page, pagedFines.PageSize));
+	}
+
+	/// <summary>
+	/// Gets all unpaid fines for staff (UC043)
+	/// </summary>
+	public async Task<Result<List<FineBasicDto>>> GetFinesReportAsync()
+	{
+		var fines = await _unitOfWork.FineRepository.GetUnpaidFinesAsync();
+		var dtos = fines.Select(_mapper.Map<FineBasicDto>).ToList();
+		return Result.Success(dtos);
+	}
+
+	/// <summary>
+	/// Gets the outstanding fines for a specific member (UC044)
+	/// </summary>
+	public async Task<Result<OutstandingFinesDto>> GetOutstandingFinesAsync(int memberId)
+	{
+		var total = await _unitOfWork.FineRepository.GetOutstandingFinesForMemberAsync(memberId);
+		var member = await _unitOfWork.Repository<Member>().GetAsync(m => m.Id == memberId);
+		if (member == null)
+			return Result.Failure<OutstandingFinesDto>("Member not found.");
+		var dto = new OutstandingFinesDto
+		{
+			MemberId = member.Id,
+			MemberName = member.User?.FullName ?? string.Empty,
+			TotalOutstanding = total
+		};
+		return Result.Success(dto);
+	}
+
 	#region Private Helper Methods
 
 	/// <summary>

@@ -111,4 +111,33 @@ public class AuditService : IAuditService
             return Result.Failure<PagedResult<AuditLogResponse>>("An error occurred while searching audit logs. Please try again later.");
         }
     }
+
+    /// <summary>
+    /// Gets dashboard statistics for staff (UC045)
+    /// </summary>
+    public async Task<Result<DashboardStatsDto>> GetDashboardStatsAsync()
+    {
+        var now = DateTime.UtcNow;
+        var totalMembers = await _unitOfWork.Repository<Member>().CountAsync();
+        var totalBooks = await _unitOfWork.Repository<Book>().CountAsync();
+        var totalBookCopies = await _unitOfWork.Repository<BookCopy>().CountAsync();
+        var activeLoans = await _unitOfWork.Repository<Loan>().CountAsync(l => l.Status == Domain.Enums.LoanStatus.Active);
+        var overdueLoans = await _unitOfWork.Repository<Loan>().CountAsync(l => l.Status == Domain.Enums.LoanStatus.Active && l.DueDate < now);
+        var pendingFines = await _unitOfWork.Repository<Fine>().CountAsync(f => f.Status == Domain.Enums.FineStatus.Pending);
+        var reservations = await _unitOfWork.Repository<Reservation>().CountAsync();
+        var notificationsSent = await _unitOfWork.Repository<Notification>().CountAsync();
+        var dto = new DashboardStatsDto
+        {
+            TotalMembers = totalMembers,
+            TotalBooks = totalBooks,
+            TotalBookCopies = totalBookCopies,
+            ActiveLoans = activeLoans,
+            OverdueLoans = overdueLoans,
+            PendingFines = pendingFines,
+            Reservations = reservations,
+            NotificationsSent = notificationsSent,
+            StatsGeneratedAt = now
+        };
+        return Result.Success(dto);
+    }
 }

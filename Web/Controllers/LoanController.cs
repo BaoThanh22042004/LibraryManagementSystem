@@ -560,5 +560,83 @@ namespace Web.Controllers
                 return RedirectToAction(nameof(MyLoans));
             }
         }
+
+        /// <summary>
+        /// Displays the overdue loans report (paged)
+        /// UC042
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> OverdueReport(int page = 1, int pageSize = 20)
+        {
+            try
+            {
+                var request = new Application.Common.PagedRequest { Page = page, PageSize = pageSize };
+                var result = await _loanService.GetOverdueLoansReportPagedAsync(request);
+                if (!result.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = result.Error;
+                    return View("OverdueReport", new Application.Common.PagedResult<Application.DTOs.LoanBasicDto>());
+                }
+                // Audit log
+                if (User.TryGetUserId(out int staffId))
+                {
+                    await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
+                    {
+                        UserId = staffId,
+                        ActionType = Domain.Enums.AuditActionType.Read,
+                        EntityType = "Loan",
+                        Details = $"Viewed overdue loans report (page {page})",
+                        IsSuccess = true
+                    });
+                }
+                return View("OverdueReport", result.Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading overdue loans report");
+                TempData["ErrorMessage"] = "Unable to load overdue loans report.";
+                return View("OverdueReport", new Application.Common.PagedResult<Application.DTOs.LoanBasicDto>());
+            }
+        }
+
+        /// <summary>
+        /// Downloads the full overdue loans report as CSV
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> DownloadOverdueReportCsv()
+        {
+            try
+            {
+                var result = await _loanService.GetOverdueLoansReportAsync();
+                if (!result.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = result.Error;
+                    return RedirectToAction(nameof(OverdueReport));
+                }
+                var csv = Web.Extensions.CsvExportExtensions.ToCsv(result.Value);
+                var fileName = $"OverdueLoans_{DateTime.UtcNow:yyyyMMdd}.csv";
+                // Audit log
+                if (User.TryGetUserId(out int staffId))
+                {
+                    await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
+                    {
+                        UserId = staffId,
+                        ActionType = Domain.Enums.AuditActionType.Export,
+                        EntityType = "Loan",
+                        Details = "Exported overdue loans report (CSV)",
+                        IsSuccess = true
+                    });
+                }
+                return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting overdue loans report");
+                TempData["ErrorMessage"] = "Unable to export overdue loans report.";
+                return RedirectToAction(nameof(OverdueReport));
+            }
+        }
     }
 }

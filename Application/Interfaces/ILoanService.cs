@@ -24,4 +24,8 @@ public interface ILoanService
     Task<Result<IEnumerable<LoanBasicDto>>> GetLoansByBookCopyIdAsync(int bookCopyId);
 
     Task<Result<int>> UpdateOverdueLoansAsync();
+
+    Task<Result<PagedResult<LoanBasicDto>>> GetOverdueLoansReportPagedAsync(PagedRequest request);
+
+    Task<Result<List<LoanBasicDto>>> GetOverdueLoansReportAsync();
 }

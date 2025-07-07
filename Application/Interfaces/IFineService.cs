@@ -28,4 +28,10 @@ public interface IFineService
     Task<Result<IEnumerable<FineBasicDto>>> GetFinesByLoanIdAsync(int loanId);
 
     Task<Result<int>> GenerateOverdueFinesAsync();
+
+    Task<Result<PagedResult<FineBasicDto>>> GetFinesReportPagedAsync(PagedRequest request);
+
+    Task<Result<List<FineBasicDto>>> GetFinesReportAsync();
+
+    Task<Result<OutstandingFinesDto>> GetOutstandingFinesAsync(int memberId);
 }

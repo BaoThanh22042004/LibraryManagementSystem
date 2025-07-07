@@ -29,7 +29,10 @@ public class LoanProfile : Profile
         CreateMap<Loan, LoanBasicDto>()
             .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member.User.FullName))
             .ForMember(dest => dest.BookId, opt => opt.MapFrom(src => src.BookCopy.BookId))
-            .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.BookCopy.Book.Title));
+            .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.BookCopy.Book.Title))
+            .ForMember(dest => dest.MemberEmail, opt => opt.MapFrom(src => src.Member.User.Email))
+            .ForMember(dest => dest.MemberPhone, opt => opt.MapFrom(src => src.Member.User.Phone))
+            .ForMember(dest => dest.MemberAddress, opt => opt.MapFrom(src => src.Member.User.Address));
 
         // Map from Loan entity to LoanDetailDto
         CreateMap<Loan, LoanDetailDto>()

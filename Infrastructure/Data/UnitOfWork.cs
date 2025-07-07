@@ -10,6 +10,9 @@ public class UnitOfWork : IUnitOfWork
     private readonly LibraryDbContext _context;
     private readonly ConcurrentDictionary<Type, object> _repositories = new();
     private IDbContextTransaction? _transaction;
+    private ILoanRepository? _loanRepository;
+    private IFineRepository? _fineRepository;
+    private IAuditLogRepository? _auditLogRepository;
 
     public UnitOfWork(LibraryDbContext context)
     {
@@ -56,6 +59,9 @@ public class UnitOfWork : IUnitOfWork
         _transaction = null;
     }
 
+    public ILoanRepository LoanRepository => _loanRepository ??= new LoanRepository(_context);
+    public IFineRepository FineRepository => _fineRepository ??= new FineRepository(_context);
+    public IAuditLogRepository AuditLogRepository => _auditLogRepository ??= new AuditLogRepository(_context);
 
     public async ValueTask DisposeAsync()
     {

@@ -1,0 +1,56 @@
+@model Application.Common.PagedResult<Application.DTOs.AuditLogResponse>
+@{
+    ViewData["Title"] = "Audit Logs";
+}
+<h2>Audit Logs</h2>
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Entity</th>
+            <th>Details</th>
+            <th>Success</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var log in Model.Items)
+    {
+        <tr>
+            <td>@log.CreatedAt.ToString("g")</td>
+            <td>@log.UserName</td>
+            <td>@log.ActionType</td>
+            <td>@log.EntityType @log.EntityName</td>
+            <td>@log.Details</td>
+            <td>@(log.IsSuccess ? "Yes" : "No")</td>
+        </tr>
+    }
+    @if (!Model.Items.Any())
+    {
+        <tr>
+            <td colspan="6" class="text-center">No audit logs found for selected criteria.</td>
+        </tr>
+    }
+    </tbody>
+</table>
+<div>
+    <a class="btn btn-primary" asp-action="ExportCsv">Export CSV</a>
+</div>
+@if (Model.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Page ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-pageSize="@Model.PageSize">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+} 

@@ -133,3 +133,14 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequest>
         });
     }
 }
+
+/// <summary>
+/// Validator for the DashboardStatsRequest DTO (if needed, e.g., for date range or export format in future).
+/// </summary>
+public class DashboardStatsRequestValidator : AbstractValidator<object>
+{
+    public DashboardStatsRequestValidator()
+    {
+        // No rules yet
+    }
+}

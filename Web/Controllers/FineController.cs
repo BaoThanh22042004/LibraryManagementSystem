@@ -709,5 +709,122 @@ namespace Web.Controllers
                 return RedirectToAction(nameof(MyFines));
             }
         }
+
+        /// <summary>
+        /// Displays the fines report (paged)
+        /// UC043
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> FinesReport(int page = 1, int pageSize = 20)
+        {
+            try
+            {
+                var request = new Application.Common.PagedRequest { Page = page, PageSize = pageSize };
+                var result = await _fineService.GetFinesReportPagedAsync(request);
+                if (!result.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = result.Error;
+                    return View("FinesReport", new Application.Common.PagedResult<Application.DTOs.FineBasicDto>());
+                }
+                // Audit log
+                if (User.TryGetUserId(out int staffId))
+                {
+                    await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
+                    {
+                        UserId = staffId,
+                        ActionType = Domain.Enums.AuditActionType.Read,
+                        EntityType = "Fine",
+                        Details = $"Viewed fines report (page {page})",
+                        IsSuccess = true
+                    });
+                }
+                return View("FinesReport", result.Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading fines report");
+                TempData["ErrorMessage"] = "Unable to load pending fines report.";
+                return View("FinesReport", new Application.Common.PagedResult<Application.DTOs.FineBasicDto>());
+            }
+        }
+
+        /// <summary>
+        /// Downloads the full fines report as CSV
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> DownloadFinesReportCsv()
+        {
+            try
+            {
+                var result = await _fineService.GetFinesReportAsync();
+                if (!result.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = result.Error;
+                    return RedirectToAction(nameof(FinesReport));
+                }
+                var csv = Web.Extensions.CsvExportExtensions.ToCsv(result.Value);
+                var fileName = $"FinesReport_{DateTime.UtcNow:yyyyMMdd}.csv";
+                // Audit log
+                if (User.TryGetUserId(out int staffId))
+                {
+                    await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
+                    {
+                        UserId = staffId,
+                        ActionType = Domain.Enums.AuditActionType.Export,
+                        EntityType = "Fine",
+                        Details = "Exported fines report (CSV)",
+                        IsSuccess = true
+                    });
+                }
+                return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error exporting fines report");
+                TempData["ErrorMessage"] = "Unable to export fines report.";
+                return RedirectToAction(nameof(FinesReport));
+            }
+        }
+
+        /// <summary>
+        /// Gets the outstanding fines for a specific member (staff view)
+        /// UC044
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> OutstandingFines(int memberId)
+        {
+            try
+            {
+                var result = await _fineService.GetOutstandingFinesAsync(memberId);
+                if (!result.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = result.Error;
+                    return RedirectToAction("Index");
+                }
+                // Audit log
+                if (User.TryGetUserId(out int staffId))
+                {
+                    await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
+                    {
+                        UserId = staffId,
+                        ActionType = Domain.Enums.AuditActionType.Read,
+                        EntityType = "Fine",
+                        EntityId = memberId.ToString(),
+                        Details = "Viewed outstanding fines for member",
+                        IsSuccess = true
+                    });
+                }
+                return View("OutstandingFines", result.Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading outstanding fines");
+                TempData["ErrorMessage"] = "Unable to load outstanding fines.";
+                return RedirectToAction("Index");
+            }
+        }
     }
 }

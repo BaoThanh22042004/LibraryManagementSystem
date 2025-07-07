@@ -24,7 +24,10 @@ public class FineProfile : Profile
 
         // Map from Fine entity to FineBasicDto
         CreateMap<Fine, FineBasicDto>()
-            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member.User.FullName));
+            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member.User.FullName))
+            .ForMember(dest => dest.MemberEmail, opt => opt.MapFrom(src => src.Member.User.Email))
+            .ForMember(dest => dest.MemberPhone, opt => opt.MapFrom(src => src.Member.User.Phone))
+            .ForMember(dest => dest.MemberAddress, opt => opt.MapFrom(src => src.Member.User.Address));
 
         // Map from Fine entity to FineDetailDto
         CreateMap<Fine, FineDetailDto>()

@@ -1,0 +1,63 @@
+@model Application.Common.PagedResult<Application.DTOs.FineBasicDto>
+@{
+    ViewData["Title"] = "Fines Report";
+}
+<h2>Fines Report</h2>
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Member</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var fine in Model.Items)
+    {
+        <tr>
+            <td>
+                <div><strong>@fine.MemberName</strong></div>
+                <div><strong>Email:</strong> @fine.MemberEmail</div>
+                @if (!string.IsNullOrEmpty(fine.MemberPhone)) {
+                    <div><strong>Phone:</strong> @fine.MemberPhone</div>
+                }
+                @if (!string.IsNullOrEmpty(fine.MemberAddress)) {
+                    <div><strong>Address:</strong> @fine.MemberAddress</div>
+                }
+            </td>
+            <td>@fine.Amount.ToString("C")</td>
+            <td>@fine.FineDate.ToString("yyyy-MM-dd")</td>
+            <td>@fine.Status</td>
+            <td>@fine.Description</td>
+        </tr>
+    }
+    @if (!Model.Items.Any())
+    {
+        <tr>
+            <td colspan="5" class="text-center">No pending fines found.</td>
+        </tr>
+    }
+    </tbody>
+</table>
+<div>
+    <a class="btn btn-primary" asp-action="DownloadFinesReportCsv">Export CSV</a>
+</div>
+@if (Model.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Page ? "active" : "")">
+                    <a class="page-link" asp-action="FinesReport" asp-route-page="@i" asp-route-pageSize="@Model.PageSize">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+} 

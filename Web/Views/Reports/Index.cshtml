@@ -1,0 +1,60 @@
+@model Application.DTOs.ReportRequestDto
+@{
+    ViewData["Title"] = "Generate Report";
+}
+<h2>Generate Report</h2>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+<form asp-action="Generate" method="post">
+    <div class="mb-3">
+        <label asp-for="ReportType" class="form-label">Report Type</label>
+        <select asp-for="ReportType" class="form-select">
+            <option value="">-- Select Report Type --</option>
+            @foreach (var type in Enum.GetValues(typeof(Domain.Enums.ReportType)))
+            {
+                <option value="@type">@type</option>
+            }
+        </select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Format" class="form-label">Format</label>
+        <select asp-for="Format" class="form-select">
+            <option value="">-- Select Format --</option>
+            @foreach (var format in Enum.GetValues(typeof(Domain.Enums.ReportFormat)))
+            {
+                <option value="@format">@format</option>
+            }
+        </select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="FromDate" class="form-label">From Date</label>
+        <input asp-for="FromDate" type="date" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="ToDate" class="form-label">To Date</label>
+        <input asp-for="ToDate" type="date" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="MemberId" class="form-label">Member ID (optional)</label>
+        <input asp-for="MemberId" type="number" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="BookId" class="form-label">Book ID (optional)</label>
+        <input asp-for="BookId" type="number" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="CategoryId" class="form-label">Category ID (optional)</label>
+        <input asp-for="CategoryId" type="number" class="form-control" />
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="IncludeDetails" class="form-check-input" />
+        <label asp-for="IncludeDetails" class="form-check-label">Include Details</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Generate Report</button>
+</form> 

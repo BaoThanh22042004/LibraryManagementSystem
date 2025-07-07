@@ -193,6 +193,21 @@ public record LoanBasicDto
             return (DateTime.UtcNow > DueDate) ? (int)(DateTime.UtcNow - DueDate).TotalDays : 0;
         }
     }
+
+    /// <summary>
+    /// The email of the member.
+    /// </summary>
+    public string MemberEmail { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The phone number of the member.
+    /// </summary>
+    public string? MemberPhone { get; set; }
+
+    /// <summary>
+    /// The address of the member.
+    /// </summary>
+    public string? MemberAddress { get; set; }
 }
 
 /// <summary>

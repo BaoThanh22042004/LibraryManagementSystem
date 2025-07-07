@@ -58,3 +58,16 @@ public record AuditLogSearchRequest : PagedRequest
     public DateTime? EndDate { get; set; }
     public bool? IsSuccess { get; set; }
 }
+
+public record DashboardStatsDto
+{
+    public int TotalMembers { get; set; }
+    public int TotalBooks { get; set; }
+    public int TotalBookCopies { get; set; }
+    public int ActiveLoans { get; set; }
+    public int OverdueLoans { get; set; }
+    public int PendingFines { get; set; }
+    public int Reservations { get; set; }
+    public int NotificationsSent { get; set; }
+    public DateTime StatsGeneratedAt { get; set; }
+}

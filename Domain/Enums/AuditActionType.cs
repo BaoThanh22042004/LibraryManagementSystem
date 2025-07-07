@@ -71,6 +71,11 @@ public enum AuditActionType
     PayFine = 13,
     
     /// <summary>
+    /// Exporting data or reports
+    /// </summary>
+    Export = 14,
+    
+    /// <summary>
     /// Other actions not categorized above
     /// </summary>
     Other = 99

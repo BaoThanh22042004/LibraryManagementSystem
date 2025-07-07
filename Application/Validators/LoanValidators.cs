@@ -2,6 +2,7 @@
 using FluentValidation;
 using Application.Interfaces;
 using Domain.Enums;
+using Application.Common;
 
 namespace Application.Validators;
 
@@ -107,5 +108,15 @@ public class LoanSearchRequestValidator : AbstractValidator<LoanSearchRequest>
                 .Must(x => x.FromDate <= x.ToDate)
                 .WithMessage("From date must be earlier than or equal to To date");
         });
+    }
+}
+
+public class OverdueLoansReportRequestValidator : AbstractValidator<PagedRequest>
+{
+    public OverdueLoansReportRequestValidator()
+    {
+        RuleFor(x => x.Page).GreaterThanOrEqualTo(1);
+        RuleFor(x => x.PageSize).InclusiveBetween(1, 100);
+        // Add role-based validation in controller/service as needed
     }
 }

@@ -2,6 +2,7 @@
 using FluentValidation;
 using Application.Interfaces;
 using Domain.Enums;
+using Application.Common;
 
 namespace Application.Validators;
 
@@ -171,5 +172,22 @@ public class FineSearchRequestValidator : AbstractValidator<FineSearchRequest>
 				.Must(x => x.FromDate <= x.ToDate)
 				.WithMessage("From date must be earlier than or equal to To date");
 		});
+	}
+}
+
+public class FinesReportRequestValidator : AbstractValidator<PagedRequest>
+{
+	public FinesReportRequestValidator()
+	{
+		RuleFor(x => x.Page).GreaterThanOrEqualTo(1);
+		RuleFor(x => x.PageSize).InclusiveBetween(1, 100);
+	}
+}
+
+public class OutstandingFinesRequestValidator : AbstractValidator<int>
+{
+	public OutstandingFinesRequestValidator()
+	{
+		RuleFor(x => x).GreaterThan(0).WithMessage("MemberId must be positive.");
 	}
 }

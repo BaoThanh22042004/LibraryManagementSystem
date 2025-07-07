@@ -9,4 +9,8 @@ public interface IUnitOfWork : IDisposable, IAsyncDisposable
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();
     Task RollbackTransactionAsync();
+
+    ILoanRepository LoanRepository { get; }
+    IFineRepository FineRepository { get; }
+    IAuditLogRepository AuditLogRepository { get; }
 }

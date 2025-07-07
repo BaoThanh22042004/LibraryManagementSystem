@@ -506,6 +506,28 @@ public class LoanService : ILoanService
 		}
     }
 
+    /// <summary>
+    /// Gets a paged report of overdue loans for staff (UC042)
+    /// </summary>
+    public async Task<Result<PagedResult<LoanBasicDto>>> GetOverdueLoansReportPagedAsync(PagedRequest request)
+    {
+        var now = DateTime.UtcNow;
+        var pagedLoans = await _unitOfWork.LoanRepository.GetOverdueLoansPagedAsync(request, now);
+        var dtos = pagedLoans.Items.Select(_mapper.Map<LoanBasicDto>).ToList();
+        return Result.Success(new PagedResult<LoanBasicDto>(dtos, pagedLoans.Count, pagedLoans.Page, pagedLoans.PageSize));
+    }
+
+    /// <summary>
+    /// Gets all overdue loans for staff (UC042)
+    /// </summary>
+    public async Task<Result<List<LoanBasicDto>>> GetOverdueLoansReportAsync()
+    {
+        var now = DateTime.UtcNow;
+        var loans = await _unitOfWork.LoanRepository.GetOverdueLoansAsync(now);
+        var dtos = loans.Select(_mapper.Map<LoanBasicDto>).ToList();
+        return Result.Success(dtos);
+    }
+
     #region Private Helper Methods
 
     /// <summary>

@@ -224,6 +224,21 @@ public record FineBasicDto
     /// Description or reason for the fine.
     /// </summary>
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The email of the member.
+    /// </summary>
+    public string MemberEmail { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The phone number of the member.
+    /// </summary>
+    public string? MemberPhone { get; set; }
+
+    /// <summary>
+    /// The address of the member.
+    /// </summary>
+    public string? MemberAddress { get; set; }
 }
 
 /// <summary>
@@ -295,4 +310,11 @@ public record FineDetailDto : FineBasicDto
     /// Override context for the fine.
     /// </summary>
     public FineOverrideContext? OverrideContext { get; set; }
+}
+
+public record OutstandingFinesDto
+{
+    public int MemberId { get; set; }
+    public string MemberName { get; set; } = string.Empty;
+    public decimal TotalOutstanding { get; set; }
 }

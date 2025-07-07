@@ -12,4 +12,6 @@ public interface IAuditService
     Task<Result> CreateAuditLogAsync(CreateAuditLogRequest request);
     
     Task<Result<PagedResult<AuditLogResponse>>> SearchAuditLogsAsync(AuditLogSearchRequest request);
+
+    Task<Result<DashboardStatsDto>> GetDashboardStatsAsync();
 }

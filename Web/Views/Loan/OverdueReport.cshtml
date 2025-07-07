@@ -1,0 +1,62 @@
+@model Application.Common.PagedResult<Application.DTOs.LoanBasicDto>
+@{
+    ViewData["Title"] = "Overdue Loans Report";
+}
+<h2>Overdue Loans Report</h2>
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Member</th>
+            <th>Contact</th>
+            <th>Book</th>
+            <th>Due Date</th>
+            <th>Days Overdue</th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (!Model.Items.Any())
+    {
+        <tr>
+            <td colspan="5" class="text-center">No overdue loans found.</td>
+        </tr>
+    }
+    @foreach (var loan in Model.Items)
+    {
+        <tr>
+            <td>@loan.MemberName</td>
+            <td>
+                <div><strong>Email:</strong> @loan.MemberEmail</div>
+                @if (!string.IsNullOrEmpty(loan.MemberPhone)) {
+                    <div><strong>Phone:</strong> @loan.MemberPhone</div>
+                }
+                @if (!string.IsNullOrEmpty(loan.MemberAddress)) {
+                    <div><strong>Address:</strong> @loan.MemberAddress</div>
+                }
+            </td>
+            <td>@loan.BookTitle</td>
+            <td>@loan.DueDate.ToString("yyyy-MM-dd")</td>
+            <td>@loan.DaysOverdue</td>
+        </tr>
+    }
+    </tbody>
+</table>
+<div>
+    <a class="btn btn-primary" asp-action="DownloadOverdueReportCsv">Export CSV</a>
+</div>
+@if (Model.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Page ? "active" : "")">
+                    <a class="page-link" asp-action="OverdueReport" asp-route-page="@i" asp-route-pageSize="@Model.PageSize">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+} 

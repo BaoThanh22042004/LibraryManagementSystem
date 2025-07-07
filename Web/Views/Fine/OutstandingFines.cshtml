@@ -1,0 +1,19 @@
+@model Application.DTOs.OutstandingFinesDto
+@{
+    ViewData["Title"] = "Outstanding Fines";
+}
+<h2>Outstanding Fines</h2>
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+<div class="card">
+    <div class="card-body">
+        <h4>@Model.MemberName</h4>
+        <p>Total Outstanding: <strong>@Model.TotalOutstanding.ToString("C")</strong></p>
+        @if (Model.TotalOutstanding == 0)
+        {
+            <div class="alert alert-success mt-3">No outstanding fines. Balance is zero.</div>
+        }
+    </div>
+</div> 
