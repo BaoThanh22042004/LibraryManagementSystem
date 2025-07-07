@@ -19,6 +19,7 @@ namespace Web.Controllers
 		private readonly IFineService _fineService;
 		private readonly ILoanService _loanService;
 		private readonly IAuditService _auditService;
+		private readonly INotificationService _notificationService;
 		private readonly ILogger<FineController> _logger;
 		private readonly IValidator<CreateFineRequest> _createFineValidator;
 		private readonly IValidator<CalculateFineRequest> _calculateFineValidator;
@@ -29,6 +30,7 @@ namespace Web.Controllers
 			IFineService fineService,
 			ILoanService loanService,
 			IAuditService auditService,
+			INotificationService notificationService,
 			ILogger<FineController> logger,
 			IValidator<CreateFineRequest> createFineValidator,
 			IValidator<CalculateFineRequest> calculateFineValidator,
@@ -38,6 +40,7 @@ namespace Web.Controllers
 			_fineService = fineService;
 			_loanService = loanService;
 			_auditService = auditService;
+			_notificationService = notificationService;
 			_logger = logger;
 			_createFineValidator = createFineValidator;
 			_calculateFineValidator = calculateFineValidator;
@@ -281,6 +284,16 @@ namespace Web.Controllers
                     staffId, result.Value.Id, model.Amount, model.MemberId, DateTime.UtcNow);
                 
                 TempData["SuccessMessage"] = "Fine created successfully.";
+
+                // Send fine incurred notification
+                await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+                {
+                    UserId = result.Value.UserId,
+                    Type = NotificationType.LoanReminder, // Consider extending NotificationType for FineIncurred
+                    Subject = $"Fine Incurred: {result.Value.BookTitle ?? "Library Fine"}",
+                    Message = $"A fine of {result.Value.Amount:C} has been added to your account. Reason: {result.Value.Description}"
+                });
+
                 return RedirectToAction(nameof(Details), new { id = result.Value.Id });
             }
             catch (Exception ex)
@@ -374,6 +387,16 @@ namespace Web.Controllers
                     staffId, result.Value.Id, result.Value.Amount, model.LoanId, DateTime.UtcNow);
                 
                 TempData["SuccessMessage"] = "Fine calculated successfully.";
+
+                // Send fine incurred notification
+                await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+                {
+                    UserId = result.Value.UserId,
+                    Type = NotificationType.LoanReminder, // Consider extending NotificationType for FineIncurred
+                    Subject = $"Fine Incurred: {result.Value.BookTitle ?? "Library Fine"}",
+                    Message = $"A fine of {result.Value.Amount:C} has been added to your account. Reason: {result.Value.Description}"
+                });
+
                 return RedirectToAction(nameof(Details), new { id = result.Value.Id });
             }
             catch (Exception ex)
@@ -485,6 +508,16 @@ namespace Web.Controllers
 					staffId, model.PaymentAmount, model.FineId, DateTime.UtcNow);
 
 				TempData["SuccessMessage"] = "Fine payment processed successfully.";
+
+				// Send fine payment confirmation notification
+				await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+				{
+					UserId = result.Value.UserId,
+					Type = NotificationType.LoanReminder, // Consider extending NotificationType for FinePaid
+					Subject = $"Fine Paid: {result.Value.BookTitle ?? "Library Fine"}",
+					Message = $"Your payment of {result.Value.Amount:C} for the fine has been received. Thank you!"
+				});
+
 				return RedirectToAction(nameof(Details), new { id = model.FineId });
 			}
 			catch (Exception ex)
@@ -616,6 +649,16 @@ namespace Web.Controllers
 					staffId, model.FineId, result.Value.Amount, DateTime.UtcNow);
 
 				TempData["SuccessMessage"] = "Fine waived successfully.";
+
+				// Send fine waiver notification
+				await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+				{
+					UserId = result.Value.UserId,
+					Type = NotificationType.LoanReminder, // Consider extending NotificationType for FineWaived
+					Subject = $"Fine Waived: {result.Value.BookTitle ?? "Library Fine"}",
+					Message = $"Your fine of {result.Value.Amount:C} has been waived. Reason: {result.Value.WaiverReason ?? "N/A"}"
+				});
+
 				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
 			}
 			catch (Exception ex)

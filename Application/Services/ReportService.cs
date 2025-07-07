@@ -23,7 +23,7 @@ public class ReportService : IReportService
 
     public async Task<Result<ReportResponseDto>> GenerateReportAsync(ReportRequestDto request)
     {
-        var userId = request.Schedule?.Recipients?.FirstOrDefault(); // Placeholder: pass userId as needed
+        // var userId = request.Schedule?.Recipients?.FirstOrDefault(); // Placeholder: pass userId as needed
         var reportType = request.ReportType.ToString();
         var format = request.Format.ToString();
         try
@@ -41,28 +41,12 @@ public class ReportService : IReportService
                     result = Result.Failure<ReportResponseDto>("Unsupported report type.");
                     break;
             }
-            // Audit log
-            await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
-            {
-                UserId = userId != null ? int.Parse(userId) : 0, // Replace with actual user context
-                ActionType = Domain.Enums.AuditActionType.Export,
-                EntityType = "Report",
-                Details = $"Generated report: {reportType} ({format}) - Success: {result.IsSuccess}",
-                IsSuccess = result.IsSuccess
-            });
+            // Audit log removed: now handled in controller
             return result;
         }
         catch (Exception ex)
         {
-            // Audit log for failure
-            await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
-            {
-                UserId = userId != null ? int.Parse(userId) : 0,
-                ActionType = Domain.Enums.AuditActionType.Export,
-                EntityType = "Report",
-                Details = $"Failed to generate report: {reportType} ({format}) - {ex.Message}",
-                IsSuccess = false
-            });
+            // Audit log removed: now handled in controller
             throw;
         }
     }

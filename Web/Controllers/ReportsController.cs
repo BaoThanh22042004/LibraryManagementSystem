@@ -43,15 +43,26 @@ public class ReportsController : Controller
             var result = await _reportService.GenerateReportAsync(request);
             if (!result.IsSuccess)
             {
+                if (User.TryGetUserId(out int staffId))
+                {
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                    {
+                        UserId = staffId,
+                        ActionType = AuditActionType.Export,
+                        EntityType = "Report",
+                        Details = $"Failed to generate report: {request.ReportType} ({request.Format}) - {result.Error}",
+                        IsSuccess = false
+                    });
+                }
                 TempData["ErrorMessage"] = result.Error;
                 return View("Index", request);
             }
-            // Audit log
-            if (User.TryGetUserId(out int staffId))
+            // Audit log for success
+            if (User.TryGetUserId(out int staffIdSuccess))
             {
                 await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
                 {
-                    UserId = staffId,
+                    UserId = staffIdSuccess,
                     ActionType = AuditActionType.Export,
                     EntityType = "Report",
                     Details = $"Generated report: {request.ReportType} ({request.Format})",
@@ -65,6 +76,17 @@ public class ReportsController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating report");
+            if (User.TryGetUserId(out int staffIdFail))
+            {
+                await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                {
+                    UserId = staffIdFail,
+                    ActionType = AuditActionType.Export,
+                    EntityType = "Report",
+                    Details = $"Exception during report generation: {request.ReportType} ({request.Format}) - {ex.Message}",
+                    IsSuccess = false
+                });
+            }
             TempData["ErrorMessage"] = "Unable to generate report.";
             return View("Index", request);
         }

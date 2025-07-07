@@ -27,6 +27,7 @@ namespace Web.Controllers
 		private readonly IValidator<CreateLoanRequest> _createLoanValidator;
 		private readonly IValidator<ReturnBookRequest> _returnBookValidator;
 		private readonly IValidator<RenewLoanRequest> _renewLoanValidator;
+		private readonly INotificationService _notificationService;
 
 		public LoanController(
 			ILoanService loanService,
@@ -36,7 +37,8 @@ namespace Web.Controllers
 			ILogger<LoanController> logger,
 			IValidator<CreateLoanRequest> createLoanValidator,
 			IValidator<ReturnBookRequest> returnBookValidator,
-			IValidator<RenewLoanRequest> renewLoanValidator)
+			IValidator<RenewLoanRequest> renewLoanValidator,
+			INotificationService notificationService)
 		{
 			_loanService = loanService;
 			_bookCopyService = bookCopyService;
@@ -46,6 +48,7 @@ namespace Web.Controllers
 			_createLoanValidator = createLoanValidator;
 			_returnBookValidator = returnBookValidator;
 			_renewLoanValidator = renewLoanValidator;
+			_notificationService = notificationService;
 		}
 
 		/// <summary>
@@ -195,6 +198,16 @@ namespace Web.Controllers
 					staffId, model.BookCopyId, model.MemberId, DateTime.UtcNow);
 
 				TempData["SuccessMessage"] = "Book checked out successfully.";
+
+				// Send loan confirmation notification
+				await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+				{
+					UserId = result.Value.UserId,
+					Type = NotificationType.LoanReminder,
+					Subject = $"Loan Confirmation: {result.Value.BookTitle}",
+					Message = $"You have successfully checked out '{result.Value.BookTitle}'. Due date: {result.Value.DueDate:yyyy-MM-dd}."
+				});
+
 				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
 			}
 			catch (Exception ex)
@@ -303,6 +316,16 @@ namespace Web.Controllers
 					staffId, result.Value.BookCopyId, result.Value.MemberId, DateTime.UtcNow);
 
 				TempData["SuccessMessage"] = "Book returned successfully.";
+
+				// Send return confirmation notification
+				await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+				{
+					UserId = result.Value.UserId,
+					Type = NotificationType.LoanReminder,
+					Subject = $"Return Confirmation: {result.Value.BookTitle}",
+					Message = $"You have successfully returned '{result.Value.BookTitle}'. Thank you!"
+				});
+
 				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
 			}
 			catch (Exception ex)
@@ -412,6 +435,16 @@ namespace Web.Controllers
 					staffId, result.Value.Id, result.Value.MemberId, DateTime.UtcNow);
 
 				TempData["SuccessMessage"] = "Loan renewed successfully.";
+
+				// Send loan renewal confirmation notification
+				await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+				{
+					UserId = result.Value.UserId,
+					Type = NotificationType.LoanReminder,
+					Subject = $"Loan Renewal Confirmation: {result.Value.BookTitle}",
+					Message = $"Your loan for '{result.Value.BookTitle}' has been renewed. New due date: {result.Value.DueDate:yyyy-MM-dd}."
+				});
+
 				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
 			}
 			catch (Exception ex)

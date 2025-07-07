@@ -28,6 +28,7 @@ public class ReservationProfile : Profile
         CreateMap<Reservation, ReservationBasicDto>()
             .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member.User.FullName))
             .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book.Title))
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Member.UserId))
             .ForMember(dest => dest.QueuePosition, opt => opt.Ignore()) // Queue position calculated in service
             .ForMember(dest => dest.PickupDeadline, opt => opt.Ignore()); // Pickup deadline calculated in service
 

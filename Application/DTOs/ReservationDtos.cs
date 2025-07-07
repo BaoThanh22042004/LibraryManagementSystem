@@ -118,6 +118,11 @@ public record ReservationBasicDto
     public int MemberId { get; set; }
 
     /// <summary>
+    /// The User ID of the member (for notification targeting).
+    /// </summary>
+    public int UserId { get; set; }
+
+    /// <summary>
     /// The name of the member.
     /// </summary>
     public string MemberName { get; set; } = string.Empty;

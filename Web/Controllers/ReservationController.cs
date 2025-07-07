@@ -20,7 +20,7 @@ namespace Web.Controllers
 		private readonly IReservationService _reservationService;
 		private readonly IBookService _bookService;
 		private readonly IAuditService _auditService;
-		//private readonly INotificationService _notificationService;
+		private readonly INotificationService _notificationService;
 		private readonly ILogger<ReservationController> _logger;
 		private readonly IValidator<CreateReservationRequest> _createReservationValidator;
 		private readonly IValidator<CancelReservationRequest> _cancelReservationValidator;
@@ -30,7 +30,7 @@ namespace Web.Controllers
 			IReservationService reservationService,
 			IBookService bookService,
 			IAuditService auditService,
-			//INotificationService notificationService,
+			INotificationService notificationService,
 			ILogger<ReservationController> logger,
 			IValidator<CreateReservationRequest> createReservationValidator,
 			IValidator<CancelReservationRequest> cancelReservationValidator,
@@ -39,7 +39,7 @@ namespace Web.Controllers
 			_reservationService = reservationService;
 			_bookService = bookService;
 			_auditService = auditService;
-			//_notificationService = notificationService;
+			_notificationService = notificationService;
 			_logger = logger;
 			_createReservationValidator = createReservationValidator;
 			_cancelReservationValidator = cancelReservationValidator;
@@ -265,6 +265,16 @@ namespace Web.Controllers
 					staffId, result.Value.Id, model.BookId, model.MemberId, DateTime.UtcNow);
 
 				TempData["SuccessMessage"] = "Reservation created successfully.";
+
+				// Send reservation confirmation notification
+				await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+				{
+					UserId = result.Value.UserId,
+					Type = NotificationType.LoanReminder, // Consider extending NotificationType for ReservationConfirmation
+					Subject = $"Reservation Confirmation: {result.Value.BookTitle}",
+					Message = $"You have successfully reserved '{result.Value.BookTitle}'. Your queue position: {result.Value.QueuePosition ?? 1}."
+				});
+
 				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
 			}
 			catch (Exception ex)
@@ -331,6 +341,16 @@ namespace Web.Controllers
                     staffId, model.ReservationId, DateTime.UtcNow);
                 
                 TempData["SuccessMessage"] = "Reservation cancelled successfully.";
+
+                // Send reservation cancellation notification
+                await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+                {
+                    UserId = result.Value.UserId,
+                    Type = NotificationType.LoanReminder, // Consider extending NotificationType for ReservationCancellation
+                    Subject = $"Reservation Cancelled: {result.Value.BookTitle}",
+                    Message = $"Your reservation for '{result.Value.BookTitle}' has been cancelled."
+                });
+
                 return RedirectToAction(nameof(Details), new { id = model.ReservationId });
             }
             catch (Exception ex)
@@ -446,6 +466,16 @@ namespace Web.Controllers
 					staffId, result.Value.Id, result.Value.BookCopyId, DateTime.UtcNow);
 
 				TempData["SuccessMessage"] = "Reservation fulfilled successfully.";
+
+				// Send reservation fulfillment notification
+				await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+				{
+					UserId = result.Value.UserId,
+					Type = NotificationType.ReservationAvailable,
+					Subject = $"Reservation Fulfilled: {result.Value.BookTitle}",
+					Message = $"Your reserved book '{result.Value.BookTitle}' is now available for pickup. Please collect it by {result.Value.PickupDeadline:yyyy-MM-dd}."
+				});
+
 				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
 			}
 			catch (Exception ex)
@@ -581,6 +611,16 @@ namespace Web.Controllers
                     memberId, result.Value.Id, model.BookId, DateTime.UtcNow);
                 
                 TempData["SuccessMessage"] = "Book reserved successfully. You will be notified when it becomes available.";
+
+                // Send reservation confirmation notification
+                await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+                {
+                    UserId = result.Value.UserId,
+                    Type = NotificationType.LoanReminder, // Consider extending NotificationType for ReservationConfirmation
+                    Subject = $"Reservation Confirmation: {result.Value.BookTitle}",
+                    Message = $"You have successfully reserved '{result.Value.BookTitle}'. Your queue position: {result.Value.QueuePosition ?? 1}."
+                });
+
                 return RedirectToAction(nameof(MyReservationDetails), new { id = result.Value.Id });
             }
             catch (Exception ex)
@@ -643,6 +683,16 @@ namespace Web.Controllers
                     memberId, model.ReservationId, DateTime.UtcNow);
                 
                 TempData["SuccessMessage"] = "Reservation cancelled successfully.";
+
+                // Send reservation cancellation notification
+                await _notificationService.CreateNotificationAsync(new NotificationCreateDto
+                {
+                    UserId = result.Value.UserId,
+                    Type = NotificationType.LoanReminder, // Consider extending NotificationType for ReservationCancellation
+                    Subject = $"Reservation Cancelled: {result.Value.BookTitle}",
+                    Message = $"Your reservation for '{result.Value.BookTitle}' has been cancelled."
+                });
+
                 return RedirectToAction(nameof(MyReservations));
             }
             catch (Exception ex)
