@@ -43,6 +43,11 @@ public class Notification : BaseEntity
 	public DateTime? SentAt { get; set; }
 
 	/// <summary>
+	/// The date and time the notification was read by the recipient, if applicable.
+	/// </summary>
+	public DateTime? ReadAt { get; set; }
+
+	/// <summary>
 	/// Navigation property to the recipient user, if applicable.
 	/// </summary>
 	public User? User { get; set; }

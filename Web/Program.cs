@@ -30,6 +30,9 @@ builder.Services.AddAuthentication(options =>
 // Register Application layer with configuration
 builder.Services.AddApplication(builder.Configuration);
 
+// Register background notification job service
+builder.Services.AddHostedService<Web.Services.NotificationJobService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

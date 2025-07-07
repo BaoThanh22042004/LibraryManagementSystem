@@ -1,0 +1,21 @@
+@model Application.DTOs.NotificationReadDto
+@{
+    ViewData["Title"] = "Notification Details";
+}
+<h2>Notification Details</h2>
+<div class="card">
+    <div class="card-header">
+        <strong>@Model.Subject</strong>
+    </div>
+    <div class="card-body">
+        <p><strong>Message:</strong> @Model.Message</p>
+        <p><strong>Status:</strong> @Model.Status</p>
+        <p><strong>Sent At:</strong> @Model.SentAt?.ToString("g")</p>
+        <p><strong>Created At:</strong> @Model.CreatedAt.ToString("g")</p>
+        @if (!string.IsNullOrEmpty(Model.UserName))
+        {
+            <p><strong>Member:</strong> @Model.UserName</p>
+        }
+    </div>
+</div>
+<a asp-action="Index" class="btn btn-secondary mt-3">Back to List</a> 

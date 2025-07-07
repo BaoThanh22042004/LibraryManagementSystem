@@ -15,5 +15,12 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
 			.WithMany(u => u.Notifications)
 			.HasForeignKey(n => n.UserId)
 			.OnDelete(DeleteBehavior.Cascade);
+
+		builder.Property(n => n.Subject)
+			.HasMaxLength(200)
+			.IsRequired();
+		builder.Property(n => n.Message)
+			.HasMaxLength(500)
+			.IsRequired();
 	}
 }
