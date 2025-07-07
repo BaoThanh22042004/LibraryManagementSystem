@@ -46,7 +46,7 @@ public class BookCopyService : IBookCopyService
             if (book == null)
             {
                 _logger.LogWarning("Book copy creation failed: Book not found with ID {BookId}", request.BookId);
-                return Result.Failure<BookCopyDetailDto>($"Book with ID {request.BookId} not found.");
+                return Result.Failure<BookCopyDetailDto>("Book not found. Please check the book and try again.");
             }
 
             // Generate copy number if not provided
@@ -69,7 +69,7 @@ public class BookCopyService : IBookCopyService
                 {
                     _logger.LogWarning("Book copy creation failed: Copy number '{CopyNumber}' already exists for book {BookId}", 
                         copyNumber, request.BookId);
-                    return Result.Failure<BookCopyDetailDto>($"Copy number '{copyNumber}' already exists for this book.");
+                    return Result.Failure<BookCopyDetailDto>("A copy with this number already exists for this book. Please use a different number or let the system auto-generate one.");
                 }
             }
 
@@ -100,7 +100,7 @@ public class BookCopyService : IBookCopyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating book copy: {Message}", ex.Message);
-            return Result.Failure<BookCopyDetailDto>($"Failed to create book copy: {ex.Message}");
+            return Result.Failure<BookCopyDetailDto>("System error: Unable to create book copy. Please try again or contact support if the problem persists.");
         }
     }
 
@@ -120,7 +120,7 @@ public class BookCopyService : IBookCopyService
             if (book == null)
             {
                 _logger.LogWarning("Multiple book copies creation failed: Book not found with ID {BookId}", request.BookId);
-                return Result.Failure<IEnumerable<int>>($"Book with ID {request.BookId} not found.");
+                return Result.Failure<IEnumerable<int>>("Book not found. Please check the book and try again.");
             }
 
             // Begin transaction to ensure atomic operation
@@ -177,7 +177,7 @@ public class BookCopyService : IBookCopyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating multiple book copies: {Message}", ex.Message);
-            return Result.Failure<IEnumerable<int>>($"Failed to create multiple book copies: {ex.Message}");
+            return Result.Failure<IEnumerable<int>>("System error: Unable to create multiple book copies. Please try again or contact support if the problem persists.");
         }
     }
 
@@ -199,7 +199,7 @@ public class BookCopyService : IBookCopyService
             if (copy == null)
             {
                 _logger.LogWarning("Book copy status update failed: Copy not found with ID {CopyId}", request.Id);
-                return Result.Failure<BookCopyDetailDto>($"Book copy with ID {request.Id} not found.");
+                return Result.Failure<BookCopyDetailDto>("Book copy not found. Please check the copy and try again.");
             }
 
             // Validate status change
@@ -210,7 +210,7 @@ public class BookCopyService : IBookCopyService
                 if (hasActiveLoans)
                 {
                     _logger.LogWarning("Book copy status update failed: Cannot mark copy {CopyId} as Available while it has active loans", request.Id);
-                    return Result.Failure<BookCopyDetailDto>("Cannot mark copy as Available while it has active loans. Process the return first.");
+                    return Result.Failure<BookCopyDetailDto>("Cannot mark copy as Available while it has active loans. Please process the return first.");
                 }
             }
 
@@ -233,7 +233,7 @@ public class BookCopyService : IBookCopyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating book copy status: {Message}", ex.Message);
-            return Result.Failure<BookCopyDetailDto>($"Failed to update book copy status: {ex.Message}");
+            return Result.Failure<BookCopyDetailDto>("System error: Unable to update book copy status. Please try again or contact support if the problem persists.");
         }
     }
 
@@ -255,7 +255,7 @@ public class BookCopyService : IBookCopyService
             if (copy == null)
             {
                 _logger.LogWarning("Book copy deletion failed: Copy not found with ID {CopyId}", id);
-                return Result.Failure<bool>($"Book copy with ID {id} not found.");
+                return Result.Failure<bool>("Book copy not found. Please check the copy and try again.");
             }
 
             // Check for active loans (BR-08)
@@ -263,7 +263,7 @@ public class BookCopyService : IBookCopyService
             if (hasActiveLoans)
             {
                 _logger.LogWarning("Book copy deletion failed: Copy {CopyId} has active loans", id);
-                return Result.Failure<bool>("Cannot delete book copy because it has active loans.");
+                return Result.Failure<bool>("Cannot delete this copy because it has active loans. Please process all returns before deleting.");
             }
 
             // Check for active reservations (BR-08)
@@ -271,7 +271,7 @@ public class BookCopyService : IBookCopyService
             if (hasActiveReservations)
             {
                 _logger.LogWarning("Book copy deletion failed: Copy {CopyId} has active reservations", id);
-                return Result.Failure<bool>("Cannot delete book copy because it has active reservations.");
+                return Result.Failure<bool>("Cannot delete this copy because it has active reservations. Please cancel or reassign reservations before deleting.");
             }
 
             // Delete copy
@@ -284,7 +284,7 @@ public class BookCopyService : IBookCopyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting book copy: {Message}", ex.Message);
-            return Result.Failure<bool>($"Failed to delete book copy: {ex.Message}");
+            return Result.Failure<bool>("System error: Unable to delete book copy. Please try again or contact support if the problem persists.");
         }
     }
 

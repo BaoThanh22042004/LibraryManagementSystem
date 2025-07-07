@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Web.Extensions;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace Web.Controllers
 {
@@ -139,7 +141,7 @@ namespace Web.Controllers
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "Admin,Librarian")]
-		public async Task<IActionResult> Create(CreateCategoryRequest model)
+		public async Task<IActionResult> Create(CreateCategoryRequest model, IFormFile? CoverImageFile)
 		{
 			try
 			{
@@ -161,6 +163,27 @@ namespace Web.Controllers
 				{
 					ModelState.AddModelError("Name", "A category with this name already exists.");
 					return View(model);
+				}
+
+				// Handle cover image upload
+				if (CoverImageFile != null && CoverImageFile.Length > 0)
+				{
+					var ext = Path.GetExtension(CoverImageFile.FileName).ToLowerInvariant();
+					var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+					if (!allowed.Contains(ext))
+					{
+						ModelState.AddModelError("CoverImageFile", "Invalid image format. Allowed: jpg, jpeg, png, gif, webp.");
+						return View(model);
+					}
+					var fileName = $"cat_{Guid.NewGuid()}{ext}";
+					var savePath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", "images", "categories");
+					Directory.CreateDirectory(savePath);
+					var filePath = Path.Combine(savePath, fileName);
+					using (var stream = new FileStream(filePath, FileMode.Create))
+					{
+						await CoverImageFile.CopyToAsync(stream);
+					}
+					model.CoverImageUrl = $"/images/categories/{fileName}";
 				}
 
 				var result = await _categoryService.CreateCategoryAsync(model);
@@ -191,7 +214,7 @@ namespace Web.Controllers
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error creating category for user {UserId}", User.GetUserId());
-				TempData["ErrorMessage"] = "An error occurred while creating the category.";
+				TempData["ErrorMessage"] = "An error occurred while creating the category. Please try again or contact support if the problem persists.";
 				return View(model);
 			}
 		}
@@ -241,7 +264,7 @@ namespace Web.Controllers
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "Admin,Librarian")]
-		public async Task<IActionResult> Edit(UpdateCategoryRequest model)
+		public async Task<IActionResult> Edit(UpdateCategoryRequest model, IFormFile? CoverImageFile, bool RemoveCoverImage = false)
 		{
 			try
 			{
@@ -264,6 +287,49 @@ namespace Web.Controllers
 					ModelState.AddModelError("Name", "A category with this name already exists.");
 					return View(model);
 				}
+
+				// Handle cover image upload/removal
+				if (RemoveCoverImage)
+				{
+					if (!string.IsNullOrEmpty(model.CoverImageUrl))
+					{
+						var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", model.CoverImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+						if (System.IO.File.Exists(oldPath))
+						{
+							System.IO.File.Delete(oldPath);
+						}
+					}
+					model.CoverImageUrl = null;
+				}
+				else if (CoverImageFile != null && CoverImageFile.Length > 0)
+				{
+					var ext = Path.GetExtension(CoverImageFile.FileName).ToLowerInvariant();
+					var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+					if (!allowed.Contains(ext))
+					{
+						ModelState.AddModelError("CoverImageFile", "Invalid image format. Allowed: jpg, jpeg, png, gif, webp.");
+						return View(model);
+					}
+					var fileName = $"cat_{Guid.NewGuid()}{ext}";
+					var savePath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", "images", "categories");
+					Directory.CreateDirectory(savePath);
+					var filePath = Path.Combine(savePath, fileName);
+					using (var stream = new FileStream(filePath, FileMode.Create))
+					{
+						await CoverImageFile.CopyToAsync(stream);
+					}
+					// Remove old image if exists
+					if (!string.IsNullOrEmpty(model.CoverImageUrl))
+					{
+						var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", model.CoverImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+						if (System.IO.File.Exists(oldPath))
+						{
+							System.IO.File.Delete(oldPath);
+						}
+					}
+					model.CoverImageUrl = $"/images/categories/{fileName}";
+				}
+
 				var result = await _categoryService.UpdateCategoryAsync(model);
 				if (!result.IsSuccess)
 				{
@@ -292,7 +358,7 @@ namespace Web.Controllers
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error updating category {CategoryId} for user {UserId}", model.Id, User.GetUserId());
-				TempData["ErrorMessage"] = "An error occurred while updating the category.";
+				TempData["ErrorMessage"] = "An error occurred while updating the category. Please try again or contact support if the problem persists.";
 				return View(model);
 			}
 		}

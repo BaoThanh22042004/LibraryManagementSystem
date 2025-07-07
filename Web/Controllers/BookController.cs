@@ -7,6 +7,8 @@ using Application.Validators;
 using Web.Extensions;
 using Application.Common;
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace Web.Controllers
 {
@@ -180,7 +182,7 @@ namespace Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Create(CreateBookRequest model)
+        public async Task<IActionResult> Create(CreateBookRequest model, IFormFile? CoverImageFile)
         {
             try
             {
@@ -193,18 +195,8 @@ namespace Web.Controllers
                 if (!validationResult.IsValid)
                 {
                     validationResult.AddToModelState(ModelState);
-
-                    // Get categories for the form again
                     var categoriesResult = await _categoryService.GetAllCategoriesAsync();
-                    if (categoriesResult.IsSuccess)
-                    {
-                        ViewBag.Categories = categoriesResult.Value;
-                    }
-                    else
-                    {
-                        ViewBag.Categories = new List<CategoryDto>();
-                    }
-
+                    ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new List<CategoryDto>();
                     return View(model);
                 }
 
@@ -213,38 +205,40 @@ namespace Web.Controllers
                 if (isbnExistsResult.IsSuccess && isbnExistsResult.Value)
                 {
                     ModelState.AddModelError("ISBN", "A book with this ISBN already exists.");
-
-                    // Get categories for the form again
                     var categoriesResult = await _categoryService.GetAllCategoriesAsync();
-                    if (categoriesResult.IsSuccess)
-                    {
-                        ViewBag.Categories = categoriesResult.Value;
-                    }
-                    else
-                    {
-                        ViewBag.Categories = new List<CategoryDto>();
-                    }
-
+                    ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new List<CategoryDto>();
                     return View(model);
                 }
 
-                var result = await _bookService.CreateBookAsync(model);
+                // Handle cover image upload
+                if (CoverImageFile != null && CoverImageFile.Length > 0)
+                {
+                    var ext = Path.GetExtension(CoverImageFile.FileName).ToLowerInvariant();
+                    var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                    if (!allowed.Contains(ext))
+                    {
+                        ModelState.AddModelError("CoverImageFile", "Invalid image format. Allowed: jpg, jpeg, png, gif, webp.");
+                        var categoriesResult = await _categoryService.GetAllCategoriesAsync();
+                        ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new List<CategoryDto>();
+                        return View(model);
+                    }
+                    var fileName = $"book_{Guid.NewGuid()}{ext}";
+                    var savePath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", "images", "books");
+                    Directory.CreateDirectory(savePath);
+                    var filePath = Path.Combine(savePath, fileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await CoverImageFile.CopyToAsync(stream);
+                    }
+                    model.CoverImageUrl = $"/images/books/{fileName}";
+                }
 
+                var result = await _bookService.CreateBookAsync(model);
                 if (!result.IsSuccess)
                 {
                     ModelState.AddModelError(string.Empty, result.Error);
-
-                    // Get categories for the form again
                     var categoriesResult = await _categoryService.GetAllCategoriesAsync();
-                    if (categoriesResult.IsSuccess)
-                    {
-                        ViewBag.Categories = categoriesResult.Value;
-                    }
-                    else
-                    {
-                        ViewBag.Categories = new List<CategoryDto>();
-                    }
-
+                    ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new List<CategoryDto>();
                     return View(model);
                 }
 
@@ -269,19 +263,9 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating book by user {UserId}", User.GetUserId());
-                ModelState.AddModelError(string.Empty, "An unexpected error occurred while creating the book.");
-
-                // Get categories for the form again
+                ModelState.AddModelError(string.Empty, "An unexpected error occurred while creating the book. Please try again or contact support if the problem persists.");
                 var categoriesResult = await _categoryService.GetAllCategoriesAsync();
-                if (categoriesResult.IsSuccess)
-                {
-                    ViewBag.Categories = categoriesResult.Value;
-                }
-                else
-                {
-                    ViewBag.Categories = new List<CategoryDto>();
-                }
-
+                ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new List<CategoryDto>();
                 return View(model);
             }
         }
@@ -350,7 +334,7 @@ namespace Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Edit(UpdateBookRequest model)
+        public async Task<IActionResult> Edit(UpdateBookRequest model, IFormFile? CoverImageFile, bool RemoveCoverImage = false)
         {
             try
             {
@@ -363,18 +347,8 @@ namespace Web.Controllers
                 if (!validationResult.IsValid)
                 {
                     validationResult.AddToModelState(ModelState);
-
-                    // Get categories for the form again
                     var categoriesResult = await _categoryService.GetAllCategoriesAsync();
-                    if (categoriesResult.IsSuccess)
-                    {
-                        ViewBag.Categories = categoriesResult.Value;
-                    }
-                    else
-                    {
-                        ViewBag.Categories = new List<CategoryDto>();
-                    }
-
+                    ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new List<CategoryDto>();
                     return View(model);
                 }
 
@@ -383,38 +357,61 @@ namespace Web.Controllers
                 if (isbnExistsResult.IsSuccess && isbnExistsResult.Value)
                 {
                     ModelState.AddModelError("ISBN", "A book with this ISBN already exists.");
-
-                    // Get categories for the form again
                     var categoriesResult = await _categoryService.GetAllCategoriesAsync();
-                    if (categoriesResult.IsSuccess)
-                    {
-                        ViewBag.Categories = categoriesResult.Value;
-                    }
-                    else
-                    {
-                        ViewBag.Categories = new List<CategoryDto>();
-                    }
-
+                    ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new List<CategoryDto>();
                     return View(model);
                 }
 
-                var result = await _bookService.UpdateBookAsync(model);
+                // Handle cover image upload/removal
+                if (RemoveCoverImage)
+                {
+                    if (!string.IsNullOrEmpty(model.CoverImageUrl))
+                    {
+                        var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", model.CoverImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                        if (System.IO.File.Exists(oldPath))
+                        {
+                            System.IO.File.Delete(oldPath);
+                        }
+                    }
+                    model.CoverImageUrl = null;
+                }
+                else if (CoverImageFile != null && CoverImageFile.Length > 0)
+                {
+                    var ext = Path.GetExtension(CoverImageFile.FileName).ToLowerInvariant();
+                    var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                    if (!allowed.Contains(ext))
+                    {
+                        ModelState.AddModelError("CoverImageFile", "Invalid image format. Allowed: jpg, jpeg, png, gif, webp.");
+                        var categoriesResult = await _categoryService.GetAllCategoriesAsync();
+                        ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new List<CategoryDto>();
+                        return View(model);
+                    }
+                    var fileName = $"book_{Guid.NewGuid()}{ext}";
+                    var savePath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", "images", "books");
+                    Directory.CreateDirectory(savePath);
+                    var filePath = Path.Combine(savePath, fileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await CoverImageFile.CopyToAsync(stream);
+                    }
+                    // Remove old image if exists
+                    if (!string.IsNullOrEmpty(model.CoverImageUrl))
+                    {
+                        var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", model.CoverImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                        if (System.IO.File.Exists(oldPath))
+                        {
+                            System.IO.File.Delete(oldPath);
+                        }
+                    }
+                    model.CoverImageUrl = $"/images/books/{fileName}";
+                }
 
+                var result = await _bookService.UpdateBookAsync(model);
                 if (!result.IsSuccess)
                 {
                     ModelState.AddModelError(string.Empty, result.Error);
-
-                    // Get categories for the form again
                     var categoriesResult = await _categoryService.GetAllCategoriesAsync();
-                    if (categoriesResult.IsSuccess)
-                    {
-                        ViewBag.Categories = categoriesResult.Value;
-                    }
-                    else
-                    {
-                        ViewBag.Categories = new List<CategoryDto>();
-                    }
-
+                    ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new List<CategoryDto>();
                     return View(model);
                 }
 
@@ -439,19 +436,9 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating book {BookId} by user {UserId}", model.Id, User.GetUserId());
-                ModelState.AddModelError(string.Empty, "An unexpected error occurred while updating the book.");
-
-                // Get categories for the form again
+                ModelState.AddModelError(string.Empty, "An unexpected error occurred while updating the book. Please try again or contact support if the problem persists.");
                 var categoriesResult = await _categoryService.GetAllCategoriesAsync();
-                if (categoriesResult.IsSuccess)
-                {
-                    ViewBag.Categories = categoriesResult.Value;
-                }
-                else
-                {
-                    ViewBag.Categories = new List<CategoryDto>();
-                }
-
+                ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new List<CategoryDto>();
                 return View(model);
             }
         }

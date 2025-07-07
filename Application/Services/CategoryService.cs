@@ -43,7 +43,7 @@ public class CategoryService : ICategoryService
             if (nameExistsResult.IsSuccess && nameExistsResult.Value)
             {
                 _logger.LogWarning("Category creation failed: Category name '{Name}' already exists", request.Name);
-                return Result.Failure<CategoryDto>("A category with this name already exists.");
+                return Result.Failure<CategoryDto>("Category with this name already exists. Please choose a different name to proceed.");
             }
 
             // Map DTO to entity
@@ -64,7 +64,7 @@ public class CategoryService : ICategoryService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating category: {Message}", ex.Message);
-            return Result.Failure<CategoryDto>($"Failed to create category: {ex.Message}");
+            return Result.Failure<CategoryDto>("System error: Unable to create category. Please try again or contact support if the problem persists.");
         }
     }
 
@@ -81,7 +81,7 @@ public class CategoryService : ICategoryService
             if (category == null)
             {
                 _logger.LogWarning("Category update failed: Category not found with ID {CategoryId}", request.Id);
-                return Result.Failure<CategoryDto>($"Category with ID {request.Id} not found.");
+                return Result.Failure<CategoryDto>("Category not found. Please check the category and try again.");
             }
 
             // Check if updated name already exists (excluding current category)
@@ -91,7 +91,7 @@ public class CategoryService : ICategoryService
                 if (nameExistsResult.IsSuccess && nameExistsResult.Value)
                 {
                     _logger.LogWarning("Category update failed: Category name '{Name}' already exists", request.Name);
-                    return Result.Failure<CategoryDto>("A category with this name already exists.");
+                    return Result.Failure<CategoryDto>("Category name already exists. Please choose a different name to proceed.");
                 }
             }
 
@@ -113,7 +113,7 @@ public class CategoryService : ICategoryService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating category: {Message}", ex.Message);
-            return Result.Failure<CategoryDto>($"Failed to update category: {ex.Message}");
+            return Result.Failure<CategoryDto>("System error: Unable to update category. Please try again or contact support if the problem persists.");
         }
     }
 
