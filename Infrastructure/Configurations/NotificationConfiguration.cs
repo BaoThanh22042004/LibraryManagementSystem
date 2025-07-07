@@ -16,11 +16,30 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
 			.HasForeignKey(n => n.UserId)
 			.OnDelete(DeleteBehavior.Cascade);
 
+		// Configure properties
+		builder.Property(n => n.UserId)
+			.IsRequired(false);
+
+		builder.Property(n => n.Type)
+			.HasConversion<int>()
+			.IsRequired();
+
+		builder.Property(n => n.Status)
+			.HasConversion<int>()
+			.IsRequired();
+
 		builder.Property(n => n.Subject)
 			.HasMaxLength(200)
 			.IsRequired();
+
 		builder.Property(n => n.Message)
 			.HasMaxLength(500)
 			.IsRequired();
+
+		builder.Property(n => n.SentAt)
+			.IsRequired(false);
+
+		builder.Property(n => n.ReadAt)
+			.IsRequired(false);
 	}
 }
