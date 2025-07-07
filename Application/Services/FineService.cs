@@ -34,17 +34,18 @@ public class FineService : IFineService
 
 	/// <summary>
 	/// Creates a new fine manually - UC026
+	/// Supports staff override for fine creation restrictions.
 	/// </summary>
 	/// <param name="request">Fine creation details</param>
-	/// <returns>Result with created fine information</returns>
-	public async Task<Result<FineDetailDto>> CreateFineAsync(CreateFineRequest request)
+	/// <param name="allowOverride">If true, allows staff to override certain business rules</param>
+	/// <param name="overrideReason">Reason for override (required if allowOverride is true)</param>
+	/// <returns>Result with created fine information and override context</returns>
+	public async Task<Result<FineDetailDto>> CreateFineAsync(CreateFineRequest request, bool allowOverride = false, string? overrideReason = null)
 	{
 		try
 		{
-			// Begin transaction for data consistency
 			await _unitOfWork.BeginTransactionAsync();
 
-			// Get the member
 			var member = await _unitOfWork.Repository<Member>().GetAsync(
 				m => m.Id == request.MemberId,
 				m => m.User);
@@ -52,7 +53,6 @@ public class FineService : IFineService
 			if (member == null)
 				return Result.Failure<FineDetailDto>($"Member with ID {request.MemberId} not found.");
 
-			// If loan ID is provided, verify it exists and belongs to the member
 			Loan? loan = null;
 			if (request.LoanId.HasValue)
 			{
@@ -60,54 +60,55 @@ public class FineService : IFineService
 					l => l.Id == request.LoanId.Value && l.MemberId == request.MemberId,
 					l => l.BookCopy.Book);
 
-				if (loan == null)
+				if (loan == null && !allowOverride)
 					return Result.Failure<FineDetailDto>($"Loan with ID {request.LoanId.Value} not found or does not belong to the specified member.");
 			}
 
-			// Create the fine entity
+			// Validate fine amount
+			if ((request.Amount <= 0 || request.Amount > 1000) && !allowOverride)
+				return Result.Failure<FineDetailDto>("Fine amount must be between $0.01 and $1000.");
+
+			// Validate description
+			if (string.IsNullOrWhiteSpace(request.Description) && !allowOverride)
+				return Result.Failure<FineDetailDto>("Description is required.");
+
 			var fine = _mapper.Map<Fine>(request);
 			fine.FineDate = DateTime.UtcNow;
 			fine.Status = FineStatus.Pending;
 
-			// Save the fine
 			await _unitOfWork.Repository<Fine>().AddAsync(fine);
-
-			// Update the member's outstanding fine amount
 			member.OutstandingFines += fine.Amount;
 			_unitOfWork.Repository<Member>().Update(member);
-
 			await _unitOfWork.SaveChangesAsync();
-
-			// Commit transaction
 			await _unitOfWork.CommitTransactionAsync();
-
-			// Reload the fine with related entities
 			var createdFine = await _unitOfWork.Repository<Fine>().GetAsync(
 				f => f.Id == fine.Id,
 				f => f.Member.User,
 				f => f.Loan!.BookCopy.Book);
-
-			// Map and return the result
 			var fineDto = _mapper.Map<FineDetailDto>(createdFine);
-
-			// Set additional fields if loan-related
 			if (loan != null)
 			{
 				fineDto.BookTitle = loan.BookCopy.Book.Title;
 				fineDto.DueDate = loan.DueDate;
 				fineDto.ReturnDate = loan.ReturnDate;
-
 				if (loan.ReturnDate.HasValue && loan.ReturnDate.Value > loan.DueDate)
 				{
 					fineDto.DaysOverdue = (int)(loan.ReturnDate.Value - loan.DueDate).TotalDays;
 				}
 			}
-
+			if (allowOverride && !string.IsNullOrWhiteSpace(overrideReason))
+			{
+				fineDto.OverrideContext = new FineOverrideContext
+				{
+					IsOverride = true,
+					Reason = overrideReason,
+					OverriddenRules = GetOverriddenRulesForCreateFine(request, loan)
+				};
+			}
 			return Result.Success(fineDto);
 		}
 		catch (Exception ex)
 		{
-			// Rollback on error
 			await _unitOfWork.RollbackTransactionAsync();
 			_logger.LogError(ex, "Error creating fine: {ErrorMessage}", ex.Message);
 			return Result.Failure<FineDetailDto>($"Failed to create fine: {ex.Message}");
@@ -334,17 +335,18 @@ public class FineService : IFineService
 
 	/// <summary>
 	/// Waives a fine - UC028
+	/// Supports staff override for waiver restrictions.
 	/// </summary>
 	/// <param name="request">Waiver details</param>
-	/// <returns>Result with updated fine information</returns>
-	public async Task<Result<FineDetailDto>> WaiveFineAsync(WaiveFineRequest request)
+	/// <param name="allowOverride">If true, allows staff to override certain business rules</param>
+	/// <param name="overrideReason">Reason for override (required if allowOverride is true)</param>
+	/// <returns>Result with updated fine information and override context</returns>
+	public async Task<Result<FineDetailDto>> WaiveFineAsync(WaiveFineRequest request, bool allowOverride = false, string? overrideReason = null)
 	{
 		try
 		{
-			// Begin transaction
 			await _unitOfWork.BeginTransactionAsync();
 
-			// Get the fine with related entities
 			var fine = await _unitOfWork.Repository<Fine>().GetAsync(
 				f => f.Id == request.FineId,
 				f => f.Member.User,
@@ -353,62 +355,83 @@ public class FineService : IFineService
 			if (fine == null)
 				return Result.Failure<FineDetailDto>($"Fine with ID {request.FineId} not found.");
 
-			// Check if fine can be waived (must be pending)
-			if (fine.Status != FineStatus.Pending)
+			if (fine.Status != FineStatus.Pending && !allowOverride)
 				return Result.Failure<FineDetailDto>($"Fine cannot be waived. Current status: {fine.Status}.");
 
-			// Get the staff member who is authorizing the waiver
 			var staffMember = await _unitOfWork.Repository<User>().GetAsync(u => u.Id == request.StaffId);
-			if (staffMember == null)
+			if (staffMember == null && !allowOverride)
 				return Result.Failure<FineDetailDto>($"Staff member with ID {request.StaffId} not found.");
 
-			// Validate waiver reason
-			if (string.IsNullOrWhiteSpace(request.WaiverReason))
+			if (string.IsNullOrWhiteSpace(request.WaiverReason) && !allowOverride)
 				return Result.Failure<FineDetailDto>("Waiver reason is required.");
 
-			// Process the waiver
 			fine.Status = FineStatus.Waived;
-
-			// Update member's outstanding balance
 			fine.Member.OutstandingFines -= fine.Amount;
 			_unitOfWork.Repository<Member>().Update(fine.Member);
 			_unitOfWork.Repository<Fine>().Update(fine);
-
 			await _unitOfWork.SaveChangesAsync();
-
-			// Commit transaction
 			await _unitOfWork.CommitTransactionAsync();
-
-			// Map and return the result
 			var fineDto = _mapper.Map<FineDetailDto>(fine);
-
-			// Set waiver details
 			fineDto.WaiverReason = request.WaiverReason;
 			fineDto.ProcessedByStaffId = request.StaffId;
-			fineDto.ProcessedByStaffName = staffMember.FullName;
-
-			// Set loan-related fields if applicable
+			fineDto.ProcessedByStaffName = staffMember?.FullName;
 			if (fine.Loan != null)
 			{
 				fineDto.BookTitle = fine.Loan.BookCopy.Book.Title;
 				fineDto.DueDate = fine.Loan.DueDate;
 				fineDto.ReturnDate = fine.Loan.ReturnDate;
-
 				if (fine.Loan.ReturnDate.HasValue && fine.Loan.ReturnDate.Value > fine.Loan.DueDate)
 				{
 					fineDto.DaysOverdue = (int)(fine.Loan.ReturnDate.Value - fine.Loan.DueDate).TotalDays;
 				}
 			}
-
+			if (allowOverride && !string.IsNullOrWhiteSpace(overrideReason))
+			{
+				fineDto.OverrideContext = new FineOverrideContext
+				{
+					IsOverride = true,
+					Reason = overrideReason,
+					OverriddenRules = GetOverriddenRulesForWaiveFine(fine, staffMember, request)
+				};
+			}
 			return Result.Success(fineDto);
 		}
 		catch (Exception ex)
 		{
-			// Rollback on error
 			await _unitOfWork.RollbackTransactionAsync();
 			_logger.LogError(ex, "Error waiving fine: {ErrorMessage}", ex.Message);
 			return Result.Failure<FineDetailDto>($"Failed to waive fine: {ex.Message}");
 		}
+	}
+
+	/// <summary>
+	/// Helper to get overridden rules for CreateFine
+	/// </summary>
+	private static List<string> GetOverriddenRulesForCreateFine(CreateFineRequest request, Loan? loan)
+	{
+		var overridden = new List<string>();
+		if (request.Amount <= 0 || request.Amount > 1000)
+			overridden.Add("FineAmount");
+		if (string.IsNullOrWhiteSpace(request.Description))
+			overridden.Add("Description");
+		if (request.LoanId.HasValue && loan == null)
+			overridden.Add("LoanExists");
+		return overridden;
+	}
+
+	/// <summary>
+	/// Helper to get overridden rules for WaiveFine
+	/// </summary>
+	private static List<string> GetOverriddenRulesForWaiveFine(Fine fine, User? staffMember, WaiveFineRequest request)
+	{
+		var overridden = new List<string>();
+		if (fine.Status != FineStatus.Pending)
+			overridden.Add("FineStatus");
+		if (staffMember == null)
+			overridden.Add("StaffExists");
+		if (string.IsNullOrWhiteSpace(request.WaiverReason))
+			overridden.Add("WaiverReason");
+		return overridden;
 	}
 
 	/// <summary>

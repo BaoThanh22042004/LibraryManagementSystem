@@ -227,6 +227,16 @@ public record FineBasicDto
 }
 
 /// <summary>
+/// FineOverrideContext class
+/// </summary>
+public class FineOverrideContext
+{
+    public bool IsOverride { get; set; }
+    public string? Reason { get; set; }
+    public List<string> OverriddenRules { get; set; } = new();
+}
+
+/// <summary>
 /// Detailed DTO for fine information
 /// </summary>
 public record FineDetailDto : FineBasicDto
@@ -280,4 +290,9 @@ public record FineDetailDto : FineBasicDto
     /// The name of the staff member who processed the payment or waiver.
     /// </summary>
     public string? ProcessedByStaffName { get; set; }
+
+    /// <summary>
+    /// Override context for the fine.
+    /// </summary>
+    public FineOverrideContext? OverrideContext { get; set; }
 }

@@ -198,6 +198,13 @@ public record LoanBasicDto
 /// <summary>
 /// Detailed DTO for loan information with related fines
 /// </summary>
+public class LoanOverrideContext
+{
+    public bool IsOverride { get; set; }
+    public string? Reason { get; set; }
+    public List<string> OverriddenRules { get; set; } = new();
+}
+
 public record LoanDetailDto : LoanBasicDto
 {
     /// <summary>
@@ -219,4 +226,6 @@ public record LoanDetailDto : LoanBasicDto
     /// The ISBN of the book.
     /// </summary>
     public string ISBN { get; set; } = string.Empty;
+
+    public LoanOverrideContext? OverrideContext { get; set; }
 }

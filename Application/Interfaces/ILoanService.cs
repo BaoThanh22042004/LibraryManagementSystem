@@ -9,11 +9,11 @@ namespace Application.Interfaces;
 /// </summary>
 public interface ILoanService
 {
-    Task<Result<LoanDetailDto>> CreateLoanAsync(CreateLoanRequest request);
+    Task<Result<LoanDetailDto>> CreateLoanAsync(CreateLoanRequest request, bool allowOverride = false, string? overrideReason = null);
 
     Task<Result<LoanDetailDto>> ReturnBookAsync(ReturnBookRequest request);
 
-    Task<Result<LoanDetailDto>> RenewLoanAsync(RenewLoanRequest request);
+    Task<Result<LoanDetailDto>> RenewLoanAsync(RenewLoanRequest request, bool allowOverride = false, string? overrideReason = null);
 
     Task<Result<LoanDetailDto>> GetLoanByIdAsync(int loanId);
 

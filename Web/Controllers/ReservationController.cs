@@ -17,34 +17,40 @@ namespace Web.Controllers
     /// </summary>
     public class ReservationController : Controller
     {
-        private readonly IReservationService _reservationService;
-        private readonly IBookService _bookService;
-        private readonly ILogger<ReservationController> _logger;
-        private readonly IValidator<CreateReservationRequest> _createReservationValidator;
-        private readonly IValidator<CancelReservationRequest> _cancelReservationValidator;
-        private readonly IValidator<FulfillReservationRequest> _fulfillReservationValidator;
+		private readonly IReservationService _reservationService;
+		private readonly IBookService _bookService;
+		private readonly IAuditService _auditService;
+		//private readonly INotificationService _notificationService;
+		private readonly ILogger<ReservationController> _logger;
+		private readonly IValidator<CreateReservationRequest> _createReservationValidator;
+		private readonly IValidator<CancelReservationRequest> _cancelReservationValidator;
+		private readonly IValidator<FulfillReservationRequest> _fulfillReservationValidator;
 
-        public ReservationController(
-            IReservationService reservationService,
-            IBookService bookService,
-            ILogger<ReservationController> logger,
-            IValidator<CreateReservationRequest> createReservationValidator,
-            IValidator<CancelReservationRequest> cancelReservationValidator,
-            IValidator<FulfillReservationRequest> fulfillReservationValidator)
-        {
-            _reservationService = reservationService;
-            _bookService = bookService;
-            _logger = logger;
-            _createReservationValidator = createReservationValidator;
-            _cancelReservationValidator = cancelReservationValidator;
-            _fulfillReservationValidator = fulfillReservationValidator;
-        }
+		public ReservationController(
+			IReservationService reservationService,
+			IBookService bookService,
+			IAuditService auditService,
+			//INotificationService notificationService,
+			ILogger<ReservationController> logger,
+			IValidator<CreateReservationRequest> createReservationValidator,
+			IValidator<CancelReservationRequest> cancelReservationValidator,
+			IValidator<FulfillReservationRequest> fulfillReservationValidator)
+		{
+			_reservationService = reservationService;
+			_bookService = bookService;
+			_auditService = auditService;
+			//_notificationService = notificationService;
+			_logger = logger;
+			_createReservationValidator = createReservationValidator;
+			_cancelReservationValidator = cancelReservationValidator;
+			_fulfillReservationValidator = fulfillReservationValidator;
+		}
 
-        /// <summary>
-        /// Displays reservation management index page with search and filter options.
-        /// For staff use only. Part of UC025 (View Reservations).
-        /// </summary>
-        [HttpGet]
+		/// <summary>
+		/// Displays reservation management index page with search and filter options.
+		/// For staff use only. Part of UC025 (View Reservations).
+		/// </summary>
+		[HttpGet]
         [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Index(ReservationSearchRequest? search = null)
         {
@@ -199,74 +205,84 @@ namespace Web.Controllers
             return View(model);
         }
 
-        /// <summary>
-        /// Processes create reservation request.
-        /// For staff use. Implements UC022 (Reserve Book).
-        /// </summary>
-        [HttpPost]
+		/// <summary>
+		/// Processes create reservation request with audit logging.
+		/// Implements UC022 (Reserve Book) - BR-17, BR-18, BR-22
+		/// </summary>
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "Admin,Librarian")]
+		public async Task<IActionResult> Create(CreateReservationRequest model)
+		{
+			try
+			{
+				if (!User.TryGetUserId(out int staffId))
+				{
+					return RedirectToAction("Login", "Auth");
+				}
+
+				var validationResult = await _createReservationValidator.ValidateAsync(model);
+				if (!validationResult.IsValid)
+				{
+					validationResult.AddToModelState(ModelState);
+
+					var bookResult = await _bookService.GetBookByIdAsync(model.BookId);
+					if (bookResult.IsSuccess)
+					{
+						ViewBag.BookTitle = bookResult.Value.Title;
+					}
+
+					return View(model);
+				}
+
+				var result = await _reservationService.CreateReservationAsync(model);
+				if (!result.IsSuccess)
+				{
+					ModelState.AddModelError(string.Empty, result.Error);
+
+					var bookResult = await _bookService.GetBookByIdAsync(model.BookId);
+					if (bookResult.IsSuccess)
+					{
+						ViewBag.BookTitle = bookResult.Value.Title;
+					}
+
+					return View(model);
+				}
+
+				// Audit successful reservation
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					UserId = staffId,
+					ActionType = AuditActionType.Create,
+					EntityType = "Reservation",
+					EntityId = result.Value.Id.ToString(),
+					EntityName = $"{result.Value.MemberName} - {result.Value.BookTitle}",
+					Details = $"Reservation created successfully. Queue Position: {result.Value.QueuePosition}",
+					IsSuccess = true
+				});
+
+				_logger.LogInformation("Staff {StaffId} created reservation {ReservationId} for book {BookId} for member {MemberId} at {Time}",
+					staffId, result.Value.Id, model.BookId, model.MemberId, DateTime.UtcNow);
+
+				TempData["SuccessMessage"] = "Reservation created successfully.";
+				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error creating reservation");
+				TempData["ErrorMessage"] = "An error occurred while creating the reservation.";
+				return View(model);
+			}
+		}
+
+		/// <summary>
+		/// Processes cancel reservation request.
+		/// For staff use. Implements UC023 (Cancel Reservation).
+		/// </summary>
+		[HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Create(CreateReservationRequest model)
-        {
-            try
-            {
-                if (!User.TryGetUserId(out int staffId))
-                {
-                    return RedirectToAction("Login", "Auth");
-                }
-
-                var validationResult = await _createReservationValidator.ValidateAsync(model);
-                if (!validationResult.IsValid)
-                {
-                    validationResult.AddToModelState(ModelState);
-                    
-                    // Reload book information for the view if available
-                    var bookResult = await _bookService.GetBookByIdAsync(model.BookId);
-                    if (bookResult.IsSuccess)
-                    {
-                        ViewBag.BookTitle = bookResult.Value.Title;
-                    }
-                    
-                    return View(model);
-                }
-
-                var result = await _reservationService.CreateReservationAsync(model);
-                if (!result.IsSuccess)
-                {
-                    ModelState.AddModelError(string.Empty, result.Error);
-                    
-                    // Reload book information for the view
-                    var bookResult = await _bookService.GetBookByIdAsync(model.BookId);
-                    if (bookResult.IsSuccess)
-                    {
-                        ViewBag.BookTitle = bookResult.Value.Title;
-                    }
-                    
-                    return View(model);
-                }
-
-                _logger.LogInformation("Staff {StaffId} created reservation {ReservationId} for book {BookId} for member {MemberId} at {Time}",
-                    staffId, result.Value.Id, model.BookId, model.MemberId, DateTime.UtcNow);
-                
-                TempData["SuccessMessage"] = "Reservation created successfully.";
-                return RedirectToAction(nameof(Details), new { id = result.Value.Id });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating reservation");
-                TempData["ErrorMessage"] = "An error occurred while creating the reservation.";
-                return View(model);
-            }
-        }
-
-        /// <summary>
-        /// Processes cancel reservation request.
-        /// For staff use. Implements UC023 (Cancel Reservation).
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Cancel(CancelReservationRequest model)
+        public async Task<IActionResult> Cancel(CancelReservationRequest model, bool allowOverride = false, string? overrideReason = null)
         {
             try
             {
@@ -286,12 +302,30 @@ namespace Web.Controllers
                     return RedirectToAction(nameof(Details), new { id = model.ReservationId });
                 }
 
-                var result = await _reservationService.CancelReservationAsync(model);
+                // Pass override parameters to service
+                var result = await _reservationService.CancelReservationAsync(model, allowOverride, overrideReason);
                 if (!result.IsSuccess)
                 {
                     TempData["ErrorMessage"] = result.Error;
                     return RedirectToAction(nameof(Details), new { id = model.ReservationId });
                 }
+
+                // Audit successful cancellation, including override context if present
+                var auditDetails = $"Reservation cancelled successfully.";
+                if (result.Value.OverrideContext?.IsOverride == true)
+                {
+                    auditDetails += $" [OVERRIDE] Reason: {result.Value.OverrideContext.Reason}; Rules: {string.Join(", ", result.Value.OverrideContext.OverriddenRules)}";
+                }
+                await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                {
+                    UserId = staffId,
+                    ActionType = AuditActionType.Update,
+                    EntityType = "Reservation",
+                    EntityId = model.ReservationId.ToString(),
+                    EntityName = $"{result.Value.MemberName} - {result.Value.BookTitle}",
+                    Details = auditDetails,
+                    IsSuccess = true
+                });
 
                 _logger.LogInformation("Staff {StaffId} cancelled reservation {ReservationId} at {Time}",
                     staffId, model.ReservationId, DateTime.UtcNow);
@@ -348,65 +382,79 @@ namespace Web.Controllers
             }
         }
 
-        /// <summary>
-        /// Processes fulfill reservation request.
-        /// For staff use only. Implements UC024 (Fulfill Reservation).
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Fulfill(FulfillReservationRequest model)
-        {
-            try
-            {
-                if (!User.TryGetUserId(out int staffId))
-                {
-                    return RedirectToAction("Login", "Auth");
-                }
+		/// <summary>
+		/// Processes fulfill reservation request with notification.
+		/// Implements UC024 (Fulfill Reservation) - BR-19, BR-21, BR-22
+		/// </summary>
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "Admin,Librarian")]
+		public async Task<IActionResult> Fulfill(FulfillReservationRequest model, bool allowOverride = false, string? overrideReason = null)
+		{
+			try
+			{
+				if (!User.TryGetUserId(out int staffId))
+				{
+					return RedirectToAction("Login", "Auth");
+				}
 
-                var validationResult = await _fulfillReservationValidator.ValidateAsync(model);
-                if (!validationResult.IsValid)
-                {
-                    validationResult.AddToModelState(ModelState);
-                    
-                    // Reload reservation details for the view
-                    var reservationResult = await _reservationService.GetReservationByIdAsync(model.ReservationId);
-                    if (reservationResult.IsSuccess)
-                    {
-                        ViewBag.ReservationDetails = reservationResult.Value;
-                    }
-                    
-                    return View(model);
-                }
+				var validationResult = await _fulfillReservationValidator.ValidateAsync(model);
+				if (!validationResult.IsValid)
+				{
+					validationResult.AddToModelState(ModelState);
 
-                var result = await _reservationService.FulfillReservationAsync(model);
-                if (!result.IsSuccess)
-                {
-                    ModelState.AddModelError(string.Empty, result.Error);
-                    
-                    // Reload reservation details for the view
-                    var reservationResult = await _reservationService.GetReservationByIdAsync(model.ReservationId);
-                    if (reservationResult.IsSuccess)
-                    {
-                        ViewBag.ReservationDetails = reservationResult.Value;
-                    }
-                    
-                    return View(model);
-                }
+					var reservationResult = await _reservationService.GetReservationByIdAsync(model.ReservationId);
+					if (reservationResult.IsSuccess)
+					{
+						ViewBag.ReservationDetails = reservationResult.Value;
+					}
 
-                _logger.LogInformation("Staff {StaffId} fulfilled reservation {ReservationId} with book copy {BookCopyId} at {Time}",
-                    staffId, model.ReservationId, model.BookCopyId, DateTime.UtcNow);
-                
-                TempData["SuccessMessage"] = "Reservation fulfilled successfully.";
-                return RedirectToAction(nameof(Details), new { id = model.ReservationId });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fulfilling reservation");
-                TempData["ErrorMessage"] = "An error occurred while fulfilling the reservation.";
-                return RedirectToAction(nameof(Index));
-            }
-        }
+					return View(model);
+				}
+
+				// Pass override parameters to service
+				var result = await _reservationService.FulfillReservationAsync(model, allowOverride, overrideReason);
+				if (!result.IsSuccess)
+				{
+					ModelState.AddModelError(string.Empty, result.Error);
+					var reservationResult = await _reservationService.GetReservationByIdAsync(model.ReservationId);
+					if (reservationResult.IsSuccess)
+					{
+						ViewBag.ReservationDetails = reservationResult.Value;
+					}
+					return View(model);
+				}
+
+				// Audit successful fulfillment, including override context if present
+				var auditDetails = $"Reservation fulfilled successfully. Pickup Deadline: {result.Value.PickupDeadline:yyyy-MM-dd HH:mm}. Copy: {result.Value.CopyNumber}";
+				if (result.Value.OverrideContext?.IsOverride == true)
+				{
+					auditDetails += $" [OVERRIDE] Reason: {result.Value.OverrideContext.Reason}; Rules: {string.Join(", ", result.Value.OverrideContext.OverriddenRules)}";
+				}
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					UserId = staffId,
+					ActionType = AuditActionType.Update,
+					EntityType = "Reservation",
+					EntityId = result.Value.Id.ToString(),
+					EntityName = $"{result.Value.MemberName} - {result.Value.BookTitle}",
+					Details = auditDetails,
+					IsSuccess = true
+				});
+
+				_logger.LogInformation("Staff {StaffId} fulfilled reservation {ReservationId} with copy {BookCopyId} at {Time}",
+					staffId, result.Value.Id, result.Value.BookCopyId, DateTime.UtcNow);
+
+				TempData["SuccessMessage"] = "Reservation fulfilled successfully.";
+				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error fulfilling reservation");
+				TempData["ErrorMessage"] = "An error occurred while fulfilling the reservation.";
+				return View(model);
+			}
+		}
 
         /// <summary>
         /// Allows members to view their reservations.

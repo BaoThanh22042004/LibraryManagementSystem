@@ -10,45 +10,49 @@ using Web.Extensions;
 
 namespace Web.Controllers
 {
-    /// <summary>
+	/// <summary>
     /// Controller for loan management operations.
-    /// Implements UC018 (Check Out), UC019 (Return Book), 
-    /// UC020 (Renew Loan), and UC021 (View Loan History).
-    /// </summary>
-    [Authorize(Roles = "Admin,Librarian")]
-    public class LoanController : Controller
-    {
-        private readonly ILoanService _loanService;
-        private readonly IBookCopyService _bookCopyService;
-        private readonly IFineService _fineService;
-        private readonly ILogger<LoanController> _logger;
-        private readonly IValidator<CreateLoanRequest> _createLoanValidator;
-        private readonly IValidator<ReturnBookRequest> _returnBookValidator;
-        private readonly IValidator<RenewLoanRequest> _renewLoanValidator;
+	/// Implements UC018 (Check Out), UC019 (Return Book), 
+	/// UC020 (Renew Loan), and UC021 (View Loan History).
+	/// Business Rules: BR-13, BR-14, BR-15, BR-16, BR-22
+	/// </summary>
+	[Authorize(Roles = "Admin,Librarian")]
+	public class LoanController : Controller
+	{
+		private readonly ILoanService _loanService;
+		private readonly IBookCopyService _bookCopyService;
+		private readonly IFineService _fineService;
+		private readonly IAuditService _auditService;
+		private readonly ILogger<LoanController> _logger;
+		private readonly IValidator<CreateLoanRequest> _createLoanValidator;
+		private readonly IValidator<ReturnBookRequest> _returnBookValidator;
+		private readonly IValidator<RenewLoanRequest> _renewLoanValidator;
 
-        public LoanController(
-            ILoanService loanService,
-            IBookCopyService bookCopyService,
-            IFineService fineService,
-            ILogger<LoanController> logger,
-            IValidator<CreateLoanRequest> createLoanValidator,
-            IValidator<ReturnBookRequest> returnBookValidator,
-            IValidator<RenewLoanRequest> renewLoanValidator)
-        {
-            _loanService = loanService;
-            _bookCopyService = bookCopyService;
-            _fineService = fineService;
-            _logger = logger;
-            _createLoanValidator = createLoanValidator;
-            _returnBookValidator = returnBookValidator;
-            _renewLoanValidator = renewLoanValidator;
-        }
+		public LoanController(
+			ILoanService loanService,
+			IBookCopyService bookCopyService,
+			IFineService fineService,
+			IAuditService auditService,
+			ILogger<LoanController> logger,
+			IValidator<CreateLoanRequest> createLoanValidator,
+			IValidator<ReturnBookRequest> returnBookValidator,
+			IValidator<RenewLoanRequest> renewLoanValidator)
+		{
+			_loanService = loanService;
+			_bookCopyService = bookCopyService;
+			_fineService = fineService;
+			_auditService = auditService;
+			_logger = logger;
+			_createLoanValidator = createLoanValidator;
+			_returnBookValidator = returnBookValidator;
+			_renewLoanValidator = renewLoanValidator;
+		}
 
-        /// <summary>
-        /// Displays loan management index page with search and filter options.
-        /// Part of UC021 (View Loan History).
-        /// </summary>
-        [HttpGet]
+		/// <summary>
+		/// Displays loan management index page with search and filter options.
+		/// Part of UC021 (View Loan History).
+		/// </summary>
+		[HttpGet]
         public async Task<IActionResult> Index(LoanSearchRequest? search = null)
         {
             try
@@ -142,54 +146,70 @@ namespace Web.Controllers
             return View(new CreateLoanRequest());
         }
 
-        /// <summary>
-        /// Processes checkout request.
-        /// Implements UC018 (Check Out).
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Checkout(CreateLoanRequest model)
-        {
-            try
-            {
-                if (!User.TryGetUserId(out int staffId))
-                {
-                    return RedirectToAction("Login", "Auth");
-                }
+		/// <summary>
+		/// Processes checkout request.
+		/// Implements UC018 (Check Out) - BR-13, BR-14, BR-16, BR-22
+		/// </summary>
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Checkout(CreateLoanRequest model, bool allowOverride = false, string? overrideReason = null)
+		{
+			try
+			{
+				if (!User.TryGetUserId(out int staffId))
+				{
+					return RedirectToAction("Login", "Auth");
+				}
 
-                var validationResult = await _createLoanValidator.ValidateAsync(model);
-                if (!validationResult.IsValid)
-                {
-                    validationResult.AddToModelState(ModelState);
-                    return View(model);
-                }
+				var validationResult = await _createLoanValidator.ValidateAsync(model);
+				if (!validationResult.IsValid)
+				{
+					validationResult.AddToModelState(ModelState);
+					return View(model);
+				}
 
-                var result = await _loanService.CreateLoanAsync(model);
-                if (!result.IsSuccess)
-                {
-                    ModelState.AddModelError(string.Empty, result.Error);
-                    return View(model);
-                }
+				var result = await _loanService.CreateLoanAsync(model, allowOverride, overrideReason);
+				if (!result.IsSuccess)
+				{
+					ModelState.AddModelError(string.Empty, result.Error);
+					return View(model);
+				}
 
-                _logger.LogInformation("Staff {StaffId} checked out book copy {BookCopyId} to member {MemberId} at {Time}",
-                    staffId, model.BookCopyId, model.MemberId, DateTime.UtcNow);
-                
-                TempData["SuccessMessage"] = "Book checked out successfully.";
-                return RedirectToAction(nameof(Details), new { id = result.Value.Id });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing checkout");
-                TempData["ErrorMessage"] = "An error occurred while processing checkout.";
-                return View(model);
-            }
-        }
+				var auditDetails = $"Book checkout successful. Due Date: {result.Value.DueDate:yyyy-MM-dd}. Copy ID: {model.BookCopyId}";
+				if (result.Value.OverrideContext?.IsOverride == true)
+				{
+					auditDetails += $" [OVERRIDE] Reason: {result.Value.OverrideContext.Reason}; Rules: {string.Join(", ", result.Value.OverrideContext.OverriddenRules)}";
+				}
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					UserId = staffId,
+					ActionType = AuditActionType.Create,
+					EntityType = "Loan",
+					EntityId = result.Value.Id.ToString(),
+					EntityName = $"{result.Value.MemberName} - {result.Value.BookTitle}",
+					Details = auditDetails,
+					IsSuccess = true
+				});
 
-        /// <summary>
-        /// Displays return book form.
-        /// Part of UC019 (Return Book).
-        /// </summary>
-        [HttpGet]
+				_logger.LogInformation("Staff {StaffId} checked out book copy {BookCopyId} to member {MemberId} at {Time}",
+					staffId, model.BookCopyId, model.MemberId, DateTime.UtcNow);
+
+				TempData["SuccessMessage"] = "Book checked out successfully.";
+				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error processing checkout");
+				TempData["ErrorMessage"] = "An error occurred while processing checkout.";
+				return View(model);
+			}
+		}
+
+		/// <summary>
+		/// Displays return book form.
+		/// Part of UC019 (Return Book).
+		/// </summary>
+		[HttpGet]
         public async Task<IActionResult> Return(int id)
         {
             try
@@ -224,109 +244,80 @@ namespace Web.Controllers
             }
         }
 
-        /// <summary>
-        /// Processes return book request.
-        /// Implements UC019 (Return Book).
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Return(ReturnBookRequest model)
-        {
-            try
-            {
-                if (!User.TryGetUserId(out int staffId))
-                {
-                    return RedirectToAction("Login", "Auth");
-                }
+		/// <summary>
+		/// Processes return book request.
+		/// Implements UC019 (Return Book) - BR-10, BR-15, BR-22
+		/// </summary>
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Return(ReturnBookRequest model)
+		{
+			try
+			{
+				if (!User.TryGetUserId(out int staffId))
+				{
+					return RedirectToAction("Login", "Auth");
+				}
 
-                var validationResult = await _returnBookValidator.ValidateAsync(model);
-                if (!validationResult.IsValid)
-                {
-                    validationResult.AddToModelState(ModelState);
-                    
-                    // Reload loan details for the view
-                    var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId);
-                    if (loanResult.IsSuccess)
-                    {
-                        ViewBag.LoanDetails = loanResult.Value;
-                    }
-                    
-                    return View(model);
-                }
+				var validationResult = await _returnBookValidator.ValidateAsync(model);
+				if (!validationResult.IsValid)
+				{
+					validationResult.AddToModelState(ModelState);
 
-                var result = await _loanService.ReturnBookAsync(model);
-                if (!result.IsSuccess)
-                {
-                    ModelState.AddModelError(string.Empty, result.Error);
-                    
-                    // Reload loan details for the view
-                    var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId);
-                    if (loanResult.IsSuccess)
-                    {
-                        ViewBag.LoanDetails = loanResult.Value;
-                    }
-                    
-                    return View(model);
-                }
+					var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId);
+					if (loanResult.IsSuccess)
+					{
+						ViewBag.LoanDetails = loanResult.Value;
+					}
 
-                // Handle damaged book if applicable
-                if (model.BookCondition == BookCondition.Damaged)
-                {
-                    var fineRequest = new CreateFineRequest
-                    {
-                        MemberId = result.Value.MemberId,
-                        LoanId = result.Value.Id,
-                        Type = FineType.Damaged,
-                        Amount = 10.00m, // Default damage fine amount
-                        Description = $"Damage to book '{result.Value.BookTitle}'"
-                    };
+					return View(model);
+				}
 
-                    await _fineService.CreateFineAsync(fineRequest);
-                }
-                else if (model.BookCondition == BookCondition.Lost)
-                {
-                    var fineRequest = new CreateFineRequest
-                    {
-                        MemberId = result.Value.MemberId,
-                        LoanId = result.Value.Id,
-                        Type = FineType.Lost,
-                        Amount = 30.00m, // Default lost book fine amount
-                        Description = $"Lost book '{result.Value.BookTitle}'"
-                    };
+				var result = await _loanService.ReturnBookAsync(model);
+				if (!result.IsSuccess)
+				{
+					ModelState.AddModelError(string.Empty, result.Error);
 
-                    await _fineService.CreateFineAsync(fineRequest);
-                }
+					var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId);
+					if (loanResult.IsSuccess)
+					{
+						ViewBag.LoanDetails = loanResult.Value;
+					}
 
-                // Calculate and create overdue fine if applicable
-                if (result.Value.ReturnDate > result.Value.DueDate)
-                {
-                    var calculateFineRequest = new CalculateFineRequest
-                    {
-                        LoanId = result.Value.Id
-                    };
+					return View(model);
+				}
 
-                    await _fineService.CalculateFineAsync(calculateFineRequest);
-                }
+				// Audit successful return
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					UserId = staffId,
+					ActionType = AuditActionType.Update,
+					EntityType = "Loan",
+					EntityId = result.Value.Id.ToString(),
+					EntityName = $"{result.Value.MemberName} - {result.Value.BookTitle}",
+					Details = $"Book return successful. Condition: {model.BookCondition}. Return Date: {result.Value.ReturnDate:yyyy-MM-dd}",
+					IsSuccess = true
+				});
 
-                _logger.LogInformation("Staff {StaffId} processed return of book copy {BookCopyId} from member {MemberId} at {Time}",
-                    staffId, result.Value.BookCopyId, result.Value.MemberId, DateTime.UtcNow);
-                
-                TempData["SuccessMessage"] = "Book returned successfully.";
-                return RedirectToAction(nameof(Details), new { id = result.Value.Id });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing book return");
-                TempData["ErrorMessage"] = "An error occurred while processing book return.";
-                return RedirectToAction(nameof(Index));
-            }
-        }
+				_logger.LogInformation("Staff {StaffId} processed return of book copy {BookCopyId} from member {MemberId} at {Time}",
+					staffId, result.Value.BookCopyId, result.Value.MemberId, DateTime.UtcNow);
 
-        /// <summary>
-        /// Displays renew loan form.
-        /// Part of UC020 (Renew Loan).
-        /// </summary>
-        [HttpGet]
+				TempData["SuccessMessage"] = "Book returned successfully.";
+				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error processing book return");
+				TempData["ErrorMessage"] = "An error occurred while processing book return.";
+				return RedirectToAction(nameof(Index));
+			}
+		}
+
+		/// <summary>
+		/// Displays renew loan form.
+		/// Part of UC020 (Renew Loan).
+		/// </summary>
+		[HttpGet]
         public async Task<IActionResult> Renew(int id)
         {
             try
@@ -362,64 +353,74 @@ namespace Web.Controllers
             }
         }
 
-        /// <summary>
-        /// Processes renew loan request.
-        /// Implements UC020 (Renew Loan).
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Renew(RenewLoanRequest model)
-        {
-            try
-            {
-                if (!User.TryGetUserId(out int staffId))
-                {
-                    return RedirectToAction("Login", "Auth");
-                }
+		/// <summary>
+		/// Processes renew loan request.
+		/// Implements UC020 (Renew Loan) - BR-14, BR-16, BR-22
+		/// </summary>
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Renew(RenewLoanRequest model, bool allowOverride = false, string? overrideReason = null)
+		{
+			try
+			{
+				if (!User.TryGetUserId(out int staffId))
+				{
+					return RedirectToAction("Login", "Auth");
+				}
 
-                var validationResult = await _renewLoanValidator.ValidateAsync(model);
-                if (!validationResult.IsValid)
-                {
-                    validationResult.AddToModelState(ModelState);
-                    
-                    // Reload loan details for the view
-                    var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId);
-                    if (loanResult.IsSuccess)
-                    {
-                        ViewBag.LoanDetails = loanResult.Value;
-                    }
-                    
-                    return View(model);
-                }
+				var validationResult = await _renewLoanValidator.ValidateAsync(model);
+				if (!validationResult.IsValid)
+				{
+					validationResult.AddToModelState(ModelState);
+					var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId);
+					if (loanResult.IsSuccess)
+					{
+						ViewBag.LoanDetails = loanResult.Value;
+					}
+					return View(model);
+				}
 
-                var result = await _loanService.RenewLoanAsync(model);
-                if (!result.IsSuccess)
-                {
-                    ModelState.AddModelError(string.Empty, result.Error);
-                    
-                    // Reload loan details for the view
-                    var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId);
-                    if (loanResult.IsSuccess)
-                    {
-                        ViewBag.LoanDetails = loanResult.Value;
-                    }
-                    
-                    return View(model);
-                }
+				var result = await _loanService.RenewLoanAsync(model, allowOverride, overrideReason);
+				if (!result.IsSuccess)
+				{
+					ModelState.AddModelError(string.Empty, result.Error);
+					var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId);
+					if (loanResult.IsSuccess)
+					{
+						ViewBag.LoanDetails = loanResult.Value;
+					}
+					return View(model);
+				}
 
-                _logger.LogInformation("Staff {StaffId} renewed loan {LoanId} until {NewDueDate} at {Time}",
-                    staffId, model.LoanId, result.Value.DueDate, DateTime.UtcNow);
-                
-                TempData["SuccessMessage"] = "Loan renewed successfully.";
-                return RedirectToAction(nameof(Details), new { id = result.Value.Id });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing loan renewal");
-                TempData["ErrorMessage"] = "An error occurred while processing loan renewal.";
-                return RedirectToAction(nameof(Index));
-            }
-        }
+				var auditDetails = $"Loan renewal successful. New Due Date: {result.Value.DueDate:yyyy-MM-dd}.";
+				if (result.Value.OverrideContext?.IsOverride == true)
+				{
+					auditDetails += $" [OVERRIDE] Reason: {result.Value.OverrideContext.Reason}; Rules: {string.Join(", ", result.Value.OverrideContext.OverriddenRules)}";
+				}
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					UserId = staffId,
+					ActionType = AuditActionType.Update,
+					EntityType = "Loan",
+					EntityId = result.Value.Id.ToString(),
+					EntityName = $"{result.Value.MemberName} - {result.Value.BookTitle}",
+					Details = auditDetails,
+					IsSuccess = true
+				});
+
+				_logger.LogInformation("Staff {StaffId} renewed loan {LoanId} for member {MemberId} at {Time}",
+					staffId, result.Value.Id, result.Value.MemberId, DateTime.UtcNow);
+
+				TempData["SuccessMessage"] = "Loan renewed successfully.";
+				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error processing loan renewal");
+				TempData["ErrorMessage"] = "An error occurred while processing loan renewal.";
+				return View(model);
+			}
+		}
 
         /// <summary>
         /// Allows members to view their loan history.

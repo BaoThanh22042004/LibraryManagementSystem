@@ -11,9 +11,9 @@ public interface IReservationService
 {
     Task<Result<ReservationDetailDto>> CreateReservationAsync(CreateReservationRequest request);
 
-    Task<Result<ReservationDetailDto>> CancelReservationAsync(CancelReservationRequest request);
+    Task<Result<ReservationDetailDto>> CancelReservationAsync(CancelReservationRequest request, bool allowOverride = false, string? overrideReason = null);
 
-    Task<Result<ReservationDetailDto>> FulfillReservationAsync(FulfillReservationRequest request);
+    Task<Result<ReservationDetailDto>> FulfillReservationAsync(FulfillReservationRequest request, bool allowOverride = false, string? overrideReason = null);
 
     Task<Result<ReservationDetailDto>> GetReservationByIdAsync(int reservationId);
 

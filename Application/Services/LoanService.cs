@@ -35,17 +35,18 @@ public class LoanService : ILoanService
 
     /// <summary>
     /// Creates a new loan (checkout) - UC018
+    /// Supports staff override for eligibility and loan limits.
     /// </summary>
     /// <param name="request">Loan creation details</param>
-    /// <returns>Result with created loan information</returns>
-    public async Task<Result<LoanDetailDto>> CreateLoanAsync(CreateLoanRequest request)
+    /// <param name="allowOverride">If true, allows staff to override certain business rules</param>
+    /// <param name="overrideReason">Reason for override (required if allowOverride is true)</param>
+    /// <returns>Result with created loan information and override context</returns>
+    public async Task<Result<LoanDetailDto>> CreateLoanAsync(CreateLoanRequest request, bool allowOverride = false, string? overrideReason = null)
     {
         try
         {
-            // Begin transaction for data consistency
             await _unitOfWork.BeginTransactionAsync();
 
-            // Get the member
             var member = await _unitOfWork.Repository<Member>().GetAsync(
                 m => m.Id == request.MemberId,
                 m => m.User, m => m.Loans);
@@ -53,20 +54,16 @@ public class LoanService : ILoanService
             if (member == null)
                 return Result.Failure<LoanDetailDto>($"Member with ID {request.MemberId} not found.");
 
-            // Check if member is active
-            if (member.MembershipStatus != MembershipStatus.Active)
+            if (member.MembershipStatus != MembershipStatus.Active && !allowOverride)
                 return Result.Failure<LoanDetailDto>($"Member has inactive membership status: {member.MembershipStatus}.");
 
-            // Check if member has unpaid fines - BR-16
-            if (member.OutstandingFines > 0)
+            if (member.OutstandingFines > 0 && !allowOverride)
                 return Result.Failure<LoanDetailDto>($"Member has outstanding fines of {member.OutstandingFines:C}. Please clear fines before borrowing.");
 
-            // Check if member has reached maximum loans - BR-13
             var activeLoansCount = member.Loans.Count(l => l.Status == LoanStatus.Active || l.Status == LoanStatus.Overdue);
-            if (activeLoansCount >= MaxActiveLoansPerMember)
+            if (activeLoansCount >= MaxActiveLoansPerMember && !allowOverride)
                 return Result.Failure<LoanDetailDto>($"Member has reached the maximum number of active loans ({MaxActiveLoansPerMember}).");
 
-            // Get the book copy
             var bookCopy = await _unitOfWork.Repository<BookCopy>().GetAsync(
                 bc => bc.Id == request.BookCopyId,
                 bc => bc.Book);
@@ -74,51 +71,47 @@ public class LoanService : ILoanService
             if (bookCopy == null)
                 return Result.Failure<LoanDetailDto>($"Book copy with ID {request.BookCopyId} not found.");
 
-            // Check if book copy is available - BR-09
-            if (bookCopy.Status != CopyStatus.Available)
+            if (bookCopy.Status != CopyStatus.Available && !allowOverride)
                 return Result.Failure<LoanDetailDto>($"Book copy is not available. Current status: {bookCopy.Status}.");
 
-            // Create the loan entity
             var loan = _mapper.Map<Loan>(request);
-
-            // Set due date based on standard period or custom date - BR-14
             loan.LoanDate = DateTime.UtcNow;
             loan.DueDate = request.CustomDueDate ?? DateTime.UtcNow.AddDays(DefaultLoanPeriodDays);
             loan.Status = LoanStatus.Active;
 
-            // Ensure due date is not too far in the future
-            if ((loan.DueDate - loan.LoanDate).TotalDays > MaxLoanPeriodDays)
+            if ((loan.DueDate - loan.LoanDate).TotalDays > MaxLoanPeriodDays && !allowOverride)
                 return Result.Failure<LoanDetailDto>($"Maximum loan period is {MaxLoanPeriodDays} days.");
 
-            // Ensure due date is in the future
-            if (loan.DueDate <= DateTime.UtcNow)
+            if (loan.DueDate <= DateTime.UtcNow && !allowOverride)
                 return Result.Failure<LoanDetailDto>("Due date must be in the future.");
 
-            // Update book copy status to borrowed
             bookCopy.Status = CopyStatus.Borrowed;
 
-            // Save entities
             await _unitOfWork.Repository<Loan>().AddAsync(loan);
             _unitOfWork.Repository<BookCopy>().Update(bookCopy);
             await _unitOfWork.SaveChangesAsync();
-
-            // Commit transaction
             await _unitOfWork.CommitTransactionAsync();
 
-            // Get the full loan details
             var createdLoan = await _unitOfWork.Repository<Loan>().GetAsync(
                 l => l.Id == loan.Id,
                 l => l.Member.User,
                 l => l.BookCopy.Book,
                 l => l.Fines);
 
-            // Map and return the result
             var loanDto = _mapper.Map<LoanDetailDto>(createdLoan);
+            if (allowOverride && !string.IsNullOrWhiteSpace(overrideReason))
+            {
+                loanDto.OverrideContext = new LoanOverrideContext
+                {
+                    IsOverride = true,
+                    Reason = overrideReason,
+                    OverriddenRules = GetOverriddenRulesForCreateLoan(request, member, bookCopy, activeLoansCount)
+                };
+            }
             return Result.Success(loanDto);
         }
         catch (Exception ex)
         {
-            // Rollback on error
             await _unitOfWork.RollbackTransactionAsync();
             _logger.LogError(ex, "Error creating loan: {ErrorMessage}", ex.Message);
             return Result.Failure<LoanDetailDto>($"Failed to create loan: {ex.Message}");
@@ -266,17 +259,18 @@ public class LoanService : ILoanService
 
     /// <summary>
     /// Renews/extends a loan - UC020
+    /// Supports staff override for extension and reservation block.
     /// </summary>
     /// <param name="request">Renewal details</param>
-    /// <returns>Result with updated loan information</returns>
-    public async Task<Result<LoanDetailDto>> RenewLoanAsync(RenewLoanRequest request)
+    /// <param name="allowOverride">If true, allows staff to override certain business rules</param>
+    /// <param name="overrideReason">Reason for override (required if allowOverride is true)</param>
+    /// <returns>Result with updated loan information and override context</returns>
+    public async Task<Result<LoanDetailDto>> RenewLoanAsync(RenewLoanRequest request, bool allowOverride = false, string? overrideReason = null)
     {
         try
         {
-            // Begin transaction
             await _unitOfWork.BeginTransactionAsync();
 
-            // Get the loan with related entities
             var loan = await _unitOfWork.Repository<Loan>().GetAsync(
                 l => l.Id == request.LoanId,
                 l => l.Member.User,
@@ -286,57 +280,47 @@ public class LoanService : ILoanService
             if (loan == null)
                 return Result.Failure<LoanDetailDto>($"Loan with ID {request.LoanId} not found.");
 
-            // Check if loan can be renewed (must be active)
-            if (loan.Status != LoanStatus.Active)
+            if (loan.Status != LoanStatus.Active && !allowOverride)
                 return Result.Failure<LoanDetailDto>($"Loan cannot be renewed. Current status: {loan.Status}.");
 
-            // Check if member has unpaid fines - BR-16
-            if (loan.Member.OutstandingFines > 0)
+            if (loan.Member.OutstandingFines > 0 && !allowOverride)
                 return Result.Failure<LoanDetailDto>($"Member has outstanding fines of {loan.Member.OutstandingFines:C}. Please clear fines before renewal.");
 
-            // Check if book has active reservations - BR-19
             var hasActiveReservations = await _unitOfWork.Repository<Reservation>().ExistsAsync(
                 r => r.BookId == loan.BookCopy.BookId && r.Status == ReservationStatus.Active);
-
-            if (hasActiveReservations)
+            if (hasActiveReservations && !allowOverride)
                 return Result.Failure<LoanDetailDto>("Book has active reservations and cannot be renewed.");
 
-            // Set new due date
             if (request.NewDueDate.HasValue)
             {
-                // Check if new due date is valid
-                if (request.NewDueDate.Value <= DateTime.UtcNow)
+                if (request.NewDueDate.Value <= DateTime.UtcNow && !allowOverride)
                     return Result.Failure<LoanDetailDto>("New due date must be in the future.");
-
-                // Check if new due date exceeds maximum extension period
-                if ((request.NewDueDate.Value - DateTime.UtcNow).TotalDays > MaxLoanPeriodDays)
+                if ((request.NewDueDate.Value - DateTime.UtcNow).TotalDays > MaxLoanPeriodDays && !allowOverride)
                     return Result.Failure<LoanDetailDto>($"Maximum extension period is {MaxLoanPeriodDays} days from current date.");
-
                 loan.DueDate = request.NewDueDate.Value;
             }
             else
             {
-                // Extend by default period
                 loan.DueDate = DateTime.UtcNow.AddDays(DefaultLoanPeriodDays);
             }
-
-            // Ensure loan status is Active even if it was about to become overdue
             loan.Status = LoanStatus.Active;
-
-            // Update loan entity
             _unitOfWork.Repository<Loan>().Update(loan);
             await _unitOfWork.SaveChangesAsync();
-
-            // Commit transaction
             await _unitOfWork.CommitTransactionAsync();
-
-            // Map and return the result
             var loanDto = _mapper.Map<LoanDetailDto>(loan);
+            if (allowOverride && !string.IsNullOrWhiteSpace(overrideReason))
+            {
+                loanDto.OverrideContext = new LoanOverrideContext
+                {
+                    IsOverride = true,
+                    Reason = overrideReason,
+                    OverriddenRules = GetOverriddenRulesForRenewLoan(request, loan)
+                };
+            }
             return Result<LoanDetailDto>.Success(loanDto);
         }
         catch (Exception ex)
         {
-            // Rollback on error
             await _unitOfWork.RollbackTransactionAsync();
             _logger.LogError(ex, "Error renewing loan: {ErrorMessage}", ex.Message);
             return Result.Failure<LoanDetailDto>($"Failed to renew loan: {ex.Message}");
@@ -575,6 +559,44 @@ public class LoanService : ILoanService
         return predicate;
     }
 
+    /// <summary>
+    /// Helper to get overridden rules for CreateLoan
+    /// </summary>
+    private static List<string> GetOverriddenRulesForCreateLoan(CreateLoanRequest request, Member member, BookCopy bookCopy, int activeLoansCount)
+    {
+        var overridden = new List<string>();
+        if (member.MembershipStatus != MembershipStatus.Active)
+            overridden.Add("MembershipStatus");
+        if (member.OutstandingFines > 0)
+            overridden.Add("OutstandingFines");
+        if (activeLoansCount >= MaxActiveLoansPerMember)
+            overridden.Add("MaxActiveLoans");
+        if (bookCopy.Status != CopyStatus.Available)
+            overridden.Add("CopyStatus");
+        if (request.CustomDueDate.HasValue && (request.CustomDueDate.Value - DateTime.UtcNow).TotalDays > MaxLoanPeriodDays)
+            overridden.Add("MaxLoanPeriod");
+        if (request.CustomDueDate.HasValue && request.CustomDueDate.Value <= DateTime.UtcNow)
+            overridden.Add("DueDateFuture");
+        return overridden;
+    }
+
+    /// <summary>
+    /// Helper to get overridden rules for RenewLoan
+    /// </summary>
+    private static List<string> GetOverriddenRulesForRenewLoan(RenewLoanRequest request, Loan loan)
+    {
+        var overridden = new List<string>();
+        if (loan.Status != LoanStatus.Active)
+            overridden.Add("LoanStatus");
+        if (loan.Member.OutstandingFines > 0)
+            overridden.Add("OutstandingFines");
+        if (request.NewDueDate.HasValue && (request.NewDueDate.Value - DateTime.UtcNow).TotalDays > MaxLoanPeriodDays)
+            overridden.Add("MaxExtensionPeriod");
+        if (request.NewDueDate.HasValue && request.NewDueDate.Value <= DateTime.UtcNow)
+            overridden.Add("DueDateFuture");
+        return overridden;
+    }
+
     #endregion
 }
 
@@ -586,10 +608,10 @@ public static class ExpressionExtensions
         var parameter = Expression.Parameter(typeof(T));
 
         var leftVisitor = new ReplaceExpressionVisitor(expr1.Parameters[0], parameter);
-        var left = leftVisitor.Visit(expr1.Body);
+        var left = leftVisitor.Visit(expr1.Body) ?? Expression.Constant(true);
 
         var rightVisitor = new ReplaceExpressionVisitor(expr2.Parameters[0], parameter);
-        var right = rightVisitor.Visit(expr2.Body);
+        var right = rightVisitor.Visit(expr2.Body) ?? Expression.Constant(true);
 
         return Expression.Lambda<Func<T, bool>>(Expression.AndAlso(left, right), parameter);
     }

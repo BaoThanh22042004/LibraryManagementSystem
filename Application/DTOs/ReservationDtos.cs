@@ -161,6 +161,13 @@ public record ReservationBasicDto
 /// <summary>
 /// Detailed DTO for reservation information
 /// </summary>
+public class ReservationOverrideContext
+{
+    public bool IsOverride { get; set; }
+    public string? Reason { get; set; }
+    public List<string> OverriddenRules { get; set; } = new();
+}
+
 public record ReservationDetailDto : ReservationBasicDto
 {
     /// <summary>
@@ -192,4 +199,6 @@ public record ReservationDetailDto : ReservationBasicDto
     /// Member contact phone.
     /// </summary>
     public string? MemberPhone { get; set; }
+
+    public ReservationOverrideContext? OverrideContext { get; set; }
 }

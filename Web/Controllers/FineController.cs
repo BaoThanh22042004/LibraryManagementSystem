@@ -16,37 +16,40 @@ namespace Web.Controllers
     /// </summary>
     public class FineController : Controller
     {
-        private readonly IFineService _fineService;
-        private readonly ILoanService _loanService;
-        private readonly ILogger<FineController> _logger;
-        private readonly IValidator<CreateFineRequest> _createFineValidator;
-        private readonly IValidator<CalculateFineRequest> _calculateFineValidator;
-        private readonly IValidator<PayFineRequest> _payFineValidator;
-        private readonly IValidator<WaiveFineRequest> _waiveFineValidator;
+		private readonly IFineService _fineService;
+		private readonly ILoanService _loanService;
+		private readonly IAuditService _auditService;
+		private readonly ILogger<FineController> _logger;
+		private readonly IValidator<CreateFineRequest> _createFineValidator;
+		private readonly IValidator<CalculateFineRequest> _calculateFineValidator;
+		private readonly IValidator<PayFineRequest> _payFineValidator;
+		private readonly IValidator<WaiveFineRequest> _waiveFineValidator;
 
-        public FineController(
-            IFineService fineService,
-            ILoanService loanService,
-            ILogger<FineController> logger,
-            IValidator<CreateFineRequest> createFineValidator,
-            IValidator<CalculateFineRequest> calculateFineValidator,
-            IValidator<PayFineRequest> payFineValidator,
-            IValidator<WaiveFineRequest> waiveFineValidator)
-        {
-            _fineService = fineService;
-            _loanService = loanService;
-            _logger = logger;
-            _createFineValidator = createFineValidator;
-            _calculateFineValidator = calculateFineValidator;
-            _payFineValidator = payFineValidator;
-            _waiveFineValidator = waiveFineValidator;
-        }
+		public FineController(
+			IFineService fineService,
+			ILoanService loanService,
+			IAuditService auditService,
+			ILogger<FineController> logger,
+			IValidator<CreateFineRequest> createFineValidator,
+			IValidator<CalculateFineRequest> calculateFineValidator,
+			IValidator<PayFineRequest> payFineValidator,
+			IValidator<WaiveFineRequest> waiveFineValidator)
+		{
+			_fineService = fineService;
+			_loanService = loanService;
+			_auditService = auditService;
+			_logger = logger;
+			_createFineValidator = createFineValidator;
+			_calculateFineValidator = calculateFineValidator;
+			_payFineValidator = payFineValidator;
+			_waiveFineValidator = waiveFineValidator;
+		}
 
-        /// <summary>
-        /// Displays fine management index page with search and filter options.
-        /// For staff use only. Part of UC029 (View Fine History).
-        /// </summary>
-        [HttpGet]
+		/// <summary>
+		/// Displays fine management index page with search and filter options.
+		/// For staff use only. Part of UC029 (View Fine History).
+		/// </summary>
+		[HttpGet]
         [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Index(FineSearchRequest? search = null)
         {
@@ -217,7 +220,7 @@ namespace Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Create(CreateFineRequest model)
+        public async Task<IActionResult> Create(CreateFineRequest model, bool allowOverride = false, string? overrideReason = null)
         {
             try
             {
@@ -230,8 +233,6 @@ namespace Web.Controllers
                 if (!validationResult.IsValid)
                 {
                     validationResult.AddToModelState(ModelState);
-                    
-                    // Reload loan details for the view if applicable
                     if (model.LoanId.HasValue)
                     {
                         var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId.Value);
@@ -240,16 +241,14 @@ namespace Web.Controllers
                             ViewBag.LoanDetails = loanResult.Value;
                         }
                     }
-                    
                     return View(model);
                 }
 
-                var result = await _fineService.CreateFineAsync(model);
+                // Pass override parameters to service
+                var result = await _fineService.CreateFineAsync(model, allowOverride, overrideReason);
                 if (!result.IsSuccess)
                 {
                     ModelState.AddModelError(string.Empty, result.Error);
-                    
-                    // Reload loan details for the view if applicable
                     if (model.LoanId.HasValue)
                     {
                         var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId.Value);
@@ -258,9 +257,25 @@ namespace Web.Controllers
                             ViewBag.LoanDetails = loanResult.Value;
                         }
                     }
-                    
                     return View(model);
                 }
+
+                // Audit successful fine creation, including override context if present
+                var auditDetails = $"Fine created successfully. Amount: {result.Value.Amount:C}. Type: {result.Value.Type}.";
+                if (result.Value.OverrideContext?.IsOverride == true)
+                {
+                    auditDetails += $" [OVERRIDE] Reason: {result.Value.OverrideContext.Reason}; Rules: {string.Join(", ", result.Value.OverrideContext.OverriddenRules)}";
+                }
+                await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+                {
+                    UserId = staffId,
+                    ActionType = AuditActionType.Create,
+                    EntityType = "Fine",
+                    EntityId = result.Value.Id.ToString(),
+                    EntityName = $"Fine - {result.Value.MemberName}",
+                    Details = auditDetails,
+                    IsSuccess = true
+                });
 
                 _logger.LogInformation("Staff {StaffId} created fine {FineId} of {Amount:C} for member {MemberId} at {Time}",
                     staffId, result.Value.Id, model.Amount, model.MemberId, DateTime.UtcNow);
@@ -410,71 +425,81 @@ namespace Web.Controllers
             }
         }
 
-        /// <summary>
-        /// Processes pay fine request.
-        /// For staff use only. Implements UC027 (Pay Fine).
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Pay(PayFineRequest model)
-        {
-            try
-            {
-                if (!User.TryGetUserId(out int staffId))
-                {
-                    return RedirectToAction("Login", "Auth");
-                }
+		/// <summary>
+		/// Processes fine payment with audit logging.
+		/// Implements UC027 (Pay Fine) - BR-22
+		/// </summary>
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "Admin,Librarian")]
+		public async Task<IActionResult> Pay(PayFineRequest model)
+		{
+			try
+			{
+				if (!User.TryGetUserId(out int staffId))
+				{
+					return RedirectToAction("Login", "Auth");
+				}
 
-                var validationResult = await _payFineValidator.ValidateAsync(model);
-                if (!validationResult.IsValid)
-                {
-                    validationResult.AddToModelState(ModelState);
-                    
-                    // Reload fine details for the view
-                    var fineResult = await _fineService.GetFineByIdAsync(model.FineId);
-                    if (fineResult.IsSuccess)
-                    {
-                        ViewBag.FineDetails = fineResult.Value;
-                    }
-                    
-                    return View(model);
-                }
+				var validationResult = await _payFineValidator.ValidateAsync(model);
+				if (!validationResult.IsValid)
+				{
+					validationResult.AddToModelState(ModelState);
 
-                var result = await _fineService.PayFineAsync(model);
-                if (!result.IsSuccess)
-                {
-                    ModelState.AddModelError(string.Empty, result.Error);
-                    
-                    // Reload fine details for the view
-                    var fineResult = await _fineService.GetFineByIdAsync(model.FineId);
-                    if (fineResult.IsSuccess)
-                    {
-                        ViewBag.FineDetails = fineResult.Value;
-                    }
-                    
-                    return View(model);
-                }
+					var fineResult = await _fineService.GetFineByIdAsync(model.FineId);
+					if (fineResult.IsSuccess)
+					{
+						ViewBag.FineDetails = fineResult.Value;
+					}
 
-                _logger.LogInformation("Staff {StaffId} processed payment of {Amount:C} for fine {FineId} at {Time}",
-                    staffId, model.PaymentAmount, model.FineId, DateTime.UtcNow);
-                
-                TempData["SuccessMessage"] = "Fine payment processed successfully.";
-                return RedirectToAction(nameof(Details), new { id = model.FineId });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing fine payment");
-                TempData["ErrorMessage"] = "An error occurred while processing fine payment.";
-                return RedirectToAction(nameof(Index));
-            }
-        }
+					return View(model);
+				}
 
-        /// <summary>
-        /// Displays waive fine form.
-        /// For staff use only. Part of UC028 (Waive Fine).
-        /// </summary>
-        [HttpGet]
+				var result = await _fineService.PayFineAsync(model);
+				if (!result.IsSuccess)
+				{
+					ModelState.AddModelError(string.Empty, result.Error);
+
+					var fineResult = await _fineService.GetFineByIdAsync(model.FineId);
+					if (fineResult.IsSuccess)
+					{
+						ViewBag.FineDetails = fineResult.Value;
+					}
+
+					return View(model);
+				}
+
+				// Audit successful payment
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					UserId = staffId,
+					ActionType = AuditActionType.Update,
+					EntityType = "Fine",
+					EntityId = result.Value.Id.ToString(),
+					EntityName = $"Fine Payment - {result.Value.MemberName}",
+					Details = $"Fine payment processed successfully. Amount: {model.PaymentAmount:C}. Method: {model.PaymentMethod}",
+					IsSuccess = true
+				});
+
+				_logger.LogInformation("Staff {StaffId} processed payment of {Amount:C} for fine {FineId} at {Time}",
+					staffId, model.PaymentAmount, model.FineId, DateTime.UtcNow);
+
+				TempData["SuccessMessage"] = "Fine payment processed successfully.";
+				return RedirectToAction(nameof(Details), new { id = model.FineId });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error processing fine payment");
+				TempData["ErrorMessage"] = "An error occurred while processing fine payment.";
+				return RedirectToAction(nameof(Index));
+			}
+		}
+
+		/// <summary>
+		/// Displays waive fine form.
+		/// For staff use only. Part of UC028 (Waive Fine).
+		/// </summary>
+		[HttpGet]
         [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Waive(int id)
         {
@@ -516,74 +541,96 @@ namespace Web.Controllers
             }
         }
 
-        /// <summary>
-        /// Processes waive fine request.
-        /// For staff use only. Implements UC028 (Waive Fine).
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> Waive(WaiveFineRequest model)
-        {
-            try
-            {
-                if (!User.TryGetUserId(out int staffId))
-                {
-                    return RedirectToAction("Login", "Auth");
-                }
+		/// <summary>
+		/// Processes fine waiver with enhanced authorization and audit logging.
+		/// Implements UC028 (Waive Fine) - BR-01, BR-22
+		/// </summary>
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "Admin,Librarian")]
+		public async Task<IActionResult> Waive(WaiveFineRequest model, bool allowOverride = false, string? overrideReason = null)
+		{
+			try
+			{
+				if (!User.TryGetUserId(out int staffId))
+				{
+					return RedirectToAction("Login", "Auth");
+				}
 
-                // Ensure staff ID is set correctly
-                model.StaffId = staffId;
+				// Enhanced authorization check - BR-01
+				if (!User.IsInRole("Admin") && !User.IsInRole("Librarian"))
+				{
+					TempData["ErrorMessage"] = "You do not have permission to waive fines.";
+					return RedirectToAction(nameof(Index));
+				}
 
-                var validationResult = await _waiveFineValidator.ValidateAsync(model);
-                if (!validationResult.IsValid)
-                {
-                    validationResult.AddToModelState(ModelState);
-                    
-                    // Reload fine details for the view
-                    var fineResult = await _fineService.GetFineByIdAsync(model.FineId);
-                    if (fineResult.IsSuccess)
-                    {
-                        ViewBag.FineDetails = fineResult.Value;
-                    }
-                    
-                    return View(model);
-                }
+				model.StaffId = staffId;
 
-                var result = await _fineService.WaiveFineAsync(model);
-                if (!result.IsSuccess)
-                {
-                    ModelState.AddModelError(string.Empty, result.Error);
-                    
-                    // Reload fine details for the view
-                    var fineResult = await _fineService.GetFineByIdAsync(model.FineId);
-                    if (fineResult.IsSuccess)
-                    {
-                        ViewBag.FineDetails = fineResult.Value;
-                    }
-                    
-                    return View(model);
-                }
+				var validationResult = await _waiveFineValidator.ValidateAsync(model);
+				if (!validationResult.IsValid)
+				{
+					validationResult.AddToModelState(ModelState);
 
-                _logger.LogInformation("Staff {StaffId} waived fine {FineId} at {Time}",
-                    staffId, model.FineId, DateTime.UtcNow);
-                
-                TempData["SuccessMessage"] = "Fine waived successfully.";
-                return RedirectToAction(nameof(Details), new { id = model.FineId });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing fine waiver");
-                TempData["ErrorMessage"] = "An error occurred while processing fine waiver.";
-                return RedirectToAction(nameof(Index));
-            }
-        }
+					var fineResult = await _fineService.GetFineByIdAsync(model.FineId);
+					if (fineResult.IsSuccess)
+					{
+						ViewBag.FineDetails = fineResult.Value;
+					}
 
-        /// <summary>
-        /// Allows members to view their fines.
-        /// Implements member-facing part of UC029 (View Fine History).
-        /// </summary>
-        [HttpGet]
+					return View(model);
+				}
+
+				// Pass override parameters to service
+				var result = await _fineService.WaiveFineAsync(model, allowOverride, overrideReason);
+				if (!result.IsSuccess)
+				{
+					ModelState.AddModelError(string.Empty, result.Error);
+
+					var fineResult = await _fineService.GetFineByIdAsync(model.FineId);
+					if (fineResult.IsSuccess)
+					{
+						ViewBag.FineDetails = fineResult.Value;
+					}
+
+					return View(model);
+				}
+
+				// Audit successful waiver, including override context if present
+				var auditDetails = $"Fine waived successfully. Amount: {result.Value.Amount:C}. Reason: {model.WaiverReason}";
+				if (result.Value.OverrideContext?.IsOverride == true)
+				{
+					auditDetails += $" [OVERRIDE] Reason: {result.Value.OverrideContext.Reason}; Rules: {string.Join(", ", result.Value.OverrideContext.OverriddenRules)}";
+				}
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					UserId = staffId,
+					ActionType = AuditActionType.Update,
+					EntityType = "Fine",
+					EntityId = result.Value.Id.ToString(),
+					EntityName = $"Fine Waiver - {result.Value.MemberName}",
+					Details = auditDetails,
+					IsSuccess = true
+				});
+
+				_logger.LogInformation("Staff {StaffId} waived fine {FineId} of {Amount:C} at {Time}",
+					staffId, model.FineId, result.Value.Amount, DateTime.UtcNow);
+
+				TempData["SuccessMessage"] = "Fine waived successfully.";
+				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error waiving fine");
+				TempData["ErrorMessage"] = "An error occurred while waiving the fine.";
+				return View(model);
+			}
+		}
+
+		/// <summary>
+		/// Allows members to view their fines.
+		/// Implements member-facing part of UC029 (View Fine History).
+		/// </summary>
+		[HttpGet]
         [Authorize(Roles = "Member")]
         public async Task<IActionResult> MyFines(int page = 1, int pageSize = 10)
         {

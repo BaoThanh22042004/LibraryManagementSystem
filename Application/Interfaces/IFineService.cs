@@ -9,13 +9,13 @@ namespace Application.Interfaces;
 /// </summary>
 public interface IFineService
 {
-    Task<Result<FineDetailDto>> CreateFineAsync(CreateFineRequest request);
+    Task<Result<FineDetailDto>> CreateFineAsync(CreateFineRequest request, bool allowOverride = false, string? overrideReason = null);
 
     Task<Result<FineDetailDto>> CalculateFineAsync(CalculateFineRequest request);
 
     Task<Result<FineDetailDto>> PayFineAsync(PayFineRequest request);
 
-    Task<Result<FineDetailDto>> WaiveFineAsync(WaiveFineRequest request);
+    Task<Result<FineDetailDto>> WaiveFineAsync(WaiveFineRequest request, bool allowOverride = false, string? overrideReason = null);
 
     Task<Result<FineDetailDto>> GetFineByIdAsync(int fineId);
 

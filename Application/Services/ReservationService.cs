@@ -129,17 +129,18 @@ public class ReservationService : IReservationService
 
     /// <summary>
     /// Cancels an existing reservation - UC023
+    /// Supports staff override for cancellation restrictions.
     /// </summary>
     /// <param name="request">Cancellation details</param>
-    /// <returns>Result with updated reservation information</returns>
-    public async Task<Result<ReservationDetailDto>> CancelReservationAsync(CancelReservationRequest request)
+    /// <param name="allowOverride">If true, allows staff to override certain business rules</param>
+    /// <param name="overrideReason">Reason for override (required if allowOverride is true)</param>
+    /// <returns>Result with updated reservation information and override context</returns>
+    public async Task<Result<ReservationDetailDto>> CancelReservationAsync(CancelReservationRequest request, bool allowOverride = false, string? overrideReason = null)
     {
         try
         {
-            // Begin transaction
             await _unitOfWork.BeginTransactionAsync();
 
-            // Get the reservation with related entities
             var reservation = await _unitOfWork.Repository<Reservation>().GetAsync(
                 r => r.Id == request.ReservationId,
                 r => r.Member.User,
@@ -150,8 +151,12 @@ public class ReservationService : IReservationService
                 return Result.Failure<ReservationDetailDto>($"Reservation with ID {request.ReservationId} not found.");
 
             // Check if reservation can be cancelled (must be active or fulfilled)
-            if (reservation.Status != ReservationStatus.Active && reservation.Status != ReservationStatus.Fulfilled)
+            if (reservation.Status != ReservationStatus.Active && reservation.Status != ReservationStatus.Fulfilled && !allowOverride)
                 return Result.Failure<ReservationDetailDto>($"Reservation cannot be cancelled. Current status: {reservation.Status}.");
+
+            // Staff override restriction: only staff can cancel other members' reservations
+            if (request.IsStaffCancellation && string.IsNullOrWhiteSpace(request.CancellationReason))
+                return Result.Failure<ReservationDetailDto>("Staff cancellation requires a reason.");
 
             // Cancel the reservation
             reservation.Status = ReservationStatus.Cancelled;
@@ -167,20 +172,24 @@ public class ReservationService : IReservationService
                 }
             }
 
-            // Update reservation entity
             _unitOfWork.Repository<Reservation>().Update(reservation);
             await _unitOfWork.SaveChangesAsync();
-
-            // Commit transaction
             await _unitOfWork.CommitTransactionAsync();
 
-            // Map and return the result
             var reservationDto = _mapper.Map<ReservationDetailDto>(reservation);
+            if (allowOverride && !string.IsNullOrWhiteSpace(overrideReason))
+            {
+                reservationDto.OverrideContext = new ReservationOverrideContext
+                {
+                    IsOverride = true,
+                    Reason = overrideReason,
+                    OverriddenRules = GetOverriddenRulesForCancelReservation(reservation)
+                };
+            }
             return Result.Success(reservationDto);
         }
         catch (Exception ex)
         {
-            // Rollback on error
             await _unitOfWork.RollbackTransactionAsync();
             _logger.LogError(ex, "Error cancelling reservation: {ErrorMessage}", ex.Message);
             return Result.Failure<ReservationDetailDto>($"Failed to cancel reservation: {ex.Message}");
@@ -189,17 +198,18 @@ public class ReservationService : IReservationService
 
     /// <summary>
     /// Fulfills a reservation when a book becomes available - UC024
+    /// Supports staff override for queue position and copy status.
     /// </summary>
     /// <param name="request">Fulfillment details</param>
-    /// <returns>Result with updated reservation information</returns>
-    public async Task<Result<ReservationDetailDto>> FulfillReservationAsync(FulfillReservationRequest request)
+    /// <param name="allowOverride">If true, allows staff to override certain business rules</param>
+    /// <param name="overrideReason">Reason for override (required if allowOverride is true)</param>
+    /// <returns>Result with updated reservation information and override context</returns>
+    public async Task<Result<ReservationDetailDto>> FulfillReservationAsync(FulfillReservationRequest request, bool allowOverride = false, string? overrideReason = null)
     {
         try
         {
-            // Begin transaction
             await _unitOfWork.BeginTransactionAsync();
 
-            // Get the reservation with related entities
             var reservation = await _unitOfWork.Repository<Reservation>().GetAsync(
                 r => r.Id == request.ReservationId,
                 r => r.Member.User,
@@ -209,10 +219,9 @@ public class ReservationService : IReservationService
                 return Result.Failure<ReservationDetailDto>($"Reservation with ID {request.ReservationId} not found.");
 
             // Check if reservation can be fulfilled (must be active)
-            if (reservation.Status != ReservationStatus.Active)
+            if (reservation.Status != ReservationStatus.Active && !allowOverride)
                 return Result.Failure<ReservationDetailDto>($"Reservation cannot be fulfilled. Current status: {reservation.Status}.");
 
-            // Get the book copy
             var bookCopy = await _unitOfWork.Repository<BookCopy>().GetAsync(
                 bc => bc.Id == request.BookCopyId && bc.BookId == reservation.BookId,
                 bc => bc.Book);
@@ -221,41 +230,38 @@ public class ReservationService : IReservationService
                 return Result.Failure<ReservationDetailDto>($"Book copy with ID {request.BookCopyId} not found or doesn't match reserved book.");
 
             // Check if book copy is available
-            if (bookCopy.Status != CopyStatus.Available)
+            if (bookCopy.Status != CopyStatus.Available && !allowOverride)
                 return Result.Failure<ReservationDetailDto>($"Book copy is not available. Current status: {bookCopy.Status}.");
 
             // Check if this is the first reservation in the queue - BR-19
             var queuePosition = await GetReservationQueuePositionAsync(reservation.Id);
-            if (queuePosition.IsSuccess && queuePosition.Value > 1)
+            if (queuePosition.IsSuccess && queuePosition.Value > 1 && !allowOverride)
                 return Result.Failure<ReservationDetailDto>($"Cannot fulfill this reservation. It is not first in the queue (current position: {queuePosition.Value}).");
 
-            // Set pickup deadline
             var pickupDeadline = request.PickupDeadline ?? DateTime.UtcNow.AddHours(DefaultPickupDeadlineHours);
-
-            // Update reservation
             reservation.Status = ReservationStatus.Fulfilled;
             reservation.BookCopyId = bookCopy.Id;
-
-            // Update book copy status
             bookCopy.Status = CopyStatus.Reserved;
-
-            // Update entities
             _unitOfWork.Repository<Reservation>().Update(reservation);
             _unitOfWork.Repository<BookCopy>().Update(bookCopy);
             await _unitOfWork.SaveChangesAsync();
-
-            // Commit transaction
             await _unitOfWork.CommitTransactionAsync();
-
-            // Map and return the result
             var reservationDto = _mapper.Map<ReservationDetailDto>(reservation);
             reservationDto.PickupDeadline = pickupDeadline;
             reservationDto.CopyNumber = bookCopy.CopyNumber;
+            if (allowOverride && !string.IsNullOrWhiteSpace(overrideReason))
+            {
+                reservationDto.OverrideContext = new ReservationOverrideContext
+                {
+                    IsOverride = true,
+                    Reason = overrideReason,
+                    OverriddenRules = GetOverriddenRulesForFulfillReservation(reservation, bookCopy, queuePosition.IsSuccess ? queuePosition.Value : null)
+                };
+            }
             return Result.Success(reservationDto);
         }
         catch (Exception ex)
         {
-            // Rollback on error
             await _unitOfWork.RollbackTransactionAsync();
             _logger.LogError(ex, "Error fulfilling reservation: {ErrorMessage}", ex.Message);
             return Result.Failure<ReservationDetailDto>($"Failed to fulfill reservation: {ex.Message}");
@@ -631,6 +637,32 @@ public class ReservationService : IReservationService
         daysEstimated += 2;
 
         return DateTime.UtcNow.AddDays(daysEstimated);
+    }
+
+    /// <summary>
+    /// Helper to get overridden rules for CancelReservation
+    /// </summary>
+    private static List<string> GetOverriddenRulesForCancelReservation(Domain.Entities.Reservation reservation)
+    {
+        var overridden = new List<string>();
+        if (reservation.Status != ReservationStatus.Active && reservation.Status != ReservationStatus.Fulfilled)
+            overridden.Add("ReservationStatus");
+        return overridden;
+    }
+
+    /// <summary>
+    /// Helper to get overridden rules for FulfillReservation
+    /// </summary>
+    private static List<string> GetOverriddenRulesForFulfillReservation(Domain.Entities.Reservation reservation, Domain.Entities.BookCopy bookCopy, int? queuePosition)
+    {
+        var overridden = new List<string>();
+        if (reservation.Status != ReservationStatus.Active)
+            overridden.Add("ReservationStatus");
+        if (bookCopy.Status != CopyStatus.Available)
+            overridden.Add("CopyStatus");
+        if (queuePosition.HasValue && queuePosition.Value > 1)
+            overridden.Add("QueuePosition");
+        return overridden;
     }
 
     #endregion
