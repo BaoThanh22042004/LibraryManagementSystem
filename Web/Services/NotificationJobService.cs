@@ -32,14 +32,20 @@ public class NotificationJobService : BackgroundService
                     // Send overdue notifications
                     var overdueResult = await notificationService.SendOverdueNotificationsAsync();
                     if (overdueResult.IsSuccess)
-                        _logger.LogInformation("[NotificationJob] Overdue notifications sent: {Count}", overdueResult.Value);
+                    {
+                        var (count, errors) = overdueResult.Value;
+                        _logger.LogInformation("[NotificationJob] Overdue notifications sent: {Count}. Errors: {Errors}", count, string.Join("; ", errors));
+                    }
                     else
                         _logger.LogWarning("[NotificationJob] Failed to send overdue notifications: {Error}", overdueResult.Error);
 
                     // Send availability notifications
                     var availResult = await notificationService.SendAvailabilityNotificationsAsync();
                     if (availResult.IsSuccess)
-                        _logger.LogInformation("[NotificationJob] Availability notifications sent: {Count}", availResult.Value);
+                    {
+                        var (count, errors) = availResult.Value;
+                        _logger.LogInformation("[NotificationJob] Availability notifications sent: {Count}. Errors: {Errors}", count, string.Join("; ", errors));
+                    }
                     else
                         _logger.LogWarning("[NotificationJob] Failed to send availability notifications: {Error}", availResult.Error);
                 }

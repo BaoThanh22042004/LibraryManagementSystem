@@ -42,5 +42,15 @@ public class LoanProfile : Profile
             .ForMember(dest => dest.CopyNumber, opt => opt.MapFrom(src => src.BookCopy.CopyNumber))
             .ForMember(dest => dest.BookAuthor, opt => opt.MapFrom(src => src.BookCopy.Book.Author))
             .ForMember(dest => dest.ISBN, opt => opt.MapFrom(src => src.BookCopy.Book.ISBN));
+
+        // Map from Loan entity to OverdueLoanReportDto
+        CreateMap<Loan, OverdueLoanReportDto>()
+            .ForMember(dest => dest.LoanId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member.User.FullName))
+            .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.BookCopy.Book.Title))
+            .ForMember(dest => dest.LoanDate, opt => opt.MapFrom(src => src.LoanDate))
+            .ForMember(dest => dest.DueDate, opt => opt.MapFrom(src => src.DueDate))
+            .ForMember(dest => dest.DaysOverdue, opt => opt.MapFrom(src => src.Status == Domain.Enums.LoanStatus.Overdue ? (int)(DateTime.UtcNow - src.DueDate).TotalDays : 0))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
     }
 }

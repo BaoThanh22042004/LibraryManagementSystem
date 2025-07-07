@@ -699,10 +699,10 @@ public class FineService : IFineService
 	/// <summary>
 	/// Gets all unpaid fines for staff (UC043)
 	/// </summary>
-	public async Task<Result<List<FineBasicDto>>> GetFinesReportAsync()
+	public async Task<Result<List<FinesReportExportDto>>> GetFinesReportAsync()
 	{
 		var fines = await _unitOfWork.FineRepository.GetUnpaidFinesAsync();
-		var dtos = fines.Select(_mapper.Map<FineBasicDto>).ToList();
+		var dtos = fines.Select(_mapper.Map<FinesReportExportDto>).ToList();
 		return Result.Success(dtos);
 	}
 

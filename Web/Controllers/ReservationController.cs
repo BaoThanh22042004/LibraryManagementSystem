@@ -270,7 +270,7 @@ namespace Web.Controllers
 				await _notificationService.CreateNotificationAsync(new NotificationCreateDto
 				{
 					UserId = result.Value.UserId,
-					Type = NotificationType.LoanReminder, // Consider extending NotificationType for ReservationConfirmation
+					Type = NotificationType.ReservationConfirmation,
 					Subject = $"Reservation Confirmation: {result.Value.BookTitle}",
 					Message = $"You have successfully reserved '{result.Value.BookTitle}'. Your queue position: {result.Value.QueuePosition ?? 1}."
 				});
@@ -346,7 +346,7 @@ namespace Web.Controllers
                 await _notificationService.CreateNotificationAsync(new NotificationCreateDto
                 {
                     UserId = result.Value.UserId,
-                    Type = NotificationType.LoanReminder, // Consider extending NotificationType for ReservationCancellation
+                    Type = NotificationType.ReservationCancellation,
                     Subject = $"Reservation Cancelled: {result.Value.BookTitle}",
                     Message = $"Your reservation for '{result.Value.BookTitle}' has been cancelled."
                 });
@@ -471,7 +471,7 @@ namespace Web.Controllers
 				await _notificationService.CreateNotificationAsync(new NotificationCreateDto
 				{
 					UserId = result.Value.UserId,
-					Type = NotificationType.ReservationAvailable,
+					Type = NotificationType.ReservationConfirmation,
 					Subject = $"Reservation Fulfilled: {result.Value.BookTitle}",
 					Message = $"Your reserved book '{result.Value.BookTitle}' is now available for pickup. Please collect it by {result.Value.PickupDeadline:yyyy-MM-dd}."
 				});
@@ -616,7 +616,7 @@ namespace Web.Controllers
                 await _notificationService.CreateNotificationAsync(new NotificationCreateDto
                 {
                     UserId = result.Value.UserId,
-                    Type = NotificationType.LoanReminder, // Consider extending NotificationType for ReservationConfirmation
+                    Type = NotificationType.ReservationConfirmation,
                     Subject = $"Reservation Confirmation: {result.Value.BookTitle}",
                     Message = $"You have successfully reserved '{result.Value.BookTitle}'. Your queue position: {result.Value.QueuePosition ?? 1}."
                 });
@@ -688,7 +688,7 @@ namespace Web.Controllers
                 await _notificationService.CreateNotificationAsync(new NotificationCreateDto
                 {
                     UserId = result.Value.UserId,
-                    Type = NotificationType.LoanReminder, // Consider extending NotificationType for ReservationCancellation
+                    Type = NotificationType.ReservationCancellation,
                     Subject = $"Reservation Cancelled: {result.Value.BookTitle}",
                     Message = $"Your reservation for '{result.Value.BookTitle}' has been cancelled."
                 });

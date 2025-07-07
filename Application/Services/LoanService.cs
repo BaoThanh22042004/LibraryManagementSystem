@@ -520,11 +520,11 @@ public class LoanService : ILoanService
     /// <summary>
     /// Gets all overdue loans for staff (UC042)
     /// </summary>
-    public async Task<Result<List<LoanBasicDto>>> GetOverdueLoansReportAsync()
+    public async Task<Result<List<OverdueLoanReportDto>>> GetOverdueLoansReportAsync()
     {
         var now = DateTime.UtcNow;
         var loans = await _unitOfWork.LoanRepository.GetOverdueLoansAsync(now);
-        var dtos = loans.Select(_mapper.Map<LoanBasicDto>).ToList();
+        var dtos = loans.Select(_mapper.Map<OverdueLoanReportDto>).ToList();
         return Result.Success(dtos);
     }
 

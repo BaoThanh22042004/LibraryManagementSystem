@@ -21,5 +21,13 @@ public enum NotificationType
 	/// <summary>
 	/// System maintenance or general system-wide notification.
 	/// </summary>
-	SystemMaintenance = 4
+	SystemMaintenance = 4,
+	/// <summary>
+	/// Confirmation that a reservation was successfully created.
+	/// </summary>
+	ReservationConfirmation = 5,
+	/// <summary>
+	/// Notification that a reservation was cancelled.
+	/// </summary>
+	ReservationCancellation = 6
 }

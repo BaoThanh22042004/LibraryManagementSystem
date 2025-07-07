@@ -27,5 +27,5 @@ public interface ILoanService
 
     Task<Result<PagedResult<LoanBasicDto>>> GetOverdueLoansReportPagedAsync(PagedRequest request);
 
-    Task<Result<List<LoanBasicDto>>> GetOverdueLoansReportAsync();
+    Task<Result<List<OverdueLoanReportDto>>> GetOverdueLoansReportAsync();
 }

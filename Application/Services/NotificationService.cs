@@ -74,43 +74,75 @@ public class NotificationService : INotificationService
         // Validate status transition
         if (!Enum.IsDefined(typeof(NotificationStatus), dto.Status))
             return Result.Failure<NotificationReadDto>("Invalid status value.");
-        if (notification.Status == NotificationStatus.Sent && dto.Status == NotificationStatus.Sent)
+        // Only allow Pending -> Sent/Failed, or Failed -> Sent
+        if (notification.Status == NotificationStatus.Pending)
         {
-            // Already sent, preserve SentAt
+            if (dto.Status != NotificationStatus.Sent && dto.Status != NotificationStatus.Failed)
+                return Result.Failure<NotificationReadDto>($"Cannot change status from Pending to {dto.Status}.");
         }
-        else
+        else if (notification.Status == NotificationStatus.Failed)
         {
-            notification.Status = dto.Status;
-            if (dto.Status == NotificationStatus.Sent && notification.SentAt == null)
-                notification.SentAt = DateTime.UtcNow;
+            if (dto.Status != NotificationStatus.Sent)
+                return Result.Failure<NotificationReadDto>($"Can only change status from Failed to Sent.");
         }
+        else if (notification.Status == NotificationStatus.Sent)
+        {
+            return Result.Failure<NotificationReadDto>("Cannot change status of a notification that is already Sent.");
+        }
+        else if (notification.Status == NotificationStatus.Read)
+        {
+            return Result.Failure<NotificationReadDto>("Cannot change status of a notification that is already Read.");
+        }
+        // Apply status change
+        notification.Status = dto.Status;
+        if (dto.Status == NotificationStatus.Sent && notification.SentAt == null)
+            notification.SentAt = DateTime.UtcNow;
         repo.Update(notification);
         await _unitOfWork.SaveChangesAsync();
         var readDto = _mapper.Map<NotificationReadDto>(notification);
         return Result.Success(readDto);
     }
 
-    public async Task<Result<int>> MarkAsReadAsync(NotificationMarkAsReadDto dto, int memberId)
+    public async Task<Result<(int SuccessCount, List<(int Id, string Reason)> Failures)>> MarkAsReadAsync(NotificationMarkAsReadDto dto, int memberId)
     {
         var repo = _unitOfWork.Repository<Notification>();
-        var notifications = await repo.ListAsync(n => dto.NotificationIds.Contains(n.Id) && n.UserId == memberId && n.Status != NotificationStatus.Read);
-        if (notifications.Count == 0)
-            return Result.Failure<int>("No unread notifications found to mark as read.");
-        foreach (var n in notifications)
+        var notifications = await repo.ListAsync(n => dto.NotificationIds.Contains(n.Id));
+        var failures = new List<(int Id, string Reason)>();
+        int successCount = 0;
+        foreach (var id in dto.NotificationIds)
         {
+            var n = notifications.FirstOrDefault(x => x.Id == id);
+            if (n == null)
+            {
+                failures.Add((id, "Not found"));
+                continue;
+            }
+            if (n.UserId != memberId)
+            {
+                failures.Add((id, "Not owned by user"));
+                continue;
+            }
+            if (n.Status == NotificationStatus.Read)
+            {
+                failures.Add((id, "Already read"));
+                continue;
+            }
             n.Status = NotificationStatus.Read;
             n.ReadAt = DateTime.UtcNow;
             repo.Update(n);
+            successCount++;
         }
-        await _unitOfWork.SaveChangesAsync();
-        return Result.Success(notifications.Count);
+        if (successCount > 0) await _unitOfWork.SaveChangesAsync();
+        if (successCount == 0)
+            return Result.Failure<(int, List<(int, string)>)>("No unread notifications found to mark as read.", (0, failures ?? new List<(int, string)>()));
+        return Result.Success((successCount, failures));
     }
 
     public async Task<Result<List<NotificationListDto>>> GetNotificationsAsync(int memberId, bool unreadOnly = false)
     {
         var repo = _unitOfWork.Repository<Notification>();
         var notifications = await repo.ListAsync(
-            n => n.UserId == memberId && (!unreadOnly || n.Status != NotificationStatus.Read),
+            n => (n.UserId == memberId || n.UserId == null) && (!unreadOnly || n.Status != NotificationStatus.Read),
             q => q.OrderByDescending(n => n.SentAt ?? n.CreatedAt));
         var dtos = notifications.Select(_mapper.Map<NotificationListDto>).ToList();
         return Result.Success(dtos);
@@ -122,10 +154,16 @@ public class NotificationService : INotificationService
         var notification = await repo.GetAsync(n => n.Id == notificationId, n => n.User!);
         if (notification == null)
             return Result.Failure<NotificationReadDto>("Notification not found.");
+        if (notification.UserId == null)
+        {
+            // System-wide notification: allow any authenticated user
+            var dto = _mapper.Map<NotificationReadDto>(notification);
+            return Result.Success(dto);
+        }
         if (!isStaff && notification.UserId != requesterId)
             return Result.Failure<NotificationReadDto>("Access denied.");
-        var dto = _mapper.Map<NotificationReadDto>(notification);
-        return Result.Success(dto);
+        var dto2 = _mapper.Map<NotificationReadDto>(notification);
+        return Result.Success(dto2);
     }
 
     public async Task<Result<int>> GetUnreadCountAsync(int memberId)
@@ -135,12 +173,11 @@ public class NotificationService : INotificationService
         return Result.Success(count);
     }
 
-    public async Task<Result<int>> SendOverdueNotificationsAsync()
+    public async Task<Result<(int SuccessCount, List<string> Errors)>> SendOverdueNotificationsAsync()
     {
         var loanRepo = _unitOfWork.Repository<Loan>();
         var notificationRepo = _unitOfWork.Repository<Notification>();
         var now = DateTime.UtcNow;
-        // Find all overdue loans
         var overdueLoans = await loanRepo.ListAsync(
             l => l.Status == Domain.Enums.LoanStatus.Overdue && l.DueDate < now,
             null,
@@ -148,44 +185,50 @@ public class NotificationService : INotificationService
             l => l.Member.User,
             l => l.BookCopy.Book);
         int sentCount = 0;
+        var errors = new List<string>();
         foreach (var loan in overdueLoans)
         {
-            // Check if notification already sent for this loan/member
-            bool alreadyNotified = await notificationRepo.ExistsAsync(n =>
-                n.UserId == loan.Member.UserId &&
-                n.Type == NotificationType.OverdueNotice &&
-                n.Subject.Contains(loan.BookCopy.Book.Title) &&
-                n.Status != NotificationStatus.Failed &&
-                n.CreatedAt > loan.DueDate // Only after overdue
-            );
-            if (alreadyNotified) continue;
-            var daysOverdue = (now.Date - loan.DueDate.Date).Days;
-            var subject = $"Overdue Notice: {loan.BookCopy.Book.Title}";
-            var message = $"Your loan for '{loan.BookCopy.Book.Title}' is overdue by {daysOverdue} day(s). Please return it as soon as possible.";
-            var notification = new Notification
+            try
             {
-                UserId = loan.Member.UserId,
-                Type = NotificationType.OverdueNotice,
-                Subject = subject,
-                Message = message,
-                Status = NotificationStatus.Sent,
-                SentAt = now,
-                CreatedAt = now
-            };
-            await notificationRepo.AddAsync(notification);
-            sentCount++;
+                bool alreadyNotified = await notificationRepo.ExistsAsync(n =>
+                    n.UserId == loan.Member.UserId &&
+                    n.Type == NotificationType.OverdueNotice &&
+                    n.Subject.Contains(loan.BookCopy.Book.Title) &&
+                    n.Status != NotificationStatus.Failed &&
+                    n.CreatedAt > loan.DueDate
+                );
+                if (alreadyNotified) continue;
+                var daysOverdue = (now.Date - loan.DueDate.Date).Days;
+                var subject = $"Overdue Notice: {loan.BookCopy.Book.Title}";
+                var message = $"Your loan for '{loan.BookCopy.Book.Title}' is overdue by {daysOverdue} day(s). Please return it as soon as possible.";
+                var notification = new Notification
+                {
+                    UserId = loan.Member.UserId,
+                    Type = NotificationType.OverdueNotice,
+                    Subject = subject,
+                    Message = message,
+                    Status = NotificationStatus.Sent,
+                    SentAt = now,
+                    CreatedAt = now
+                };
+                await notificationRepo.AddAsync(notification);
+                sentCount++;
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"LoanId {loan.Id}: {ex.Message}");
+            }
         }
         if (sentCount > 0) await _unitOfWork.SaveChangesAsync();
-        return Result.Success(sentCount);
+        return Result.Success((sentCount, errors));
     }
 
-    public async Task<Result<int>> SendAvailabilityNotificationsAsync()
+    public async Task<Result<(int SuccessCount, List<string> Errors)>> SendAvailabilityNotificationsAsync()
     {
         var reservationRepo = _unitOfWork.Repository<Reservation>();
         var bookCopyRepo = _unitOfWork.Repository<BookCopy>();
         var notificationRepo = _unitOfWork.Repository<Notification>();
         var now = DateTime.UtcNow;
-        // Find all active reservations ordered by reservation date
         var reservations = await reservationRepo.ListAsync(
             r => r.Status == Domain.Enums.ReservationStatus.Active,
             q => q.OrderBy(r => r.ReservationDate),
@@ -193,42 +236,46 @@ public class NotificationService : INotificationService
             r => r.Member.User,
             r => r.Book);
         int sentCount = 0;
-        // Group by book
+        var errors = new List<string>();
         var reservationsByBook = reservations.GroupBy(r => r.BookId);
         foreach (var group in reservationsByBook)
         {
-            // Check if any copy of the book is available
-            var availableCopy = await bookCopyRepo.GetAsync(bc => bc.BookId == group.Key && bc.Status == Domain.Enums.CopyStatus.Available);
-            if (availableCopy == null) continue;
-            // Notify the first reservation in the queue
-            var reservation = group.OrderBy(r => r.ReservationDate).FirstOrDefault();
-            if (reservation == null) continue;
-            // Check if notification already sent for this reservation/member
-            bool alreadyNotified = await notificationRepo.ExistsAsync(n =>
-                n.UserId == reservation.Member.UserId &&
-                n.Type == NotificationType.ReservationAvailable &&
-                n.Subject.Contains(reservation.Book.Title) &&
-                n.Status != NotificationStatus.Failed &&
-                n.CreatedAt > (availableCopy.LastModifiedAt ?? availableCopy.CreatedAt)
-            );
-            if (alreadyNotified) continue;
-            var pickupDeadline = now.AddDays(3);
-            var subject = $"Reservation Available: {reservation.Book.Title}";
-            var message = $"Your reserved book '{reservation.Book.Title}' is now available. Please pick it up by {pickupDeadline:yyyy-MM-dd}.";
-            var notification = new Notification
+            try
             {
-                UserId = reservation.Member.UserId,
-                Type = NotificationType.ReservationAvailable,
-                Subject = subject,
-                Message = message,
-                Status = NotificationStatus.Sent,
-                SentAt = now,
-                CreatedAt = now
-            };
-            await notificationRepo.AddAsync(notification);
-            sentCount++;
+                var availableCopy = await bookCopyRepo.GetAsync(bc => bc.BookId == group.Key && bc.Status == Domain.Enums.CopyStatus.Available);
+                if (availableCopy == null) continue;
+                var reservation = group.OrderBy(r => r.ReservationDate).FirstOrDefault();
+                if (reservation == null) continue;
+                bool alreadyNotified = await notificationRepo.ExistsAsync(n =>
+                    n.UserId == reservation.Member.UserId &&
+                    n.Type == NotificationType.ReservationAvailable &&
+                    n.Subject.Contains(reservation.Book.Title) &&
+                    n.Status != NotificationStatus.Failed &&
+                    n.CreatedAt > (availableCopy.LastModifiedAt ?? availableCopy.CreatedAt)
+                );
+                if (alreadyNotified) continue;
+                var pickupDeadline = now.AddDays(3);
+                var subject = $"Reservation Available: {reservation.Book.Title}";
+                var message = $"Your reserved book '{reservation.Book.Title}' is now available. Please pick it up by {pickupDeadline:yyyy-MM-dd}.";
+                var notification = new Notification
+                {
+                    UserId = reservation.Member.UserId,
+                    Type = NotificationType.ReservationAvailable,
+                    Subject = subject,
+                    Message = message,
+                    Status = NotificationStatus.Sent,
+                    SentAt = now,
+                    CreatedAt = now
+                };
+                await notificationRepo.AddAsync(notification);
+                sentCount++;
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"ReservationId {group.FirstOrDefault()?.Id}: {ex.Message}");
+            }
         }
         if (sentCount > 0) await _unitOfWork.SaveChangesAsync();
-        return Result.Success(sentCount);
+        return Result.Success((sentCount, errors));
     }
 }

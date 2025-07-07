@@ -48,5 +48,15 @@ public class FineProfile : Profile
             .ForMember(dest => dest.WaiverReason, opt => opt.Ignore()) // Set in service
             .ForMember(dest => dest.ProcessedByStaffId, opt => opt.Ignore()) // Set in service
             .ForMember(dest => dest.ProcessedByStaffName, opt => opt.Ignore()); // Set in service
+
+        CreateMap<Fine, FinesReportExportDto>()
+            .ForMember(dest => dest.FineId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member.User.FullName))
+            .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount))
+            .ForMember(dest => dest.FineDate, opt => opt.MapFrom(src => src.FineDate))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+            .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
+            .ForMember(dest => dest.FineType, opt => opt.MapFrom(src => src.Type.ToString()))
+            .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Loan != null ? src.Loan.BookCopy.Book.Title : null));
     }
 }

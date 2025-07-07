@@ -31,7 +31,7 @@ public interface IFineService
 
     Task<Result<PagedResult<FineBasicDto>>> GetFinesReportPagedAsync(PagedRequest request);
 
-    Task<Result<List<FineBasicDto>>> GetFinesReportAsync();
+    Task<Result<List<FinesReportExportDto>>> GetFinesReportAsync();
 
     Task<Result<OutstandingFinesDto>> GetOutstandingFinesAsync(int memberId);
 }

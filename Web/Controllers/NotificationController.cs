@@ -142,16 +142,38 @@ public class NotificationController : Controller
         }
 
         var result = await _notificationService.MarkAsReadAsync(dto, userId);
+        int successCount = 0;
+        List<(int Id, string Reason)> failures = new();
+        if (result.IsSuccess)
+        {
+            (successCount, failures) = result.Value;
+        }
+        else if (result.IsFailure)
+        {
+            (successCount, failures) = result.Value;
+        }
         await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
         {
             UserId = userId,
             ActionType = AuditActionType.Update,
             EntityType = "Notification",
-            Details = result.IsSuccess ? $"Marked {result.Value} notifications as read" : "Failed to mark notifications as read",
+            Details = result.IsSuccess
+                ? $"Marked {successCount} notifications as read. Failures: {string.Join(", ", failures.Select(f => $"Id {f.Id}: {f.Reason}"))}"
+                : $"Failed to mark notifications as read. Failures: {string.Join(", ", failures.Select(f => $"Id {f.Id}: {f.Reason}"))}",
             IsSuccess = result.IsSuccess,
-            ErrorMessage = result.IsSuccess ? null : result.Error
+            ErrorMessage = result.IsSuccess ? (failures.Count > 0 ? string.Join(", ", failures.Select(f => $"Id {f.Id}: {f.Reason}")) : null) : result.Error
         });
-        if (!result.IsSuccess) return BadRequest(result.Error);
+        if (!result.IsSuccess)
+        {
+            // Optionally, show which failed and why
+            TempData["MarkAsReadFailures"] = string.Join(", ", failures.Select(f => $"Id {f.Id}: {f.Reason}"));
+            return BadRequest(result.Error);
+        }
+        if (failures.Count > 0)
+        {
+            TempData["MarkAsReadFailures"] = string.Join(", ", failures.Select(f => $"Id {f.Id}: {f.Reason}"));
+        }
+        TempData["MarkAsReadSuccess"] = $"Marked {successCount} notifications as read.";
         return RedirectToAction("Index");
     }
 
@@ -178,17 +200,18 @@ public class NotificationController : Controller
         }
 
         var result = await _notificationService.SendOverdueNotificationsAsync();
+        var (sent, errors) = result.IsSuccess ? result.Value : (0, new List<string>());
         await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
         {
             UserId = userId,
             ActionType = AuditActionType.Other,
             EntityType = "NotificationJob",
-            Details = result.IsSuccess ? $"Triggered overdue notification job: {result.Value} sent" : "Failed to trigger overdue notification job",
+            Details = result.IsSuccess ? $"Triggered overdue notification job: {sent} sent. Errors: {string.Join("; ", errors)}" : "Failed to trigger overdue notification job",
             IsSuccess = result.IsSuccess,
-            ErrorMessage = result.IsSuccess ? null : result.Error
+            ErrorMessage = result.IsSuccess ? (errors.Count > 0 ? string.Join("; ", errors) : null) : result.Error
         });
         if (!result.IsSuccess) return BadRequest(result.Error);
-        return Ok(new { sent = result.Value });
+        return Ok(new { sent, errors });
     }
 
     // GET: /Notification/TriggerAvailabilityJob (Admin only)
@@ -201,16 +224,17 @@ public class NotificationController : Controller
         }
 
         var result = await _notificationService.SendAvailabilityNotificationsAsync();
+        var (sent, errors) = result.IsSuccess ? result.Value : (0, new List<string>());
         await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
         {
             UserId = userId,
             ActionType = AuditActionType.Other,
             EntityType = "NotificationJob",
-            Details = result.IsSuccess ? $"Triggered availability notification job: {result.Value} sent" : "Failed to trigger availability notification job",
+            Details = result.IsSuccess ? $"Triggered availability notification job: {sent} sent. Errors: {string.Join("; ", errors)}" : "Failed to trigger availability notification job",
             IsSuccess = result.IsSuccess,
-            ErrorMessage = result.IsSuccess ? null : result.Error
+            ErrorMessage = result.IsSuccess ? (errors.Count > 0 ? string.Join("; ", errors) : null) : result.Error
         });
         if (!result.IsSuccess) return BadRequest(result.Error);
-        return Ok(new { sent = result.Value });
+        return Ok(new { sent, errors });
     }
 }

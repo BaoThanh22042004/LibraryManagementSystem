@@ -52,7 +52,8 @@ public class AuditController : Controller
             TempData["ErrorMessage"] = result.Error;
             return RedirectToAction(nameof(Index));
         }
-        var csv = CsvExportExtensions.ToCsv(result.Value.Items);
+        var auditLogExportDtos = result.Value.Items.Select(x => Web.Extensions.MapperExtensions.SafeMapToExportDto(x)).ToList();
+        var csv = CsvExportExtensions.ToCsv(auditLogExportDtos);
         var fileName = $"AuditLogs_{DateTime.UtcNow:yyyyMMdd}.csv";
         // Audit log for export
         if (User.TryGetUserId(out int staffId))

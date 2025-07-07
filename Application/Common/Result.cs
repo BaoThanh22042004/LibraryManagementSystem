@@ -23,6 +23,11 @@ public class Result
 
     public static Result Failure(string error) => new(false, error);
     public static Result<T> Failure<T>(string error) => new(default!, false, error);
+
+    public static Result<T> Failure<T>(string message, T value)
+    {
+        return new Result<T>(value, false, message);
+    }
 }
 
 public class Result<T> : Result

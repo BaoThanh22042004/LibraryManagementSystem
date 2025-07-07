@@ -323,3 +323,15 @@ public record OutstandingFinesDto
     public string MemberName { get; set; } = string.Empty;
     public decimal TotalOutstanding { get; set; }
 }
+
+public record FinesReportExportDto
+{
+    public int FineId { get; set; }
+    public string MemberName { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public DateTime FineDate { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string FineType { get; set; } = string.Empty;
+    public string? BookTitle { get; set; }
+}

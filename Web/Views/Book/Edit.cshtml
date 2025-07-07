@@ -97,9 +97,9 @@
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Cover Image</label>
                     <input type="file" name="CoverImageFile" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                    @if (ViewData.ModelState["CoverImageFile"] != null && ViewData.ModelState["CoverImageFile"].Errors.Count > 0)
+                    @if (ViewData.ModelState["CoverImageFile"] != null && ViewData.ModelState["CoverImageFile"]!.Errors.Count > 0)
                     {
-                        <span class="text-red-600 text-sm">@ViewData.ModelState["CoverImageFile"].Errors[0].ErrorMessage</span>
+                        <span class="text-red-600 text-sm">@ViewData.ModelState["CoverImageFile"]!.Errors[0].ErrorMessage</span>
                     }
                     <p class="text-gray-500 text-xs mt-1">Upload a new image file (jpg, jpeg, png, gif, webp) to replace the current cover image. Optional.</p>
                 </div>

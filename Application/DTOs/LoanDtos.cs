@@ -249,3 +249,14 @@ public record LoanDetailDto : LoanBasicDto
 
     public LoanOverrideContext? OverrideContext { get; set; }
 }
+
+public record OverdueLoanReportDto
+{
+    public int LoanId { get; set; }
+    public string MemberName { get; set; } = string.Empty;
+    public string BookTitle { get; set; } = string.Empty;
+    public DateTime LoanDate { get; set; }
+    public DateTime DueDate { get; set; }
+    public int DaysOverdue { get; set; }
+    public string Status { get; set; } = string.Empty;
+}

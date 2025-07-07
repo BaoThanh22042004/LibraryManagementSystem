@@ -44,7 +44,7 @@ public class ReportService : IReportService
             // Audit log removed: now handled in controller
             return result;
         }
-        catch (Exception ex)
+        catch
         {
             // Audit log removed: now handled in controller
             throw;

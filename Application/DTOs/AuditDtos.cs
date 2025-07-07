@@ -71,3 +71,18 @@ public record DashboardStatsDto
     public int NotificationsSent { get; set; }
     public DateTime StatsGeneratedAt { get; set; }
 }
+
+public record AuditLogExportDto
+{
+    public int Id { get; set; }
+    public int? UserId { get; set; }
+    public string? UserName { get; set; }
+    public string ActionType { get; set; } = string.Empty;
+    public string EntityType { get; set; } = string.Empty;
+    public string? EntityId { get; set; }
+    public string? EntityName { get; set; }
+    public string Details { get; set; } = string.Empty;
+    public bool IsSuccess { get; set; }
+    public string? ErrorMessage { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
