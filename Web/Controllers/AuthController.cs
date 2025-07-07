@@ -1,6 +1,7 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
 using Application.Validators;
+using Domain.Enums;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -13,10 +14,12 @@ namespace Web.Controllers
 	/// <summary>
 	/// Controller for authentication-related operations.
 	/// Implements UC002 (Login), UC004 (Change Password), UC005 (Reset Password), and UC008 (Register Member).
+	/// Business Rules: BR-05, BR-22, BR-24, BR-26
 	/// </summary>
 	public class AuthController : Controller
 	{
 		private readonly IAuthService _authService;
+		private readonly IAuditService _auditService;
 		private readonly ILogger<AuthController> _logger;
 		private readonly IValidator<LoginRequest> _loginValidator;
 		private readonly IValidator<RegisterRequest> _registerValidator;
@@ -26,6 +29,7 @@ namespace Web.Controllers
 
 		public AuthController(
 			IAuthService authService,
+			IAuditService auditService,
 			ILogger<AuthController> logger,
 			IValidator<LoginRequest> loginValidator,
 			IValidator<RegisterRequest> registerValidator,
@@ -34,6 +38,7 @@ namespace Web.Controllers
 			IValidator<ConfirmResetPasswordRequest> confirmResetPasswordValidator)
 		{
 			_authService = authService;
+			_auditService = auditService;
 			_logger = logger;
 			_loginValidator = loginValidator;
 			_registerValidator = registerValidator;
@@ -60,7 +65,6 @@ namespace Web.Controllers
 					return RedirectToAction("Index", "Home");
 				}
 
-
 				ViewData["ReturnUrl"] = returnUrl;
 				return View();
 			}
@@ -74,6 +78,7 @@ namespace Web.Controllers
 
 		/// <summary>
 		/// Processes login request (UC002 - Login).
+		/// Implements BR-05 (Password Security), BR-22 (Audit Logging), BR-24 (RBAC)
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
@@ -90,6 +95,7 @@ namespace Web.Controllers
 					return View(model);
 				}
 
+				// BR-05: Check account lockout status
 				var lockoutResult = await _authService.CheckAccountLockoutStatusAsync(model.Email);
 				if (lockoutResult.IsSuccess && lockoutResult.Value.HasValue)
 				{
@@ -97,6 +103,20 @@ namespace Web.Controllers
 					if (lockoutEnd > DateTime.UtcNow)
 					{
 						var remainingTime = lockoutEnd - DateTime.UtcNow;
+						
+						// Audit lockout attempt
+						await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+						{
+							ActionType = AuditActionType.Login,
+							EntityType = "User",
+							EntityId = model.Email,
+							EntityName = model.Email,
+							Details = $"Login attempt blocked due to account lockout. Remaining time: {Math.Ceiling(remainingTime.TotalMinutes)} minutes",
+							IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+							IsSuccess = false,
+							ErrorMessage = "Account temporarily locked"
+						});
+
 						ModelState.AddModelError(string.Empty, $"Account temporarily locked. Please try again in {Math.Ceiling(remainingTime.TotalMinutes)} minutes.");
 						return View(model);
 					}
@@ -112,12 +132,13 @@ namespace Web.Controllers
 
 				await _authService.ClearFailedLoginAttemptsAsync(result.Value.UserId);
 
+				// BR-24: Create claims for role-based access control
 				var claims = new List<Claim>
 				{
-					new Claim(ClaimTypes.NameIdentifier, result.Value.UserId.ToString()),
-					new Claim(ClaimTypes.Name, result.Value.FullName),
-					new Claim(ClaimTypes.Email, result.Value.Email),
-					new Claim(ClaimTypes.Role, result.Value.Role.ToString())
+					new(ClaimTypes.NameIdentifier, result.Value.UserId.ToString()),
+					new(ClaimTypes.Name, result.Value.FullName),
+					new(ClaimTypes.Email, result.Value.Email),
+					new(ClaimTypes.Role, result.Value.Role.ToString())
 				};
 
 				var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -135,7 +156,7 @@ namespace Web.Controllers
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Error processing login request");
+				_logger.LogError(ex, "Error processing login request for {Email}", model.Email);
 				TempData["ErrorMessage"] = "An error occurred during login. Please try again later.";
 				return View(model);
 			}
@@ -143,6 +164,7 @@ namespace Web.Controllers
 
 		/// <summary>
 		/// Logs out the user.
+		/// Implements BR-22 (Audit Logging)
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
@@ -187,6 +209,7 @@ namespace Web.Controllers
 
 		/// <summary>
 		/// Processes registration request (UC008 - Register Member).
+		/// Implements BR-02 (User Roles), BR-05 (Password Security), BR-22 (Audit Logging)
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
@@ -215,13 +238,27 @@ namespace Web.Controllers
 					return View(model);
 				}
 
+				// Audit successful registration
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					ActionType = AuditActionType.Register,
+					EntityType = "Member",
+					EntityId = result.Value.ToString(),
+					EntityName = model.FullName,
+					Details = $"Member registered successfully. Email: {model.Email}, PreferredMembershipNumber: {model.PreferredMembershipNumber}",
+					IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+				});
+
+				_logger.LogInformation("Member registered successfully: {UserId} - {Email}", 
+					result.Value, model.Email);
+
 				// Redirect to login page with success message
 				TempData["SuccessMessage"] = "Registration successful! Please log in with your new account.";
 				return RedirectToAction(nameof(Login));
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Error processing registration request");
+				_logger.LogError(ex, "Error processing registration request for {Email}", model.Email);
 				TempData["ErrorMessage"] = "An error occurred during registration. Please try again later.";
 				return View(model);
 			}
@@ -252,6 +289,7 @@ namespace Web.Controllers
 
 		/// <summary>
 		/// Processes forgot password request (UC005 - Reset Password).
+		/// Implements BR-22 (Audit Logging), BR-26 (Password Reset Rate Limiting)
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
@@ -267,13 +305,28 @@ namespace Web.Controllers
 				}
 
 				// Always return success view to prevent email enumeration attacks
-				await _authService.RequestPasswordResetAsync(model);
+				var result = await _authService.RequestPasswordResetAsync(model);
+				
+				// Audit password reset request (success status based on actual result)
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					ActionType = AuditActionType.PasswordReset,
+					EntityType = "User",
+					EntityId = model.Email,
+					EntityName = model.Email,
+					Details = result.IsSuccess ? "Password reset email sent successfully" : "Password reset requested for non-existent email",
+					IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+					IsSuccess = result.IsSuccess,
+					ErrorMessage = result.IsSuccess ? null : result.Error
+				});
+
+				_logger.LogInformation("Password reset requested for {Email} at {Time}", model.Email, DateTime.UtcNow);
 
 				return View("ForgotPasswordConfirmation");
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Error processing forgot password request");
+				_logger.LogError(ex, "Error processing forgot password request for {Email}", model.Email);
 				TempData["ErrorMessage"] = "An error occurred while processing your request. Please try again later.";
 				return View(model);
 			}
@@ -302,7 +355,7 @@ namespace Web.Controllers
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Error displaying reset password page");
+				_logger.LogError(ex, "Error displaying reset password page for {Email}", email);
 				TempData["ErrorMessage"] = "An error occurred while displaying the reset password page. Please try again later.";
 				return RedirectToAction(nameof(ForgotPassword));
 			}
@@ -310,6 +363,7 @@ namespace Web.Controllers
 
 		/// <summary>
 		/// Processes reset password request (UC005 - Reset Password).
+		/// Implements BR-05 (Password Security), BR-22 (Audit Logging)
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
@@ -331,11 +385,24 @@ namespace Web.Controllers
 					return View(model);
 				}
 
+				// Audit successful password reset
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					ActionType = AuditActionType.PasswordReset,
+					EntityType = "User",
+					EntityId = model.Email,
+					EntityName = model.Email,
+					Details = "Password reset completed successfully",
+					IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+				});
+
+				_logger.LogInformation("Password reset completed successfully for {Email} at {Time}", model.Email, DateTime.UtcNow);
+
 				return View("ResetPasswordConfirmation");
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Error processing reset password request");
+				_logger.LogError(ex, "Error processing reset password request for {Email}", model.Email);
 				TempData["ErrorMessage"] = "An error occurred while resetting your password. Please try again later.";
 				return View(model);
 			}
@@ -367,6 +434,7 @@ namespace Web.Controllers
 
 		/// <summary>
 		/// Processes change password request (UC004 - Change Password).
+		/// Implements BR-05 (Password Security), BR-22 (Audit Logging)
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
@@ -403,6 +471,19 @@ namespace Web.Controllers
 					ModelState.AddModelError(string.Empty, result.Error);
 					return View(model);
 				}
+
+				// Audit successful password change
+				await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
+				{
+					UserId = userId,
+					ActionType = AuditActionType.PasswordChange,
+					EntityType = "User",
+					EntityId = userId.ToString(),
+					EntityName = User.Identity.Name ?? "Unknown",
+					Details = "Password changed successfully",
+				});
+
+				_logger.LogInformation("Password changed successfully for user {UserId} at {Time}", userId, DateTime.UtcNow);
 
 				TempData["SuccessMessage"] = "Your password has been changed successfully.";
 				return RedirectToAction("Index", "Home");

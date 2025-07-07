@@ -26,6 +26,51 @@ public enum AuditActionType
     Delete = 4,
     
     /// <summary>
+    /// User login action
+    /// </summary>
+    Login = 5,
+    
+    /// <summary>
+    /// User logout action
+    /// </summary>
+    Logout = 6,
+    
+    /// <summary>
+    /// Password change action
+    /// </summary>
+    PasswordChange = 7,
+    
+    /// <summary>
+    /// Password reset action
+    /// </summary>
+    PasswordReset = 8,
+    
+    /// <summary>
+    /// User registration action
+    /// </summary>
+    Register = 9,
+    
+    /// <summary>
+    /// Book loan action
+    /// </summary>
+    Loan = 10,
+    
+    /// <summary>
+    /// Book return action
+    /// </summary>
+    Return = 11,
+    
+    /// <summary>
+    /// Book reservation action
+    /// </summary>
+    Reserve = 12,
+    
+    /// <summary>
+    /// Fine payment action
+    /// </summary>
+    PayFine = 13,
+    
+    /// <summary>
     /// Other actions not categorized above
     /// </summary>
     Other = 99
