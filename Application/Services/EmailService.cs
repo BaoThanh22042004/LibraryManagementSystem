@@ -33,9 +33,10 @@ public class EmailService : IEmailService
             var userName = _configuration["EmailSettings:UserName"];
             var password = _configuration["EmailSettings:Password"];
             var from = _configuration["EmailSettings:From"];
+            var displayName = _configuration["EmailSettings:DisplayName"] ?? "Library System";
 
-            // Validate settings
-            if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(userName) || 
+			// Validate settings
+			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(userName) || 
                 string.IsNullOrEmpty(password) || string.IsNullOrEmpty(from))
             {
                 _logger.LogError("Email settings are not properly configured.");
@@ -45,7 +46,7 @@ public class EmailService : IEmailService
             // Create message
             var mailMessage = new MailMessage
             {
-                From = new MailAddress(from),
+                From = new MailAddress(from, displayName),
                 Subject = subject,
                 Body = message,
                 IsBodyHtml = true
