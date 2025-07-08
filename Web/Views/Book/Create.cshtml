@@ -39,7 +39,7 @@
                     <label asp-for="ISBN" class="block text-gray-700 text-sm font-bold mb-2">ISBN <span class="text-red-600">*</span></label>
                     <input asp-for="ISBN" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                            placeholder="Enter ISBN (e.g., 978-3-16-148410-0)" data-val-remote-url="@Url.Action("IsbnExists")"
-                           data-val-remote="A book with this ISBN already exists." data-val-remote-additionalfields="*.ISBN">
+                           data-val-remote="A book with this ISBN already exists." data-val-remote-additionalfields="*.ISBN" data-val="true">
                     <span asp-validation-for="ISBN" class="text-red-600 text-sm"></span>
                 </div>
                 
@@ -119,26 +119,4 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-
-    <script>
-        // Client-side validation for ISBN uniqueness
-        $(document).ready(function () {
-            $.validator.addMethod("uniqueISBN", function (value, element) {
-                var isValid = false;
-                $.ajax({
-                    type: "GET",
-                    url: "@Url.Action("IsbnExists")",
-                    data: { isbn: value },
-                    dataType: "json",
-                    async: false,
-                    success: function (data) {
-                        isValid = !data.exists;
-                    }
-                });
-                return isValid;
-            }, "A book with this ISBN already exists.");
-
-            $("#ISBN").rules("add", { uniqueISBN: true });
-        });
-    </script>
 }
