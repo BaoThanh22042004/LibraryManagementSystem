@@ -12,10 +12,11 @@ public class AuthProfile : Profile
     public AuthProfile()
     {
         // User to LoginResponse
-        CreateMap<User, LoginResponse>();
-        
-        // RegisterRequest to User
-        CreateMap<RegisterRequest, User>()
+        CreateMap<User, LoginResponse>()
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id));
+
+		// RegisterRequest to User
+		CreateMap<RegisterRequest, User>()
             .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
             .ForMember(dest => dest.Role, opt => opt.MapFrom(src => Domain.Enums.UserRole.Member))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => Domain.Enums.UserStatus.Active))
