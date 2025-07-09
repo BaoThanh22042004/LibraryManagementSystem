@@ -205,12 +205,12 @@ namespace Web.Controllers
 				});
 
 				// Role-based dashboard redirection
-				string dashboardAction = "Index";
-				string dashboardController = result.Value.Role switch
+				string dashboardController = "Home";
+				string dashboardAction = result.Value.Role switch
 				{
-					UserRole.Member => "Home", // or "MemberDashboard" if exists
-					UserRole.Librarian => "Home", // or "StaffDashboard" if exists
-					UserRole.Admin => "Home", // or "AdminDashboard" if exists
+					UserRole.Member => "Index", // or "MemberDashboard" if exists
+					UserRole.Librarian => "Dashboard", // or "StaffDashboard" if exists
+					UserRole.Admin => "Dashboard", // or "AdminDashboard" if exists
 					_ => "Home"
 				};
 				// You can customize the controller/action above as needed
