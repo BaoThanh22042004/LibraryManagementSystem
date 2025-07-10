@@ -29,6 +29,16 @@
 				Categories
 			</a>
 		</li>
+		<li>
+			<form asp-action="Logout" asp-controller="Auth" method="post">
+				<button type="submit">Logout</button>
+			</form>
+		</li>
+		<li>
+			<form asp-action="Login" asp-controller="Auth" method="post">
+				<button type="submit">Login</button>
+			</form>
+		</li>
 	</ul>
 	<!-- Mobile Menu Button -->
 	<button x-on:click="mobileMenuIsOpen = !mobileMenuIsOpen"

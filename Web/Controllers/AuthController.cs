@@ -262,9 +262,9 @@ namespace Web.Controllers
 					return RedirectToAction("Index", "Home");
 				}
 
-				return View();
-			}
-			catch (Exception ex)
+                return View(new RegisterRequest());
+            }
+            catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error displaying registration page");
 				TempData["ErrorMessage"] = "An error occurred while displaying the registration page. Please try again later.";
@@ -365,7 +365,7 @@ namespace Web.Controllers
 					return RedirectToAction("Index", "Home");
 				}
 
-				return View();
+				return View(new ResetPasswordRequest());
 			}
 			catch (Exception ex)
 			{
