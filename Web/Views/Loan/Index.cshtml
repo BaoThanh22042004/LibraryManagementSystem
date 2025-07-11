@@ -21,7 +21,7 @@
 
 @await Html.PartialAsync("_AlertsPartial")
 
-<div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+<div class="bg-white shadow-md rounded-lg overflow-hidden">
     <!-- Loans Table -->
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
@@ -84,7 +84,7 @@
                                         Domain.Enums.LoanStatus.Active => "bg-green-100 text-green-800",
                                         Domain.Enums.LoanStatus.Returned => "bg-yellow-100 text-yellow-800",
                                         Domain.Enums.LoanStatus.Overdue => "bg-red-100 text-red-800",
-                                        Domain.Enums.LoanStatus.Lost => "bg-red-100 text-gray-800",
+                                        Domain.Enums.LoanStatus.Lost => "bg-gray-100 text-gray-800",
                                         _ => "bg-gray-100 text-gray-800"
                                     };
                                 }

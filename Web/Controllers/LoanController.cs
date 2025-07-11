@@ -158,7 +158,8 @@ namespace Web.Controllers
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Checkout(CreateLoanRequest model, bool allowOverride = false, string? overrideReason = null)
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> Checkout(CreateLoanRequest model, bool allowOverride = false, string? overrideReason = null)
 		{
 			try
 			{
@@ -267,7 +268,8 @@ namespace Web.Controllers
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Return(ReturnBookRequest model)
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> Return(ReturnBookRequest model)
 		{
 			try
 			{
@@ -387,7 +389,8 @@ namespace Web.Controllers
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Renew(RenewLoanRequest model, bool allowOverride = false, string? overrideReason = null)
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> Renew(RenewLoanRequest model, bool allowOverride = false, string? overrideReason = null)
 		{
 			try
 			{
