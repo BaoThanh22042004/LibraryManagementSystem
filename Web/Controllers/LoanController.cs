@@ -15,8 +15,7 @@ namespace Web.Controllers
 	/// Implements UC018 (Check Out), UC019 (Return Book), 
 	/// UC020 (Renew Loan), and UC021 (View Loan History).
 	/// Business Rules: BR-13, BR-14, BR-15, BR-16, BR-22
-	/// </summary>
-	[Authorize(Roles = "Admin,Librarian")]
+	/// </summary>	
 	public class LoanController : Controller
 	{
 		private readonly ILoanService _loanService;
@@ -56,6 +55,7 @@ namespace Web.Controllers
 		/// Part of UC021 (View Loan History).
 		/// </summary>
 		[HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Index(LoanSearchRequest? search = null)
         {
             try
@@ -84,6 +84,7 @@ namespace Web.Controllers
         /// Part of UC021 (View Loan History).
         /// </summary>
         [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Details(int id)
         {
             try
@@ -110,6 +111,7 @@ namespace Web.Controllers
         /// Part of UC021 (View Loan History).
         /// </summary>
         [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> MemberLoans(int memberId, int page = 1, int pageSize = 10)
         {
             try
@@ -144,6 +146,7 @@ namespace Web.Controllers
         /// Part of UC018 (Check Out).
         /// </summary>
         [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public IActionResult Checkout()
         {
             return View(new CreateLoanRequest());
@@ -223,6 +226,7 @@ namespace Web.Controllers
 		/// Part of UC019 (Return Book).
 		/// </summary>
 		[HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Return(int id)
         {
             try
@@ -341,6 +345,7 @@ namespace Web.Controllers
 		/// Part of UC020 (Renew Loan).
 		/// </summary>
 		[HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Renew(int id)
         {
             try

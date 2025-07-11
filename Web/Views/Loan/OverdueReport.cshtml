@@ -2,51 +2,77 @@
 @{
     ViewData["Title"] = "Overdue Loans Report";
 }
-<h2>Overdue Loans Report</h2>
+<h2 class="text-3xl font-bold mb-6">Overdue Loans Report</h2>
 @if (TempData["ErrorMessage"] != null)
 {
     <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
 }
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Member</th>
-            <th>Contact</th>
-            <th>Book</th>
-            <th>Due Date</th>
-            <th>Days Overdue</th>
-        </tr>
-    </thead>
-    <tbody>
-    @if (!Model.Items.Any())
-    {
-        <tr>
-            <td colspan="5" class="text-center">No overdue loans found.</td>
-        </tr>
-    }
-    @foreach (var loan in Model.Items)
-    {
-        <tr>
-            <td>@loan.MemberName</td>
-            <td>
-                <div><strong>Email:</strong> @loan.MemberEmail</div>
-                @if (!string.IsNullOrEmpty(loan.MemberPhone)) {
-                    <div><strong>Phone:</strong> @loan.MemberPhone</div>
-                }
-                @if (!string.IsNullOrEmpty(loan.MemberAddress)) {
-                    <div><strong>Address:</strong> @loan.MemberAddress</div>
-                }
-            </td>
-            <td>@loan.BookTitle</td>
-            <td>@loan.DueDate.ToString("yyyy-MM-dd")</td>
-            <td>@loan.DaysOverdue</td>
-        </tr>
-    }
-    </tbody>
-</table>
-<div>
-    <a class="btn btn-primary" asp-action="DownloadOverdueReportCsv">Export CSV</a>
+
+<div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Member
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Contact
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Book
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Due Date
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Days Overdue
+                </th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            @if (!Model.Items.Any())
+            {
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">No overdue loans found.</td>
+                </tr>
+            }
+            @foreach (var loan in Model.Items)
+            {
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">@loan.MemberName</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div><strong>Email:</strong> @loan.MemberEmail</div>
+                        @if (!string.IsNullOrEmpty(loan.MemberPhone))
+                        {
+                            <div><strong>Phone:</strong> @loan.MemberPhone</div>
+                        }
+                        @if (!string.IsNullOrEmpty(loan.MemberAddress))
+                        {
+                            <div><strong>Address:</strong> @loan.MemberAddress</div>
+                        }
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">@loan.BookTitle</td>
+                    <td class="px-6 py-4 whitespace-nowrap">@loan.DueDate.ToString("yyyy-MM-dd")</td>
+                    <td class="px-6 py-4 whitespace-nowrap">@loan.DaysOverdue</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
+
+<div class="flex gap-4">
+    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+        <a asp-action="Index">
+            Back to List
+        </a>
+    </button>
+    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+        <a asp-action="DownloadOverdueReportCsv">
+            Export CSV
+        </a>
+    </button>
+</div>
+
 @if (Model.TotalPages > 1)
 {
     <nav>
@@ -59,4 +85,4 @@
             }
         </ul>
     </nav>
-} 
+}

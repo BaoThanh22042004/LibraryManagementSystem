@@ -1,0 +1,135 @@
+﻿@model LoanDetailDto
+@{
+    ViewData["Title"] = "Loan Details";
+}
+
+<h1 class="text-3xl font-bold mb-6">Loan Details</h1>
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+
+@if (Model.Status == LoanStatus.Active)
+{
+    <button  class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded focus:outline-none focus:shadow-outline">
+        <a asp-action="RequestRenewal">
+            Request Renewal
+        </a>
+    </button>  
+}    
+
+<div class="bg-white shadow-md rounded-lg overflow-hidden p-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Left column - Basic Information -->
+        <div class="space-y-6">
+        <div>
+            <strong>Member Name:</strong>
+            <span>@Model.MemberName</span>
+        </div>    
+        <div>
+            <strong>Book Copy ID:</strong>
+            <span>@Model.BookCopyId</span>
+        </div>    
+        <div>
+            <strong>Book ID:</strong>
+            <span>@Model.BookId</span>
+        </div>    
+        <div>
+            <strong>Book Title:</strong>
+            <span>@Model.BookTitle</span>
+        </div>
+        <div>
+            <strong>Loan Date:</strong>
+            <span>@Model.LoanDate.ToString("dd/MM/yyyy")</span>
+        </div>    
+        <div>
+            <strong>Due Date:</strong>
+            <span>@Model.DueDate.ToString("dd/MM/yyyy")</span>
+        </div>    
+        <div>
+            <strong>Return Date:</strong>
+            <span>@(Model.ReturnDate.HasValue ? Model.ReturnDate.Value.ToString("dd/MM/yyyy") : "Not returned yet")</span>
+        </div>   
+        <div>
+            <strong>Status:</strong>
+            @{
+                var statusClasses = @Model.Status switch
+                {
+                    Domain.Enums.LoanStatus.Active => "bg-green-100 text-green-800",
+                    Domain.Enums.LoanStatus.Returned => "bg-yellow-100 text-yellow-800",
+                    Domain.Enums.LoanStatus.Overdue => "bg-red-100 text-red-800",
+                    Domain.Enums.LoanStatus.Lost => "bg-red-100 text-gray-800",
+                    _ => "bg-gray-100 text-gray-800"
+                };
+            }
+            <span class="px-2 inline-flex text-md leading-5 font-semibold rounded-full @statusClasses">
+                @Model.Status
+            </span>
+        </div>            
+        <div>
+            <strong>ISBN:</strong>
+            <span>@Model.ISBN</span>
+        </div>   
+        <div>        
+            <strong>Associated Fines:</strong>
+            @if (Model.Fines != null && Model.Fines.Any())
+            {
+                <ul class="list-disc ml-6 mt-2">
+                    @foreach (var fine in Model.Fines)
+                    {
+                        <li>
+                            @* Assuming FineBasicDto has properties like Reason and Amount *@
+                            <span>Amount: @fine.Amount.ToString("C")</span>
+                        </li>
+                    }
+                </ul>
+            }else
+            {
+                <span>No fines associated with this return.</span>
+            }
+        </div>
+        <!-- Right column - Override Information -->
+        <div class="space-y-6">
+            @if (Model.OverrideContext != null)
+            {        
+                <h3 class="text-3xl font-bold">Override Information</h3>
+                <div>
+                    <strong>Reason:</strong>
+                    <span>@Model.OverrideContext.Reason ?? "N/A"</span>
+                </div>
+
+                <div>
+                    <strong>Overridden Rules:</strong>
+                    @if (Model.OverrideContext.OverriddenRules != null)
+                    {
+                        <ul class="list-disc ml-6 mt-2">
+                            @foreach (var rule in Model.OverrideContext.OverriddenRules)
+                            {
+                                <li>@rule</li>
+                            }
+                        </ul>
+                    }else
+                    {
+                        <span>No overridden rules.</span>
+                    }
+                </div>
+            }
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded focus:outline-none focus:shadow-outline">
+    <a asp-action="MyLoan">
+        Back to List
+    </a>
+</button>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
