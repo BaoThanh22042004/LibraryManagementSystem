@@ -33,6 +33,22 @@
 			@if (User.IsInRole("Member"))
 			{
 				<a class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark"
+				   asp-area="" asp-controller="Reservation" asp-action="MyReservations">
+					Reservation
+				</a>
+			}
+			@if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
+			{
+				<a class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark"
+				   asp-area="" asp-controller="Reservation" asp-action="Index">
+					Reservation
+				</a>
+			}
+		</li>
+		<li>
+			@if (User.IsInRole("Member"))
+			{
+				<a class="font-medium text-on-surface underline-offset-2 hover:text-primary focus:outline-hidden focus:underline dark:text-on-surface-dark dark:hover:text-primary-dark"
 				   asp-area="" asp-controller="Loan" asp-action="MyLoans">
 					Loan
 				</a>			

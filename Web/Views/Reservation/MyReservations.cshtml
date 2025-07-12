@@ -1,0 +1,195 @@
+﻿@model PagedResult<ReservationBasicDto>
+
+@{
+    ViewData["Title"] = "Reservations";
+}
+
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Reservation Management</h1>
+    <div class="flex justify-between items-center">
+        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold ml-4 py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            <a asp-action="ReserveBook" asp-route-id="">
+                Add New Reservation
+            </a>
+        </button>
+    </div>
+</div>
+
+
+@await Html.PartialAsync("_AlertsPartial")
+
+<div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <!-- Reservations Table -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Book Title
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Book Copy Id
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Reservation Date
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Pickup Deadline
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Queue Position
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @if (Model.Items.Any())
+                {
+                    @foreach (var reservation in Model.Items)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900 ">@reservation.BookTitle</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-500 text-center">@reservation.BookCopyId</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-500 text-center">@reservation.ReservationDate</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-500 text-center">@reservation.PickupDeadline</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-500 text-center">@reservation.QueuePosition</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-center">
+                                @{
+                                    var statusClasses = reservation.Status switch
+                                    {
+                                        Domain.Enums.ReservationStatus.Active => "bg-green-100 text-green-800",
+                                        Domain.Enums.ReservationStatus.Fulfilled => "bg-blue-100 text-blue-800",
+                                        Domain.Enums.ReservationStatus.Cancelled => "bg-red-100 text-red-800",
+                                        Domain.Enums.ReservationStatus.Expired => "bg-gray-100 text-gray-800",
+                                        _ => "bg-gray-100 text-gray-800"
+                                    };
+                                }
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @statusClasses">
+                                    @reservation.Status
+                                </span>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                <a asp-action="MyReservationDetails" asp-route-id="@reservation.Id" class="text-blue-600 hover:text-blue-900">Details</a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="px-4 py-4 text-center text-gray-500">
+                            No reservation found.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <!-- Pagination -->
+    @if (Model.Count > 0)
+    {
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing
+                        <span class="font-medium">@((Model.Page - 1) * Model.PageSize + 1)</span>
+                        to
+                        <span class="font-medium">@(Math.Min(Model.Page * Model.PageSize, Model.Count))</span>
+                        of
+                        <span class="font-medium">@Model.Count</span>
+                        results
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        @{
+                            var totalPages = (int)Math.Ceiling(Model.Count / (double)Model.PageSize);
+                            var startPage = Math.Max(1, Model.Page - 2);
+                            var endPage = Math.Min(totalPages, startPage + 4);
+                            startPage = Math.Max(1, endPage - 4);
+
+                            var routeData = new Dictionary<string, string>();
+                        }
+
+                        @if (Model.Page > 1)
+                        {
+                            routeData["PageNumber"] = (Model.Page - 1).ToString();
+                            <a asp-action="Index" asp-all-route-data="@routeData"
+                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Previous</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                                <span class="sr-only">Previous</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                        }
+
+                        @for (var i = startPage; i <= endPage; i++)
+                        {
+                            if (i == Model.Page)
+                            {
+                                <span aria-current="page"
+                                      class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
+                                    @i
+                                </span>
+                            }
+                            else
+                            {
+                                routeData["PageNumber"] = i.ToString();
+                                <a asp-action="Index" asp-all-route-data="@routeData"
+                                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    @i
+                                </a>
+                            }
+                        }
+
+                        @if (Model.Page < totalPages)
+                        {
+                            routeData["PageNumber"] = (Model.Page + 1).ToString();
+                            <a asp-action="Index" asp-all-route-data="@routeData"
+                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Next</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                                <span class="sr-only">Next</span>
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                        }
+                    </nav>
+                </div>
+            </div>
+        </div>
+    }
+</div>

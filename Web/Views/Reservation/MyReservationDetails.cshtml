@@ -1,0 +1,116 @@
+﻿@model ReservationDetailDto
+
+@{
+    ViewData["Title"] = "Reservation Details";
+}
+
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Reservation Details</h1>
+    <div class="flex justify-between items-center">
+        @if (Model.Status == ReservationStatus.Active)
+        {
+            <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded focus:outline-none focus:shadow-outline">
+                <a asp-action="CancelMyReservation" asp-route-id="@Model.Id">
+                    Cancel Reservation
+                </a>
+            </button>        
+        }
+    </div>
+</div>
+
+@await Html.PartialAsync("_AlertsPartial")
+
+<div class="bg-white shadow-md rounded-lg overflow-hidden p-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Left column - Basic Information -->
+        <div class="space-y-6">
+            <div>
+                <strong>Member Name:</strong> 
+                <span>@Model.MemberName</span>
+            </div>
+            <div>
+                <strong>Member Email:</strong>
+                <span>@Model.MemberEmail</span>
+            </div>    
+            <div>
+                <strong>Member Phone:</strong>
+                <span>@Model.MemberPhone</span>
+            </div>
+            <div>
+                <strong>Book Title:</strong> 
+                <span>@Model.BookTitle</span>
+            </div>
+            <div>
+                <strong>Book Author:</strong> 
+                <span>@Model.BookAuthor</span>
+            </div>    
+            <div>
+                <strong>ISBN:</strong> 
+                <span>@Model.ISBN</span>
+            </div>    
+            <div>
+                <strong>Copy Number:</strong> 
+                <span>@Model.CopyNumber</span>
+            </div>    
+            <div>
+                <strong>Estimated Availability Date:</strong>
+                <span>@Model.EstimatedAvailabilityDate.ToString()</span>
+            </div>                
+            <div>
+                <strong>Status:</strong>
+                @{
+                    var statusClasses = @Model.Status switch
+                    {
+                        Domain.Enums.ReservationStatus.Active => "bg-green-100 text-green-800",
+                        Domain.Enums.ReservationStatus.Fulfilled => "bg-blue-100 text-blue-800",
+                        Domain.Enums.ReservationStatus.Cancelled => "bg-red-100 text-red-800",
+                        Domain.Enums.ReservationStatus.Expired => "bg-gray-100 text-gray-800",
+                        _ => "bg-gray-100 text-gray-800"
+                    };
+                }
+                <span class="px-2 inline-flex text-md leading-5 font-semibold rounded-full @statusClasses">
+                    @Model.Status
+                </span>
+            </div>                    
+        </div>
+        <!-- Right column - Override Information -->
+        <div class="space-y-6">
+            @if (Model.OverrideContext != null)
+            {        
+                <h3 class="text-3xl font-bold">Override Information</h3>
+                <div>
+                    <strong>Reason:</strong>
+                    <span>@Model.OverrideContext.Reason ?? "N/A"</span>
+                </div>
+
+                <div>
+                    <strong>Overridden Rules:</strong>
+                    @if (Model.OverrideContext.OverriddenRules != null)
+                    {
+                        <ul class="list-disc ml-6 mt-2">
+                            @foreach (var rule in Model.OverrideContext.OverriddenRules)
+                            {
+                                <li>@rule</li>
+                            }
+                        </ul>
+                    }else
+                    {
+                        <span>No overridden rules.</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+    <a asp-action="MyReservations">
+        Back to List
+    </a>
+</button>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

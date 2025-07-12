@@ -1,0 +1,50 @@
+﻿@model CreateReservationRequest
+
+@{
+    ViewData["Title"] = "Add Reservation";
+}
+
+<div class="mb-6">
+    <div class="flex items-center">
+        <h1 class="text-3xl font-bold">Add Reservation</h1>
+    </div>
+</div>
+
+@await Html.PartialAsync("_AlertsPartial")
+
+<div class="bg-white shadow-md rounded-lg overflow-hidden p-6 mb-7">
+    <form asp-action="ReserveBook" method="post">
+        <div class="space-y-6">
+            <div>
+                @* Need help for making <select> *@
+                <label asp-for="BookId" class="block text-gray-700 text-base font-bold mb-2">Book Id<span class="text-red-600">*</span></label>
+                <input asp-for="BookId" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Enter book id">
+                <span asp-validation-for="BookId" class="text-red-600 text-sm"></span>
+            </div>
+            <div>
+                <label asp-for="Notes" class="block text-gray-700 text-base font-bold mb-2">Notes</label>
+                <textarea asp-for="Notes" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter notes here..."></textarea>
+                <span asp-validation-for="Notes" class="text-red-600 text-sm"></span>
+            </div>
+            <div>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Submit
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+    <a asp-action="MyReservations">
+        Back to List
+    </a>
+</button>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
