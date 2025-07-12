@@ -1,4 +1,4 @@
-using Application.Common;
+﻿using Application.Common;
 using Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -27,16 +27,16 @@ public class EmailService : IEmailService
         try
         {
             // Get email settings from configuration
-            var host = _configuration["EmailSettings:Host"];
-            var port = int.Parse(_configuration["EmailSettings:Port"] ?? "587");
-            var enableSsl = bool.Parse(_configuration["EmailSettings:EnableSsl"] ?? "true");
-            var userName = _configuration["EmailSettings:UserName"];
-            var password = _configuration["EmailSettings:Password"];
-            var from = _configuration["EmailSettings:From"];
-            var displayName = _configuration["EmailSettings:DisplayName"] ?? "Library System";
+            var host = _configuration["EmailSettings:Host"] ?? throw new ArgumentNullException("EmailSettings:Host is not configured");
+            var port = int.TryParse(_configuration["EmailSettings:Port"], out int p) ? p : 587; // Mặc định 587 nếu không hợp lệ
+            var enableSsl = bool.TryParse(_configuration["EmailSettings:EnableSsl"], out bool ssl) ? ssl : true; // Mặc định true
+            var userName = _configuration["EmailSettings:UserName"] ?? throw new ArgumentNullException("EmailSettings:UserName is not configured");
+            var password = _configuration["EmailSettings:Password"] ?? throw new ArgumentNullException("EmailSettings:Password is not configured");
+            var from = _configuration["EmailSettings:From"] ?? userName; // Mặc định từ UserName nếu không có
+            var displayName = _configuration["EmailSettings:DisplayName"] ?? "Library Management System";
 
-			// Validate settings
-			if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(userName) || 
+            // Validate settings
+            if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(userName) || 
                 string.IsNullOrEmpty(password) || string.IsNullOrEmpty(from))
             {
                 _logger.LogError("Email settings are not properly configured.");

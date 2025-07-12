@@ -176,7 +176,7 @@ namespace Web.Controllers
 						return View(model);
 					}
 					var fileName = $"cat_{Guid.NewGuid()}{ext}";
-					var savePath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", "images", "categories");
+					var savePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "categories");
 					Directory.CreateDirectory(savePath);
 					var filePath = Path.Combine(savePath, fileName);
 					using (var stream = new FileStream(filePath, FileMode.Create))
@@ -293,7 +293,7 @@ namespace Web.Controllers
 				{
 					if (!string.IsNullOrEmpty(model.CoverImageUrl))
 					{
-						var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", model.CoverImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+						var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", model.CoverImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
 						if (System.IO.File.Exists(oldPath))
 						{
 							System.IO.File.Delete(oldPath);
@@ -311,7 +311,7 @@ namespace Web.Controllers
 						return View(model);
 					}
 					var fileName = $"cat_{Guid.NewGuid()}{ext}";
-					var savePath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", "images", "categories");
+					var savePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "categories");
 					Directory.CreateDirectory(savePath);
 					var filePath = Path.Combine(savePath, fileName);
 					using (var stream = new FileStream(filePath, FileMode.Create))
@@ -321,7 +321,7 @@ namespace Web.Controllers
 					// Remove old image if exists
 					if (!string.IsNullOrEmpty(model.CoverImageUrl))
 					{
-						var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "Web", "wwwroot", model.CoverImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+						var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", model.CoverImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
 						if (System.IO.File.Exists(oldPath))
 						{
 							System.IO.File.Delete(oldPath);

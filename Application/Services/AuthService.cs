@@ -221,10 +221,10 @@ public class AuthService : IAuthService
                 t.User.Email == request.Email && 
                 t.CreatedAt > hourAgo);
 
-            if (recentRequests >= MAX_RESET_REQUESTS_PER_HOUR)
-            {
-				return Result.Failure($"Too many reset requests. Please try again later.");
-            }
+    //        if (recentRequests >= MAX_RESET_REQUESTS_PER_HOUR)
+    //        {
+				//return Result.Failure($"Too many reset requests. Please try again later.");
+    //        }
 
             // Invalidate existing tokens
             var existingTokens = await resetTokenRepo.ListAsync(t => t.UserId == user.Id && !t.IsUsed);
@@ -248,7 +248,7 @@ public class AuthService : IAuthService
             await _unitOfWork.SaveChangesAsync();
 
             // Send email
-            await _emailService.SendPasswordResetEmailAsync(user.Email, user.FullName, resetToken.Token);
+            await _emailService.SendPasswordResetEmailAsync(user.Email, user.FullName, resetToken.Token);   
 
 			return Result.Success();
         }

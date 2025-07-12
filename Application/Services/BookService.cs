@@ -68,18 +68,18 @@ public class BookService : IBookService
                 // Set initial status and timestamps
                 book.Status = BookStatus.Available;
                 book.CreatedAt = DateTime.UtcNow;
-
-                // Add book to repository
-                await _unitOfWork.Repository<Book>().AddAsync(book);
                 
                 // Add category relationships
                 if (request.CategoryIds.Count != 0)
                 {
                     var categories = await _unitOfWork.Repository<Category>().ListAsync(
-                        c => request.CategoryIds.Contains(c.Id));
+                        c => request.CategoryIds.Contains(c.Id), asNoTracking: false);
                     
                     book.Categories = [.. categories];
                 }
+
+                // Add book to repository
+                await _unitOfWork.Repository<Book>().AddAsync(book);
                 
                 // Save to get book ID
                 await _unitOfWork.SaveChangesAsync();
@@ -444,12 +444,12 @@ public class BookService : IBookService
             Expression<Func<Book, bool>> predicate;
             if (excludeId.HasValue)
             {
-                predicate = b => b.ISBN.Equals(isbn, StringComparison.CurrentCultureIgnoreCase) && b.Id != excludeId.Value;
-            }
+				predicate = b => b.ISBN.ToLower() == isbn && b.Id != excludeId.Value;
+			}
             else
             {
-                predicate = b => b.ISBN.Equals(isbn, StringComparison.CurrentCultureIgnoreCase);
-            }
+				predicate = b => b.ISBN.ToLower() == isbn;
+			}
 
             var exists = await _unitOfWork.Repository<Book>().ExistsAsync(predicate);
             return Result.Success(exists);

@@ -2,10 +2,12 @@ using Application.Common;
 using Application.DTOs;
 using Application.Interfaces;
 using Application.Validators;
+using Domain.Entities;
 using Domain.Enums;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Web.Extensions;
 
 namespace Web.Controllers
@@ -17,7 +19,8 @@ namespace Web.Controllers
     /// </summary>
     public class ReservationController : Controller
     {
-		private readonly IReservationService _reservationService;
+        private readonly IUserService _userService;
+        private readonly IReservationService _reservationService;
 		private readonly IBookService _bookService;
 		private readonly IAuditService _auditService;
 		private readonly INotificationService _notificationService;
@@ -27,7 +30,8 @@ namespace Web.Controllers
 		private readonly IValidator<FulfillReservationRequest> _fulfillReservationValidator;
 
 		public ReservationController(
-			IReservationService reservationService,
+            IUserService userService,
+            IReservationService reservationService,
 			IBookService bookService,
 			IAuditService auditService,
 			INotificationService notificationService,
@@ -36,7 +40,8 @@ namespace Web.Controllers
 			IValidator<CancelReservationRequest> cancelReservationValidator,
 			IValidator<FulfillReservationRequest> fulfillReservationValidator)
 		{
-			_reservationService = reservationService;
+            _userService = userService;
+            _reservationService = reservationService;
 			_bookService = bookService;
 			_auditService = auditService;
 			_notificationService = notificationService;
@@ -227,10 +232,10 @@ namespace Web.Controllers
 					validationResult.AddToModelState(ModelState);
 
 					var bookResult = await _bookService.GetBookByIdAsync(model.BookId);
-					if (bookResult.IsSuccess)
+                    if (bookResult.IsSuccess)
 					{
-						ViewBag.BookTitle = bookResult.Value.Title;
-					}
+						ViewBag.BookTitle = bookResult.Value.Title;                        
+                    }
 
 					return View(model);
 				}
@@ -285,11 +290,50 @@ namespace Web.Controllers
 			}
 		}
 
-		/// <summary>
-		/// Processes cancel reservation request.
-		/// For staff use. Implements UC023 (Cancel Reservation).
-		/// </summary>
-		[HttpPost]
+        /// <summary>
+        /// Displays Cancel reservation form.
+        /// For staff use only. Part of UC023 (Cancel Reservation).
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            try
+            {
+                var result = await _reservationService.GetReservationByIdAsync(id);
+                if (!result.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = result.Error;
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (result.Value.Status != ReservationStatus.Active)
+                {
+                    TempData["ErrorMessage"] = "Only active reservations can be canceled.";
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                var cancelRequest = new CancelReservationRequest
+                {
+                    ReservationId = id,
+                };
+
+                ViewBag.ReservationDetails = result.Value;
+                return View(cancelRequest);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error cancelling reservation");
+                TempData["ErrorMessage"] = "An error occurred while cancelling the reservation.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        /// <summary>
+        /// Processes cancel reservation request.
+        /// For staff use. Implements UC023 (Cancel Reservation).
+        /// </summary>
+        [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Cancel(CancelReservationRequest model, bool allowOverride = false, string? overrideReason = null)
@@ -496,10 +540,19 @@ namespace Web.Controllers
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
+
+                var user = await _userService.GetUserDetailsAsync(userId); 
+                if (!user.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = user.Error;
+                    return RedirectToAction("Index", "Home");
+                }
+                
+                var memberId = user.Value.MemberDetails?.Id;
 
                 var search = new ReservationSearchRequest
                 {
@@ -534,10 +587,19 @@ namespace Web.Controllers
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
+
+                var user = await _userService.GetUserDetailsAsync(userId);
+                if (!user.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = user.Error;
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var memberId = user.Value.MemberDetails?.Id;
 
                 var result = await _reservationService.GetReservationByIdAsync(id);
                 if (!result.IsSuccess)
@@ -574,6 +636,29 @@ namespace Web.Controllers
         }
 
         /// <summary>
+        /// Displays the create reservation form.
+        /// For staff use. Part of UC022 (Reserve Book).
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Member")]
+        public async Task<IActionResult> ReserveBook( int? bookId = null)
+        {
+            var model = new CreateReservationRequest();
+
+            if (bookId.HasValue)
+            {
+                var bookResult = await _bookService.GetBookByIdAsync(bookId.Value);
+                if (bookResult.IsSuccess)
+                {
+                    model.BookId = bookId.Value;
+                    ViewBag.BookTitle = bookResult.Value.Title;
+                }
+            }
+
+            return View(model);
+        }
+
+        /// <summary>
         /// Allows members to reserve a book.
         /// Implements member-facing part of UC022 (Reserve Book).
         /// </summary>
@@ -584,10 +669,19 @@ namespace Web.Controllers
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
+
+                var user = await _userService.GetUserDetailsAsync(userId);
+                if (!user.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = user.Error;
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var memberId = user.Value.MemberDetails.Id;
 
                 // Ensure memberId is set to the current user
                 model.MemberId = memberId;
@@ -632,6 +726,45 @@ namespace Web.Controllers
         }
 
         /// <summary>
+        /// Displays Cancel reservation form.
+        /// Implements member-facing part of UC023 (Cancel Reservation).
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Member")]
+        public async Task<IActionResult> CancelMyReservation(int id)
+        {
+            try
+            {
+                var result = await _reservationService.GetReservationByIdAsync(id);
+                if (!result.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = result.Error;
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (result.Value.Status != ReservationStatus.Active)
+                {
+                    TempData["ErrorMessage"] = "Only active reservations can be canceled.";
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+
+                var cancelRequest = new CancelReservationRequest
+                {
+                    ReservationId = id,
+                };
+
+                ViewBag.ReservationDetails = result.Value;
+                return View(cancelRequest);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error cancelling member reservation");
+                TempData["ErrorMessage"] = "An error occurred while cancelling your reservation.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        /// <summary>
         /// Allows members to cancel their own reservations.
         /// Implements member-facing part of UC023 (Cancel Reservation).
         /// </summary>
@@ -642,10 +775,19 @@ namespace Web.Controllers
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
+
+                var user = await _userService.GetUserDetailsAsync(userId);
+                if (!user.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = user.Error;
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var memberId = user.Value.MemberDetails?.Id;
 
                 // Set member cancellation flag
                 model.IsStaffCancellation = false;

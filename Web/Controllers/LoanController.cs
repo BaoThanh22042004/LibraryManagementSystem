@@ -1,7 +1,9 @@
 using Application.Common;
 using Application.DTOs;
 using Application.Interfaces;
+using Application.Services;
 using Application.Validators;
+using Domain.Entities;
 using Domain.Enums;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -15,12 +17,12 @@ namespace Web.Controllers
 	/// Implements UC018 (Check Out), UC019 (Return Book), 
 	/// UC020 (Renew Loan), and UC021 (View Loan History).
 	/// Business Rules: BR-13, BR-14, BR-15, BR-16, BR-22
-	/// </summary>
-	[Authorize(Roles = "Admin,Librarian")]
+	/// </summary>	
 	public class LoanController : Controller
 	{
 		private readonly ILoanService _loanService;
-		private readonly IBookCopyService _bookCopyService;
+        private readonly IUserService _userService;
+        private readonly IBookCopyService _bookCopyService;
 		private readonly IFineService _fineService;
 		private readonly IAuditService _auditService;
 		private readonly ILogger<LoanController> _logger;
@@ -31,6 +33,7 @@ namespace Web.Controllers
 
 		public LoanController(
 			ILoanService loanService,
+            IUserService userService,
 			IBookCopyService bookCopyService,
 			IFineService fineService,
 			IAuditService auditService,
@@ -41,6 +44,7 @@ namespace Web.Controllers
 			INotificationService notificationService)
 		{
 			_loanService = loanService;
+            _userService = userService;
 			_bookCopyService = bookCopyService;
 			_fineService = fineService;
 			_auditService = auditService;
@@ -56,6 +60,7 @@ namespace Web.Controllers
 		/// Part of UC021 (View Loan History).
 		/// </summary>
 		[HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Index(LoanSearchRequest? search = null)
         {
             try
@@ -84,6 +89,7 @@ namespace Web.Controllers
         /// Part of UC021 (View Loan History).
         /// </summary>
         [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Details(int id)
         {
             try
@@ -110,6 +116,7 @@ namespace Web.Controllers
         /// Part of UC021 (View Loan History).
         /// </summary>
         [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> MemberLoans(int memberId, int page = 1, int pageSize = 10)
         {
             try
@@ -144,6 +151,7 @@ namespace Web.Controllers
         /// Part of UC018 (Check Out).
         /// </summary>
         [HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public IActionResult Checkout()
         {
             return View(new CreateLoanRequest());
@@ -155,7 +163,8 @@ namespace Web.Controllers
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Checkout(CreateLoanRequest model, bool allowOverride = false, string? overrideReason = null)
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> Checkout(CreateLoanRequest model, bool allowOverride = false, string? overrideReason = null)
 		{
 			try
 			{
@@ -223,6 +232,7 @@ namespace Web.Controllers
 		/// Part of UC019 (Return Book).
 		/// </summary>
 		[HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Return(int id)
         {
             try
@@ -263,7 +273,8 @@ namespace Web.Controllers
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Return(ReturnBookRequest model)
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> Return(ReturnBookRequest model)
 		{
 			try
 			{
@@ -341,6 +352,7 @@ namespace Web.Controllers
 		/// Part of UC020 (Renew Loan).
 		/// </summary>
 		[HttpGet]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Renew(int id)
         {
             try
@@ -382,7 +394,8 @@ namespace Web.Controllers
 		/// </summary>
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Renew(RenewLoanRequest model, bool allowOverride = false, string? overrideReason = null)
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> Renew(RenewLoanRequest model, bool allowOverride = false, string? overrideReason = null)
 		{
 			try
 			{
@@ -465,10 +478,19 @@ namespace Web.Controllers
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
+
+                var user = await _userService.GetUserDetailsAsync(userId);
+                if (!user.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = user.Error;
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var memberId = user.Value.MemberDetails?.Id;
 
                 var search = new LoanSearchRequest
                 {
@@ -503,10 +525,19 @@ namespace Web.Controllers
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
+
+                var user = await _userService.GetUserDetailsAsync(userId);
+                if (!user.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = user.Error;
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var memberId = user.Value.MemberDetails?.Id;
 
                 var result = await _loanService.GetLoanByIdAsync(id);
                 if (!result.IsSuccess)
@@ -542,10 +573,19 @@ namespace Web.Controllers
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
+
+                var user = await _userService.GetUserDetailsAsync(userId);
+                if (!user.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = user.Error;
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var memberId = user.Value.MemberDetails?.Id;
 
                 var result = await _loanService.GetLoanByIdAsync(id);
                 if (!result.IsSuccess)
