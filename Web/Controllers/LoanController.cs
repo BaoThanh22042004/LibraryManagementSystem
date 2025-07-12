@@ -1,7 +1,9 @@
 using Application.Common;
 using Application.DTOs;
 using Application.Interfaces;
+using Application.Services;
 using Application.Validators;
+using Domain.Entities;
 using Domain.Enums;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +21,8 @@ namespace Web.Controllers
 	public class LoanController : Controller
 	{
 		private readonly ILoanService _loanService;
-		private readonly IBookCopyService _bookCopyService;
+        private readonly IUserService _userService;
+        private readonly IBookCopyService _bookCopyService;
 		private readonly IFineService _fineService;
 		private readonly IAuditService _auditService;
 		private readonly ILogger<LoanController> _logger;
@@ -30,6 +33,7 @@ namespace Web.Controllers
 
 		public LoanController(
 			ILoanService loanService,
+            IUserService userService,
 			IBookCopyService bookCopyService,
 			IFineService fineService,
 			IAuditService auditService,
@@ -40,6 +44,7 @@ namespace Web.Controllers
 			INotificationService notificationService)
 		{
 			_loanService = loanService;
+            _userService = userService;
 			_bookCopyService = bookCopyService;
 			_fineService = fineService;
 			_auditService = auditService;
@@ -473,10 +478,19 @@ namespace Web.Controllers
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
+
+                var user = await _userService.GetUserDetailsAsync(userId);
+                if (!user.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = user.Error;
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var memberId = user.Value.MemberDetails?.Id;
 
                 var search = new LoanSearchRequest
                 {
@@ -511,10 +525,19 @@ namespace Web.Controllers
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
+
+                var user = await _userService.GetUserDetailsAsync(userId);
+                if (!user.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = user.Error;
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var memberId = user.Value.MemberDetails?.Id;
 
                 var result = await _loanService.GetLoanByIdAsync(id);
                 if (!result.IsSuccess)
@@ -550,10 +573,19 @@ namespace Web.Controllers
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
+
+                var user = await _userService.GetUserDetailsAsync(userId);
+                if (!user.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = user.Error;
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var memberId = user.Value.MemberDetails?.Id;
 
                 var result = await _loanService.GetLoanByIdAsync(id);
                 if (!result.IsSuccess)

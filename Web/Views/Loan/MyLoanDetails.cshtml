@@ -3,80 +3,76 @@
     ViewData["Title"] = "Loan Details";
 }
 
-<h1 class="text-3xl font-bold mb-6">Loan Details</h1>
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Loan Details</h1>    
+     @if (Model.Status == LoanStatus.Active)
+     {
+        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded focus:outline-none focus:shadow-outline">
+            <a asp-action="RequestRenewal" asp-route-id="@Model.Id">
+                Request Renewal
+            </a>
+        </button>  
+     }           
+</div>
 
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}
-
-@if (Model.Status == LoanStatus.Active)
-{
-    <button  class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded focus:outline-none focus:shadow-outline">
-        <a asp-action="RequestRenewal">
-            Request Renewal
-        </a>
-    </button>  
-}    
+@await Html.PartialAsync("_AlertsPartial")
 
 <div class="bg-white shadow-md rounded-lg overflow-hidden p-6 mb-6">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Left column - Basic Information -->
         <div class="space-y-6">
-        <div>
-            <strong>Member Name:</strong>
-            <span>@Model.MemberName</span>
-        </div>    
-        <div>
-            <strong>Book Copy ID:</strong>
-            <span>@Model.BookCopyId</span>
-        </div>    
-        <div>
-            <strong>Book ID:</strong>
-            <span>@Model.BookId</span>
-        </div>    
-        <div>
-            <strong>Book Title:</strong>
-            <span>@Model.BookTitle</span>
-        </div>
-        <div>
-            <strong>Loan Date:</strong>
-            <span>@Model.LoanDate.ToString("dd/MM/yyyy")</span>
-        </div>    
-        <div>
-            <strong>Due Date:</strong>
-            <span>@Model.DueDate.ToString("dd/MM/yyyy")</span>
-        </div>    
-        <div>
-            <strong>Return Date:</strong>
-            <span>@(Model.ReturnDate.HasValue ? Model.ReturnDate.Value.ToString("dd/MM/yyyy") : "Not returned yet")</span>
-        </div>   
-        <div>
-            <strong>Status:</strong>
-            @{
-                var statusClasses = @Model.Status switch
+            <div>
+                <strong>Member Name:</strong>
+                <span>@Model.MemberName</span>
+            </div>    
+            <div>
+                <strong>Book Copy ID:</strong>
+                <span>@Model.BookCopyId</span>
+            </div>    
+            <div>
+                <strong>Book ID:</strong>
+                <span>@Model.BookId</span>
+            </div>    
+            <div>
+                <strong>Book Title:</strong>
+                <span>@Model.BookTitle</span>
+            </div>
+            <div>
+                <strong>Loan Date:</strong>
+                <span>@Model.LoanDate.ToString("dd/MM/yyyy")</span>
+            </div>    
+            <div>
+                <strong>Due Date:</strong>
+                <span>@Model.DueDate.ToString("dd/MM/yyyy")</span>
+            </div>    
+            <div>
+                <strong>Return Date:</strong>
+                <span>@(Model.ReturnDate.HasValue ? Model.ReturnDate.Value.ToString("dd/MM/yyyy") : "Not returned yet")</span>
+            </div>   
+            <div>
+                <strong>Status:</strong>
+                @{
+                    var statusClasses = @Model.Status switch
+                    {
+                        Domain.Enums.LoanStatus.Active => "bg-green-100 text-green-800",
+                        Domain.Enums.LoanStatus.Returned => "bg-yellow-100 text-yellow-800",
+                        Domain.Enums.LoanStatus.Overdue => "bg-red-100 text-red-800",
+                        Domain.Enums.LoanStatus.Lost => "bg-red-100 text-gray-800",
+                        _ => "bg-gray-100 text-gray-800"
+                    };
+                }
+                <span class="px-2 inline-flex text-md leading-5 font-semibold rounded-full @statusClasses">
+                    @Model.Status
+                </span>
+            </div>            
+            <div>
+                <strong>ISBN:</strong>
+                <span>@Model.ISBN</span>
+            </div>   
+            <div>        
+                <strong>Associated Fines:</strong>
+                @if (Model.Fines != null && Model.Fines.Any())
                 {
-                    Domain.Enums.LoanStatus.Active => "bg-green-100 text-green-800",
-                    Domain.Enums.LoanStatus.Returned => "bg-yellow-100 text-yellow-800",
-                    Domain.Enums.LoanStatus.Overdue => "bg-red-100 text-red-800",
-                    Domain.Enums.LoanStatus.Lost => "bg-red-100 text-gray-800",
-                    _ => "bg-gray-100 text-gray-800"
-                };
-            }
-            <span class="px-2 inline-flex text-md leading-5 font-semibold rounded-full @statusClasses">
-                @Model.Status
-            </span>
-        </div>            
-        <div>
-            <strong>ISBN:</strong>
-            <span>@Model.ISBN</span>
-        </div>   
-        <div>        
-            <strong>Associated Fines:</strong>
-            @if (Model.Fines != null && Model.Fines.Any())
-            {
                 <ul class="list-disc ml-6 mt-2">
                     @foreach (var fine in Model.Fines)
                     {
@@ -86,10 +82,11 @@
                         </li>
                     }
                 </ul>
-            }else
-            {
-                <span>No fines associated with this return.</span>
-            }
+                }else
+                {
+                    <span>No fines associated with this return.</span>
+                }
+            </div>
         </div>
         <!-- Right column - Override Information -->
         <div class="space-y-6">
@@ -117,13 +114,12 @@
                     }
                 </div>
             }
-            </div>
         </div>
     </div>
 </div>
 
 <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-    <a asp-action="MyLoan">
+    <a asp-action="MyLoans">
         Back to List
     </a>
 </button>
