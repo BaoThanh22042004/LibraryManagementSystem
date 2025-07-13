@@ -1,15 +1,31 @@
-﻿<footer class="flex flex-col items-center justify-center bg-surface px-8 py-8 dark:bg-surface-dark">
-	<hr class="w-full border-outline pb-4 dark:border-outline-dark">
-	<span class="inline">
-		<b>
-			Library<span class="text-primary dark:text-primary-dark">Sys</span>
-		</b>
-		2025
-	</span>
-	<div class="mt-2 flex items-center gap-2 text-xs">
-		<a class="text-on-surface dark:text-on-surface-dark"
-		   asp-area="" asp-controller="Home" asp-action="Privacy">
-			Privacy
-		</a>
-	</div>
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var user = HttpContextAccessor.HttpContext?.User;
+    bool isStaff = user?.IsInRole("Admin") == true || user?.IsInRole("Librarian") == true;
+}
+
+<footer class="flex flex-col items-center justify-center bg-surface px-8 py-8 text-on-surface dark:bg-surface-dark dark:text-on-surface-dark">
+    <hr class="w-full max-w-7xl border-outline dark:border-outline-dark">
+
+    <div class="flex flex-col items-center py-6">
+        @{
+            var homeAction = isStaff ? "Dashboard" : "Index";
+            var brandName = isStaff ? "LibrarySys" : "LibraryApp";
+        }
+
+        <a asp-controller="Home" asp-action="@homeAction" class="text-xl font-bold transition hover:opacity-80">
+            @brandName.Substring(0, 7)<span class="text-primary dark:text-primary-dark">@brandName.Substring(7)</span>
+        </a>
+
+        <p class="mt-2 text-sm text-on-surface-weak dark:text-on-surface-dark-weak">
+            Your gateway to a world of knowledge.
+        </p>
+    </div>
+
+    <p class="text-xs text-on-surface-weak dark:text-on-surface-dark-weak">
+        © @DateTime.Now.Year @(isStaff ? "LibrarySys" : "LibraryApp"). All Rights Reserved.
+    </p>
+
 </footer>

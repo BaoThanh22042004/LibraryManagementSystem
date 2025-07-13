@@ -1,9 +1,12 @@
-using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using Web.Models;
-using Microsoft.AspNetCore.Authorization;
+using Application.Common;
+using Application.DTOs;
 using Application.Interfaces;
+using Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 using Web.Extensions;
+using Web.Models;
 
 namespace Web.Controllers;
 
@@ -11,21 +14,71 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly IAuditService _auditService;
+    private readonly IBookService _bookService;
+    private readonly ICategoryService _categoryService;
 
-    public HomeController(ILogger<HomeController> logger, IAuditService auditService)
+    public HomeController(
+        ILogger<HomeController> logger,
+        IAuditService auditService,
+        IBookService bookService,
+        ICategoryService categoryService)
     {
         _logger = logger;
         _auditService = auditService;
+        _bookService = bookService;
+        _categoryService = categoryService;
     }
 
-    public IActionResult Index()
+    [HttpGet]
+    public async Task<IActionResult> Index(int? categoryId = null, string? status = null, string? search = null, int page = 1, int pageSize = 12)
     {
-        return View();
-    }
+        try
+        {
+            // Get categories for filter dropdown
+            var categoriesResult = await _categoryService.GetAllCategoriesAsync();
+            ViewBag.Categories = categoriesResult.IsSuccess ? categoriesResult.Value : new List<CategoryDto>();
+            ViewBag.SelectedCategoryId = categoryId;
 
-    public IActionResult Privacy()
-    {
-        return View();
+            // Prepare book search request
+            var searchRequest = new BookSearchRequest
+            {
+                Page = page,
+                PageSize = pageSize,
+                CategoryId = categoryId,
+                SearchTerm = search
+            };
+
+            // Add status filter if provided and valid
+            if (!string.IsNullOrEmpty(status) && Enum.TryParse<BookStatus>(status, out var parsedStatus))
+            {
+                // Add this property to BookSearchRequest if not present
+                var statusProp = searchRequest.GetType().GetProperty("Status");
+                if (statusProp != null)
+                {
+                    statusProp.SetValue(searchRequest, parsedStatus);
+                }
+            }
+
+            // Get books (filtered by category, status, and title if provided)
+            var booksResult = await _bookService.SearchBooksAsync(searchRequest);
+
+            // Return paged result to view
+            if (booksResult.IsSuccess && booksResult.Value != null)
+            {
+                return View(booksResult.Value);
+            }
+            else
+            {
+                return View(new PagedResult<BookBasicDto>(Array.Empty<BookBasicDto>(), 0, page, pageSize));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading home page book list");
+            TempData["ErrorMessage"] = "Unable to load books. Please try again later.";
+            ViewBag.Categories = new List<CategoryDto>();
+            return View(new PagedResult<BookBasicDto>(Array.Empty<BookBasicDto>(), 0, page, pageSize));
+        }
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
