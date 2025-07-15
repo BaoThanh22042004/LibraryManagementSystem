@@ -1,256 +1,99 @@
-@model UserDetailsDto
+﻿@model UserDetailsDto
 @{
     ViewData["Title"] = "User Details";
 }
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-12 mb-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2>User Details</h2>
-                <div>
-                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
-                        <i class="bi bi-pencil-square"></i> Edit
-                    </a>
-                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Delete
-                    </a>
-                    <a asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> Back to List
-                    </a>
-                </div>
-            </div>
-            <hr />
+<div class="max-w-5xl mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <div class="space-x-2">
+            <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
+                ← Back to List
+            </a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="inline-flex items-center px-4 py-1 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition">
+                Edit
+            </a>
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="inline-flex items-center px-4 py-1 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition">
+                Delete
+            </a>
         </div>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="mb-4 p-4 text-sm text-green-700 bg-green-100 rounded-lg">
             @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg">
             @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <div class="row">
-        <div class="col-md-12 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Basic Information</h5>
-                        <div>
-                            @switch (Model.Role)
-                            {
-                                case UserRole.Admin:
-                                    <span class="badge bg-danger">Administrator</span>
-                                    break;
-                                case UserRole.Librarian:
-                                    <span class="badge bg-info">Librarian</span>
-                                    break;
-                                case UserRole.Member:
-                                    <span class="badge bg-success">Member</span>
-                                    break;
-                            }
-                            @switch (Model.Status)
-                            {
-                                case UserStatus.Active:
-                                    <span class="badge bg-success ms-2">Active</span>
-                                    break;
-                                case UserStatus.Suspended:
-                                    <span class="badge bg-warning text-dark ms-2">Suspended</span>
-                                    break;
-                                case UserStatus.Inactive:
-                                    <span class="badge bg-secondary ms-2">Inactive</span>
-                                    break;
-                            }
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+        <div class=" px-6 py-4  flex justify-between items-center">
+            <h2 class="text-lg font-semibold ">Details</h2>
+            <div class="flex items-center space-x-2">
+                <span class="px-2 py-1 text-xs rounded font-medium 
+                    @(Model.Role == UserRole.Admin ? "bg-red-100 text-red-700" :
+                      Model.Role == UserRole.Librarian ? "bg-blue-100 text-blue-700" :
+                      "bg-green-100 text-green-700")">
+                    @Model.Role
+                </span>
+                <span class="px-2 py-1 text-xs rounded font-medium 
+                    @(Model.Status == UserStatus.Active ? "bg-green-100 text-green-700" :
+                      Model.Status == UserStatus.Suspended ? "bg-yellow-100 text-yellow-800" :
+                      "bg-gray-100 text-gray-600")">
+                    @Model.Status
+                </span>
+            </div>
+        </div>
+        <div class="p-6 bg-surface-alt dark:bg-surface-dark-alt border border-outline dark:border-outline-dark rounded-radius">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative text-sm text-on-surface dark:text-on-surface-dark">
+                <!-- Cột trái -->
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">User ID</div>
+                        <div class="mt-1">@Model.Id</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Email</div>
+                        <div class="mt-1">
+                            <a href="mailto:@Model.Email" class="text-primary hover:underline dark:text-primary-dark">@Model.Email</a>
                         </div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Address</div>
+                        <div class="mt-1">@(!string.IsNullOrEmpty(Model.Address) ? Model.Address : "Not provided")</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Created At</div>
+                        <div class="mt-1">@Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm:ss")</div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <strong>User ID:</strong>
-                        </div>
-                        <div class="col-md-9">
-                            @Model.Id
-                        </div>
+
+                <!-- Line dọc chia giữa -->
+                <div class="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-outline dark:bg-outline-dark"></div>
+
+                <!-- Cột phải -->
+                <div class="space-y-4 md:pl-8">
+                    <div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Full Name</div>
+                        <div class="mt-1">@Model.FullName</div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <strong>Full Name:</strong>
-                        </div>
-                        <div class="col-md-9">
-                            @Model.FullName
-                        </div>
+                    <div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Phone</div>
+                        <div class="mt-1">@(!string.IsNullOrEmpty(Model.Phone) ? Model.Phone : "Not provided")</div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <strong>Email:</strong>
-                        </div>
-                        <div class="col-md-9">
-                            <a href="mailto:@Model.Email">@Model.Email</a>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <strong>Phone:</strong>
-                        </div>
-                        <div class="col-md-9">
-                            @(string.IsNullOrEmpty(Model.Phone) ? "Not provided" : Model.Phone)
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <strong>Address:</strong>
-                        </div>
-                        <div class="col-md-9">
-                            @if (string.IsNullOrEmpty(Model.Address))
-                            {
-                                <span>Not provided</span>
-                            }
-                            else
-                            {
-                                <span style="white-space: pre-line">@Model.Address</span>
-                            }
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <strong>Created Date:</strong>
-                        </div>
-                        <div class="col-md-9">
-                            @Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm:ss")
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <strong>Last Updated:</strong>
-                        </div>
-                        <div class="col-md-9">
-                            @(Model.UpdatedAt.HasValue ? Model.UpdatedAt.Value.ToString("MMMM dd, yyyy HH:mm:ss") : "Never")
-                        </div>
+                    <div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Last Updated</div>
+                        <div class="mt-1">@((Model.UpdatedAt.HasValue) ? Model.UpdatedAt.Value.ToString("MMMM dd, yyyy HH:mm:ss") : "Never")</div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
-
-    @if (Model.Role == UserRole.Member && Model.MemberDetails != null)
-    {
-        <div class="row">
-            <div class="col-md-12 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-light">
-                        <h5 class="card-title mb-0">Membership Details</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <strong>Membership Number:</strong>
-                            </div>
-                            <div class="col-md-9">
-                                @Model.MemberDetails.MembershipNumber
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <strong>Membership Status:</strong>
-                            </div>
-                            <div class="col-md-9">
-                                @switch (Model.MemberDetails.MembershipStatus)
-                                {
-                                    case MembershipStatus.Active:
-                                        <span class="badge bg-success">Active</span>
-                                        break;
-                                    case MembershipStatus.Expired:
-                                        <span class="badge bg-danger">Expired</span>
-                                        break;
-                                    case MembershipStatus.Suspended:
-                                        <span class="badge bg-warning text-dark">Suspended</span>
-                                        break;
-                                }
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <strong>Start Date:</strong>
-                            </div>
-                            <div class="col-md-9">
-                                @Model.MemberDetails.MembershipStartDate.ToString("MMMM dd, yyyy")
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <strong>Active Loans:</strong>
-                            </div>
-                            <div class="col-md-9">
-                                <span class="badge bg-primary">@Model.MemberDetails.ActiveLoans</span>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <strong>Active Reservations:</strong>
-                            </div>
-                            <div class="col-md-9">
-                                <span class="badge bg-primary">@Model.MemberDetails.ActiveReservations</span>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <strong>Outstanding Fines:</strong>
-                            </div>
-                            <div class="col-md-9">
-                                @if (Model.MemberDetails.OutstandingFines > 0)
-                                {
-                                    <span class="badge bg-danger">$@Model.MemberDetails.OutstandingFines.ToString("F2")</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-success">$0.00</span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-    else if (Model.Role == UserRole.Librarian && Model.LibrarianDetails != null)
-    {
-        <div class="row">
-            <div class="col-md-12 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-light">
-                        <h5 class="card-title mb-0">Staff Details</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <strong>Employee ID:</strong>
-                            </div>
-                            <div class="col-md-9">
-                                @Model.LibrarianDetails.EmployeeId
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-3">
-                                <strong>Hire Date:</strong>
-                            </div>
-                            <div class="col-md-9">
-                                @Model.LibrarianDetails.HireDate.ToString("MMMM dd, yyyy")
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
 </div>

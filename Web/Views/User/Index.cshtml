@@ -6,289 +6,180 @@
     var status = ViewData["Status"] as UserStatus?;
 }
 
-<div class="container">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2>User Management</h2>
-                <a asp-action="Create" class="btn btn-success">
-                    <i class="bi bi-person-plus"></i> Create User
-                </a>
-            </div>
-            <hr />
-        </div>
+<div class="max-w-7xl mx-auto px-7 sm:px-6 lg:px-8 py-6">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold">User Management</h1>
+        <a asp-action="Create" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg">
+            CREATE
+        </a>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg">
             @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg">
             @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="card-title mb-0">Search Users</h5>
-                </div>
-                <div class="card-body">
-                    <form asp-action="Index" method="get">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="searchTerm" name="SearchTerm" placeholder="Search" value="@searchTerm">
-                                    <label for="searchTerm">Search by name, email, or ID</label>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-floating">
-                                    <select class="form-select" id="role" name="Role">
-                                        <option value="">All Roles</option>
-                                        @if (role == UserRole.Member)
-                                        {
-                                            <option value="@((int)UserRole.Member)" selected>Member</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@((int)UserRole.Member)">Member</option>
-                                        }
-                                        
-                                        @if (role == UserRole.Librarian)
-                                        {
-                                            <option value="@((int)UserRole.Librarian)" selected>Librarian</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@((int)UserRole.Librarian)">Librarian</option>
-                                        }
-                                        
-                                        @if (role == UserRole.Admin)
-                                        {
-                                            <option value="@((int)UserRole.Admin)" selected>Administrator</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@((int)UserRole.Admin)">Administrator</option>
-                                        }
-                                    </select>
-                                    <label for="role">Role</label>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-floating">
-                                    <select class="form-select" id="status" name="Status">
-                                        <option value="">All Statuses</option>
-                                        @if (status == UserStatus.Active)
-                                        {
-                                            <option value="@((int)UserStatus.Active)" selected>Active</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@((int)UserStatus.Active)">Active</option>
-                                        }
-                                        
-                                        @if (status == UserStatus.Suspended)
-                                        {
-                                            <option value="@((int)UserStatus.Suspended)" selected>Suspended</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@((int)UserStatus.Suspended)">Suspended</option>
-                                        }
-                                        
-                                        @if (status == UserStatus.Inactive)
-                                        {
-                                            <option value="@((int)UserStatus.Inactive)" selected>Inactive</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@((int)UserStatus.Inactive)">Inactive</option>
-                                        }
-                                    </select>
-                                    <label for="status">Status</label>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="submit" class="btn btn-primary h-100 w-100">
-                                    <i class="bi bi-search"></i> Search
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+    <!-- Filter Section -->
+    <div class="p-6 mb-6 rounded-radius overflow-hidden border border-outline bg-surface-alt text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">
+        <form asp-action="Index" method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <!-- Search Input -->
+            <div>
+                <label class="block text-sm font-medium mb-1">Search</label>
+                <input type="text" name="SearchTerm" value="@searchTerm"
+                       placeholder="Name, Email or ID"
+                       class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" />
             </div>
-        </div>
-    </div>
 
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">User List</h5>
-                        <span class="badge bg-primary">Total: @Model.Count users</span>
+            <!-- Filters group -->
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-on-surface dark:text-on-surface-dark mb-1">Filters</label>
+                <div class="flex gap-2">
+                    <!-- Role -->
+                    <div class="relative w-full">
+                        <select name="Role"
+                                class="peer w-full appearance-none rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm text-on-surface transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline-strong disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark dark:focus-visible:outline-outline-dark-strong">
+                            <option value="">All Roles</option>
+                            @foreach (UserRole r in Enum.GetValues(typeof(UserRole)))
+                            {
+                                <option value="@((int)r)" selected="@(role == r)">@r</option>
+                            }
+                        </select>
+                        <!-- Dropdown icon -->
+                        <svg class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-on-surface/50 dark:text-on-surface-dark/50" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="relative w-full">
+                        <select name="Status"
+                                class="peer w-full appearance-none rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm text-on-surface transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline-strong disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark dark:focus-visible:outline-outline-dark-strong">
+                            <option value="">All Statuses</option>
+                            @foreach (UserStatus s in Enum.GetValues(typeof(UserStatus)))
+                            {
+                                <option value="@((int)s)" selected="@(status == s)">@s</option>
+                            }
+                        </select>
+                        <!-- Dropdown icon -->
+                        <svg class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-on-surface/50 dark:text-on-surface-dark/50" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
                     </div>
                 </div>
-                <div class="card-body">
-                    @if (Model.Items.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Status</th>
-                                        <th>Created</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var user in Model.Items)
-                                    {
-                                        <tr>
-                                            <td>@user.Id</td>
-                                            <td>@user.FullName</td>
-                                            <td>@user.Email</td>
-                                            <td>
-                                                @switch (user.Role)
-                                                {
-                                                    case UserRole.Admin:
-                                                        <span class="badge bg-danger">Administrator</span>
-                                                        break;
-                                                    case UserRole.Librarian:
-                                                        <span class="badge bg-info">Librarian</span>
-                                                        break;
-                                                    case UserRole.Member:
-                                                        <span class="badge bg-success">Member</span>
-                                                        if (!string.IsNullOrEmpty(user.MembershipNumber))
-                                                        {
-                                                            <small class="d-block text-muted">@user.MembershipNumber</small>
-                                                        }
-                                                        break;
-                                                }
-                                            </td>
-                                            <td>
-                                                @switch (user.Status)
-                                                {
-                                                    case UserStatus.Active:
-                                                        <span class="badge bg-success">Active</span>
-                                                        break;
-                                                    case UserStatus.Suspended:
-                                                        <span class="badge bg-warning text-dark">Suspended</span>
-                                                        break;
-                                                    case UserStatus.Inactive:
-                                                        <span class="badge bg-secondary">Inactive</span>
-                                                        break;
-                                                }
-                                            </td>
-                                            <td>@user.CreatedAt.ToString("yyyy-MM-dd")</td>
-                                            <td>
-                                                <div class="btn-group" role="group">
-                                                    <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary">
-                                                        <i class="bi bi-eye"></i>
-                                                    </a>
-                                                    <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-outline-secondary">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </a>
-                                                    <a asp-action="Delete" asp-route-id="@user.Id" class="btn btn-sm btn-outline-danger">
-                                                        <i class="bi bi-trash"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-
-                        @if (Model.TotalPages > 1)
-                        {
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination justify-content-center">
-                                    @if (Model.Page > 1)
-                                    {
-                                        <li class="page-item">
-                                            <a class="page-link" asp-action="Index" 
-                                               asp-route-searchTerm="@searchTerm"
-                                               asp-route-role="@((int?)role)"
-                                               asp-route-status="@((int?)status)"
-                                               asp-route-pageNumber="1"
-                                               asp-route-pageSize="@Model.PageSize">First</a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a class="page-link" asp-action="Index" 
-                                               asp-route-searchTerm="@searchTerm"
-                                               asp-route-role="@((int?)role)"
-                                               asp-route-status="@((int?)status)"
-                                               asp-route-pageNumber="@(Model.Page - 1)"
-                                               asp-route-pageSize="@Model.PageSize">Previous</a>
-                                        </li>
-                                    }
-
-                                    @for (var i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
-                                    {
-                                        <li class="page-item @(i == Model.Page ? "active" : "")">
-                                            <a class="page-link" asp-action="Index" 
-                                               asp-route-searchTerm="@searchTerm"
-                                               asp-route-role="@((int?)role)"
-                                               asp-route-status="@((int?)status)"
-                                               asp-route-pageNumber="@i"
-                                               asp-route-pageSize="@Model.PageSize">@i</a>
-                                        </li>
-                                    }
-
-                                    @if (Model.Page < Model.TotalPages)
-                                    {
-                                        <li class="page-item">
-                                            <a class="page-link" asp-action="Index" 
-                                               asp-route-searchTerm="@searchTerm"
-                                               asp-route-role="@((int?)role)"
-                                               asp-route-status="@((int?)status)"
-                                               asp-route-pageNumber="@(Model.Page + 1)"
-                                               asp-route-pageSize="@Model.PageSize">Next</a>
-                                        </li>
-                                        <li class="page-item">
-                                            <a class="page-link" asp-action="Index" 
-                                               asp-route-searchTerm="@searchTerm"
-                                               asp-route-role="@((int?)role)"
-                                               asp-route-status="@((int?)status)"
-                                               asp-route-pageNumber="@Model.TotalPages"
-                                               asp-route-pageSize="@Model.PageSize">Last</a>
-                                        </li>
-                                    }
-                                </ul>
-                            </nav>
-                        }
-                    }
-                    else
-                    {
-                        <div class="alert alert-info text-center" role="alert">
-                            <i class="bi bi-info-circle me-2"></i> No users found matching the search criteria.
-                        </div>
-                    }
-                </div>
             </div>
-        </div>
+            <!-- Search Button -->
+            <div>
+                <button type="submit"
+                        class="whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">
+                    Search
+                </button>
+            </div>
+        </form>
     </div>
-</div>
 
-@section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Initialize any JS functionality here
-        });
-    </script>
-}
+
+
+    <!-- User Table -->
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+        <div class="flex items-center justify-between px-4 py-3">
+            <h2 class="text-lg font-semibold">User List</h2>
+            <span class="text-sm">Total: @Model.Count users</span>
+        </div>
+
+        @if (Model.Items.Any())
+        {
+            <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+                <table class="w-full text-left text-sm text-on-surface dark:text-on-surface-dark">
+                    <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark-strong">
+                        <tr>
+                            <th class="p-4">ID</th>
+                            <th class="p-4">NAME</th>
+                            <th class="p-4">EMAIL</th>
+                            <th class="p-4">STATUS</th>
+                            <th class="p-4">CREATED</th>
+                            <th class="p-4">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-outline dark:divide-outline-dark bg-surface dark:bg-surface-dark">
+                        @foreach (var user in Model.Items)
+                        {
+                            <tr>
+                                <td class="p-4">@user.Id</td>
+                                <td class="p-4 font-medium">@user.FullName</td>
+                                <td class="p-4">@user.Email</td>
+                                <td class="p-4">
+                                    <span class="inline-block px-2 py-1 rounded text-xs font-semibold
+                                    @(user.Status == UserStatus.Active ? "bg-green-100 text-green-700" :
+                                                                                                          user.Status == UserStatus.Suspended ? "bg-yellow-100 text-yellow-800" :
+                                                                                                          "bg-gray-100 text-gray-600")">
+                                @user.Status
+                            </span>
+                        </td>
+                        <td class="p-4">@user.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td class="p-4">
+                            <div class="flex space-x-2">
+                                <a asp-action="Details" asp-route-id="@user.Id"
+                                   class="whitespace-nowrap rounded-radius bg-transparent p-0.5 font-semibold text-primary outline-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 active:opacity-100 active:outline-offset-0 dark:text-primary-dark dark:outline-primary-dark"
+                                   title="View user details">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    Details
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="p-4 border-t">
+                    <nav class="flex justify-center space-x-2">
+                        @if (Model.Page > 1)
+                        {
+                            <a class="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                               asp-route-pageNumber="1">First</a>
+                            <a class="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                               asp-route-pageNumber="@(Model.Page - 1)">Previous</a>
+                        }
+
+                        @for (int i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
+                        {
+                            <a class="px-3 py-1 rounded 
+                                       @(i == Model.Page ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200")"
+                               asp-route-pageNumber="@i">@i</a>
+                        }
+
+                        @if (Model.Page < Model.TotalPages)
+                        {
+                            <a class="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                               asp-route-pageNumber="@(Model.Page + 1)">Next</a>
+                            <a class="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                               asp-route-pageNumber="@Model.TotalPages">Last</a>
+                        }
+                    </nav>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="p-6 text-center text-gray-500">
+                <i class="bi bi-info-circle me-2"></i> No users found.
+            </div>
+        }
+    </div>
+</div>              

@@ -1,115 +1,115 @@
-@model UpdateUserRequest
+﻿@model UpdateUserRequest
 @{
     ViewData["Title"] = "Edit User";
 }
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-12 mb-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2>Edit User</h2>
-                <div>
-                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary">
-                        <i class="bi bi-arrow-left"></i> Back to Details
-                    </a>
-                    <a asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="bi bi-list"></i> Back to List
-                    </a>
-                </div>
-            </div>
-            <hr />
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="flex justify-between mb-6">
+        <div class="space-x-4">
+            <a asp-action="Details" asp-route-id="@Model.Id" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
+                ← Back to Details
+            </a>
+            <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-gray-500 hover:bg-gray-100 text-sm rounded-md transition">
+                ← Back to List   
+            </a>
         </div>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">Edit User Information</h5>
-                </div>
-                <div class="card-body">
-                    <form asp-action="Edit" method="post">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        <input type="hidden" asp-for="Id" />
+    <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark rounded-radius">
+        <h3 class="text-3xl text-center font-bold">Edit User</h3>
 
-                        <div class="row mb-3">
-                            <div class="col-md-12">
-                                <label asp-for="FullName" class="form-label">Full Name</label>
-                                <input asp-for="FullName" class="form-control" placeholder="Enter full name" />
-                                <span asp-validation-for="FullName" class="text-danger"></span>
-                            </div>
-                        </div>
+        <form asp-action="Edit" method="post" class="space-y-6">
+            <input type="hidden" asp-for="Id" />
+            <fieldset class="border border-outline rounded-radius p-4">
+                <legend class="text-sm font-medium">Full Name</legend>
+                <input asp-for="FullName"
+                       class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                       placeholder="Enter full name" />
+                <span asp-validation-for="FullName" class="text-sm text-red-600 mt-1 block"></span>
+            </fieldset>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label asp-for="Email" class="form-label">Email</label>
-                                <input asp-for="Email" class="form-control" type="email" placeholder="Enter email address" />
-                                <span asp-validation-for="Email" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Status" class="form-label">Account Status</label>
-                                <select asp-for="Status" class="form-select" id="statusSelect">
-                                    <option value="@UserStatus.Active">Active</option>
-                                    <option value="@UserStatus.Suspended">Suspended</option>
-                                    <option value="@UserStatus.Inactive">Inactive</option>
-                                </select>
-                                <span asp-validation-for="Status" class="text-danger"></span>
-                            </div>
-                        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <fieldset class="border border-outline rounded-radius p-4">
+                    <legend class="text-sm font-medium">Email</legend>
+                    <input asp-for="Email"
+                           type="email"
+                           class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                           placeholder="Enter email" />
+                    <span asp-validation-for="Email" class="text-sm text-red-600 mt-1 block"></span>
+                </fieldset>
 
-                        <div class="mb-3 status-reason-container" style="display: none;">
-                            <label asp-for="StatusChangeReason" class="form-label">Reason for Status Change</label>
-                            <textarea asp-for="StatusChangeReason" class="form-control" rows="2" placeholder="Provide reason for status change"></textarea>
-                            <div class="form-text">Required when changing user status.</div>
-                            <span asp-validation-for="StatusChangeReason" class="text-danger"></span>
-                        </div>
+                <fieldset class="border border-outline rounded-radius p-4">
+                    <legend class="text-sm font-medium">Account Status</legend>
+                    <select asp-for="Status"
+                            id="statusSelect"
+                            data-initial-value="@Model.Status"
+                            class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark">
+                        <option value="@UserStatus.Active">Active</option>
+                        <option value="@UserStatus.Suspended">Suspended</option>
+                        <option value="@UserStatus.Inactive">Inactive</option>
+                    </select>
+                    <span asp-validation-for="Status" class="text-sm text-red-600 mt-1 block"></span>
+                </fieldset>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label asp-for="Phone" class="form-label">Phone Number (Optional)</label>
-                                <input asp-for="Phone" class="form-control" placeholder="Enter phone number" />
-                                <span asp-validation-for="Phone" class="text-danger"></span>
-                            </div>
-                        </div>
+                <fieldset id="statusReasonContainer" class="border border-outline rounded-radius p-4 mt-4 hidden">
+                    <legend class="text-sm font-medium">Reason for Status Change</legend>
+                    <textarea asp-for="StatusChangeReason"
+                              class="block w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                              rows="2"
+                              placeholder="Provide reason for status change"></textarea>
+                    <span asp-validation-for="StatusChangeReason" class="text-sm text-red-600 mt-1 block"></span>
+                </fieldset>
 
-                        <div class="mb-3">
-                            <label asp-for="Address" class="form-label">Address (Optional)</label>
-                            <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter address"></textarea>
-                            <span asp-validation-for="Address" class="text-danger"></span>
-                        </div>
+                <fieldset class="border border-outline rounded-radius p-4">
+                    <legend class="text-sm font-medium">Phone Number</legend>
+                    <input asp-for="Phone"
+                           class="block w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                           placeholder="Enter phone number" />
+                    <span asp-validation-for="Phone" class="text-sm text-red-600 mt-1 block"></span>
+                </fieldset>
 
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                        </div>
-                    </form>
-                </div>
+                <fieldset class="border border-outline rounded-radius p-4">
+                    <legend class="text-sm font-medium">Address</legend>
+                    <textarea asp-for="Address"
+                              class="block w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                              rows="3"
+                              placeholder="Enter address"></textarea>
+                    <span asp-validation-for="Address" class="text-sm text-red-600 mt-1 block"></span>
+                </fieldset>
             </div>
-        </div>
+            <div class="pt-6 flex justify-center">
+                <button type="submit"
+                        class="w-full md:w-auto whitespace-nowrap rounded-radius bg-primary border border-primary px-6 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">
+                    Save
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
     <script>
-        $(document).ready(function() {
-            // Store initial status
-            var initialStatus = $('#statusSelect').val();
-            
-            // Check if status has changed
-            $('#statusSelect').change(function() {
-                var currentStatus = $(this).val();
-                
-                if (currentStatus !== initialStatus) {
-                    $('.status-reason-container').show();
-                    $('#StatusChangeReason').attr('required', 'required');
+        document.addEventListener('DOMContentLoaded', function () {
+            const statusSelect = document.getElementById('statusSelect');
+            const reasonContainer = document.getElementById('statusReasonContainer');
+            const initialValue = statusSelect.dataset.initialValue;
+
+            function toggleReasonVisibility() {
+                if (statusSelect.value !== initialValue) {
+                    reasonContainer.classList.remove('hidden');
                 } else {
-                    $('.status-reason-container').hide();
-                    $('#StatusChangeReason').removeAttr('required');
+                    reasonContainer.classList.add('hidden');
                 }
-            });
-            
-            // Initialize
-            $('#statusSelect').trigger('change');
+            }
+
+            // Initial check (in case value already changed from model binding)
+            toggleReasonVisibility();
+
+            // Attach change event
+            statusSelect.addEventListener('change', toggleReasonVisibility);
         });
     </script>
 }
