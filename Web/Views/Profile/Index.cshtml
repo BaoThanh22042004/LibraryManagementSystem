@@ -6,11 +6,11 @@
 <div class="max-w-5xl mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <div class="flex space-x-2">
-            <a asp-action="Edit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition">
-                <i class="bi bi-pencil-square mr-2"></i> Edit Profile
+            <a asp-action="Edit" class="inline-flex items-center px-4 py-1 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition">
+                Edit
             </a>
-            <a asp-controller="Auth" asp-action="ChangePassword" class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded hover:bg-gray-100 transition">
-                <i class="bi bi-key mr-2"></i> Change Password
+            <a asp-controller="Auth" asp-action="ChangePassword" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg">
+                Change Password
             </a>
         </div>
     </div>
@@ -41,18 +41,18 @@
         </div>
     }
 
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <div class="bg-gray-100 px-6 py-4 border-b">
-            <h5 class="text-lg font-medium text-gray-700">Personal Information</h5>
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+        <div class="px-6 py-4  flex justify-between items-center">
+            <h5 class="text-lg font-medium ">Personal Information</h5>
         </div>
-        <div class="p-6 space-y-4">
+        <div class="p-6 space-y-4 bg-surface-alt dark:bg-surface-dark-alt border border-outline dark:border-outline-dark rounded-radius">
             <div class="flex">
-                <div class="w-1/3 font-medium text-gray-600">Full Name:</div>
-                <div class="w-2/3 text-gray-800">@Model.FullName</div>
+                <div class="w-1/3 font-medium">Full Name:</div>
+                <div class="w-2/3">@Model.FullName</div>
             </div>
             <div class="flex items-center">
-                <div class="w-1/3 font-medium text-gray-600">Email Address:</div>
-                <div class="w-2/3 text-gray-800">
+                <div class="w-1/3 font-medium">Email Address:</div>
+                <div class="w-2/3">
                     @Model.Email
                     @if (!string.IsNullOrEmpty(Model.PendingEmail))
                     {
@@ -63,14 +63,14 @@
                 </div>
             </div>
             <div class="flex">
-                <div class="w-1/3 font-medium text-gray-600">Phone Number:</div>
-                <div class="w-2/3 text-gray-800">
+                <div class="w-1/3 font-medium">Phone Number:</div>
+                <div class="w-2/3">
                     @(string.IsNullOrEmpty(Model.Phone) ? "Not provided" : Model.Phone)
                 </div>
             </div>
             <div class="flex">
-                <div class="w-1/3 font-medium text-gray-600">Address:</div>
-                <div class="w-2/3 text-gray-800 whitespace-pre-line">
+                <div class="w-1/3 font-medium">Address:</div>
+                <div class="w-2/3">
                     @if (string.IsNullOrEmpty(Model.Address))
                     {
                         <span>Not provided</span>
