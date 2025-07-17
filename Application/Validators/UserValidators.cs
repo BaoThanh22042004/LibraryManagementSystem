@@ -36,20 +36,24 @@ public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
             .IsInEnum().WithMessage("Invalid user role")
             .NotEqual(UserRole.Member).Unless(x => x.Role == UserRole.Member).WithMessage("User role must be Member, Librarian, or Admin");
 
-        When(x => !string.IsNullOrWhiteSpace(x.Phone), () => {
+        When(x => !string.IsNullOrWhiteSpace(x.Phone), () =>
+        {
             RuleFor(x => x.Phone)
                 .Matches(_phoneRegex).WithMessage("Phone number format is invalid")
                 .MaximumLength(20).WithMessage("Phone number cannot exceed 20 characters");
         });
 
-        When(x => !string.IsNullOrWhiteSpace(x.Address), () => {
+        When(x => !string.IsNullOrWhiteSpace(x.Address), () =>
+        {
             RuleFor(x => x.Address)
                 .MaximumLength(255).WithMessage("Address cannot exceed 255 characters");
         });
 
         // Member-specific validation
-        When(x => x.Role == UserRole.Member, () => {
-            When(x => !string.IsNullOrWhiteSpace(x.MembershipNumber), () => {
+        When(x => x.Role == UserRole.Member, () =>
+        {
+            When(x => !string.IsNullOrWhiteSpace(x.MembershipNumber), () =>
+            {
                 RuleFor(x => x.MembershipNumber)
                     .Matches(_membershipNumberRegex).WithMessage("Membership number can only contain letters, numbers, and hyphens")
                     .MaximumLength(20).WithMessage("Membership number cannot exceed 20 characters");
@@ -57,8 +61,10 @@ public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
         });
 
         // Librarian-specific validation
-        When(x => x.Role == UserRole.Librarian, () => {
-            When(x => !string.IsNullOrWhiteSpace(x.EmployeeId), () => {
+        When(x => x.Role == UserRole.Librarian, () =>
+        {
+            When(x => !string.IsNullOrWhiteSpace(x.EmployeeId), () =>
+            {
                 RuleFor(x => x.EmployeeId)
                     .Matches(_employeeIdRegex).WithMessage("Employee ID can only contain letters, numbers, and hyphens")
                     .MaximumLength(20).WithMessage("Employee ID cannot exceed 20 characters");
@@ -82,31 +88,35 @@ public class UpdateUserRequestValidator : AbstractValidator<UpdateUserRequest>
         RuleFor(x => x.FullName)
             .NotEmpty().WithMessage("Full name is required")
             .MaximumLength(100).WithMessage("Full name cannot exceed 100 characters")
-            .Matches(@"^[a-zA-Z\s\-'.]+$").WithMessage("Full name contains invalid characters");
+            .Matches(@"^[\p{L}\s\-'.]+$").WithMessage("Full name contains invalid characters");
+
 
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email is required")
             .EmailAddress().WithMessage("Invalid email format")
             .MaximumLength(100).WithMessage("Email cannot exceed 100 characters");
 
-        When(x => !string.IsNullOrWhiteSpace(x.Phone), () => {
+        When(x => !string.IsNullOrWhiteSpace(x.Phone), () =>
+        {
             RuleFor(x => x.Phone)
                 .Matches(_phoneRegex).WithMessage("Phone number format is invalid")
                 .MaximumLength(20).WithMessage("Phone number cannot exceed 20 characters");
         });
 
-        When(x => !string.IsNullOrWhiteSpace(x.Address), () => {
+        When(x => !string.IsNullOrWhiteSpace(x.Address), () =>
+        {
             RuleFor(x => x.Address)
                 .MaximumLength(255).WithMessage("Address cannot exceed 255 characters");
         });
 
-        When(x => x.Status.HasValue, () => {
+        When(x => x.Status.HasValue, () =>
+        {
             RuleFor(x => x.Status)
                 .IsInEnum().WithMessage("Invalid user status");
 
-            RuleFor(x => x.StatusChangeReason)
-                .NotEmpty().WithMessage("Status change reason is required when changing status")
-                .MaximumLength(500).WithMessage("Status change reason cannot exceed 500 characters");
+            //RuleFor(x => x.StatusChangeReason)
+            //    .NotEmpty().WithMessage("Status change reason is required when changing status")
+            //    .MaximumLength(500).WithMessage("Status change reason cannot exceed 500 characters");
         });
     }
 }
@@ -118,17 +128,20 @@ public class UserSearchRequestValidator : AbstractValidator<UserSearchRequest>
 {
     public UserSearchRequestValidator()
     {
-        When(x => !string.IsNullOrWhiteSpace(x.SearchTerm), () => {
+        When(x => !string.IsNullOrWhiteSpace(x.SearchTerm), () =>
+        {
             RuleFor(x => x.SearchTerm)
                 .MaximumLength(100).WithMessage("Search term cannot exceed 100 characters");
         });
 
-        When(x => x.Role.HasValue, () => {
+        When(x => x.Role.HasValue, () =>
+        {
             RuleFor(x => x.Role)
                 .IsInEnum().WithMessage("Invalid user role");
         });
 
-        When(x => x.Status.HasValue, () => {
+        When(x => x.Status.HasValue, () =>
+        {
             RuleFor(x => x.Status)
                 .IsInEnum().WithMessage("Invalid user status");
         });

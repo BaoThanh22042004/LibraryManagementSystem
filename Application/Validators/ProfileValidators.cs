@@ -19,20 +19,22 @@ public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequ
         RuleFor(x => x.FullName)
             .NotEmpty().WithMessage("Full name is required")
             .MaximumLength(100).WithMessage("Full name cannot exceed 100 characters")
-            .Matches(@"^[a-zA-Z\s\-'.]+$").WithMessage("Full name contains invalid characters");
+            .Matches(@"^[\p{L}\s\-'.]+$").WithMessage("Full name contains invalid characters");
 
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email is required")
             .EmailAddress().WithMessage("Invalid email format")
             .MaximumLength(100).WithMessage("Email cannot exceed 100 characters");
 
-        When(x => !string.IsNullOrWhiteSpace(x.Phone), () => {
+        When(x => !string.IsNullOrWhiteSpace(x.Phone), () =>
+        {
             RuleFor(x => x.Phone)
                 .Matches(_phoneRegex).WithMessage("Phone number format is invalid")
                 .MaximumLength(20).WithMessage("Phone number cannot exceed 20 characters");
         });
 
-        When(x => !string.IsNullOrWhiteSpace(x.Address), () => {
+        When(x => !string.IsNullOrWhiteSpace(x.Address), () =>
+        {
             RuleFor(x => x.Address)
                 .MaximumLength(255).WithMessage("Address cannot exceed 255 characters");
         });

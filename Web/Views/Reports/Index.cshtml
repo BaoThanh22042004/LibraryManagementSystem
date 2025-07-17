@@ -2,59 +2,104 @@
 @{
     ViewData["Title"] = "Generate Report";
 }
-<h2>Generate Report</h2>
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-}
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
-}
-<form asp-action="Generate" method="post">
-    <div class="mb-3">
-        <label asp-for="ReportType" class="form-label">Report Type</label>
-        <select asp-for="ReportType" class="form-select">
-            <option value="">-- Select Report Type --</option>
-            @foreach (var type in Enum.GetValues(typeof(Domain.Enums.ReportType)))
-            {
-                <option value="@type">@type</option>
-            }
-        </select>
+
+<div class="max-w-3xl mx-auto px-4 py-8">
+    <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark rounded-radius">
+        <h3 class="text-3xl text-center font-bold mb-6">Generate Report</h3>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success mb-4">@TempData["SuccessMessage"]</div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger mb-4">@TempData["ErrorMessage"]</div>
+        }
+
+        <form asp-action="Generate" method="post" class="space-y-6">
+            <fieldset class="border border-outline rounded-radius p-4">
+                <legend class="text-sm font-medium">Report Type</legend>
+                <select asp-for="ReportType"
+                        class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark">
+                    <option value="">-- Select Report Type --</option>
+                    @foreach (var type in Enum.GetValues(typeof(Domain.Enums.ReportType)))
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </select>
+                <span asp-validation-for="ReportType" class="text-sm text-red-600 mt-1 block"></span>
+            </fieldset>
+
+            <fieldset class="border border-outline rounded-radius p-4">
+                <legend class="text-sm font-medium">Format</legend>
+                <select asp-for="Format"
+                        class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark">
+                    <option value="">-- Select Format --</option>
+                    @foreach (var format in Enum.GetValues(typeof(Domain.Enums.ReportFormat)))
+                    {
+                        <option value="@format">@format</option>
+                    }
+                </select>
+                <span asp-validation-for="Format" class="text-sm text-red-600 mt-1 block"></span>
+            </fieldset>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <fieldset class="border border-outline rounded-radius p-4">
+                    <legend class="text-sm font-medium">From Date</legend>
+                    <input asp-for="FromDate"
+                           type="date"
+                           class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" />
+                    <span asp-validation-for="FromDate" class="text-sm text-red-600 mt-1 block"></span>
+                </fieldset>
+
+                <fieldset class="border border-outline rounded-radius p-4">
+                    <legend class="text-sm font-medium">To Date</legend>
+                    <input asp-for="ToDate"
+                           type="date"
+                           class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" />
+                    <span asp-validation-for="ToDate" class="text-sm text-red-600 mt-1 block"></span>
+                </fieldset>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <fieldset class="border border-outline rounded-radius p-4">
+                    <legend class="text-sm font-medium">Member ID (optional)</legend>
+                    <input asp-for="MemberId"
+                           type="number"
+                           class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" />
+                    <span asp-validation-for="MemberId" class="text-sm text-red-600 mt-1 block"></span>
+                </fieldset>
+
+                <fieldset class="border border-outline rounded-radius p-4">
+                    <legend class="text-sm font-medium">Book ID (optional)</legend>
+                    <input asp-for="BookId"
+                           type="number"
+                           class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" />
+                    <span asp-validation-for="BookId" class="text-sm text-red-600 mt-1 block"></span>
+                </fieldset>
+            </div>
+
+            <fieldset class="border border-outline rounded-radius p-4">
+                <legend class="text-sm font-medium">Category ID (optional)</legend>
+                <input asp-for="CategoryId"
+                       type="number"
+                       class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" />
+                <span asp-validation-for="CategoryId" class="text-sm text-red-600 mt-1 block"></span>
+            </fieldset>
+
+            <div class="flex items-center space-x-2">
+                <input asp-for="IncludeDetails"
+                       type="checkbox"
+                       class="rounded text-primary border-gray-300 focus:ring-primary dark:focus:ring-primary-dark" />
+                <label asp-for="IncludeDetails" class="text-sm">Include Details</label>
+            </div>
+
+            <div class="pt-4">
+                <button type="submit"
+                        class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">
+                    Generate Report
+                </button>
+            </div>
+        </form>
     </div>
-    <div class="mb-3">
-        <label asp-for="Format" class="form-label">Format</label>
-        <select asp-for="Format" class="form-select">
-            <option value="">-- Select Format --</option>
-            @foreach (var format in Enum.GetValues(typeof(Domain.Enums.ReportFormat)))
-            {
-                <option value="@format">@format</option>
-            }
-        </select>
-    </div>
-    <div class="mb-3">
-        <label asp-for="FromDate" class="form-label">From Date</label>
-        <input asp-for="FromDate" type="date" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label asp-for="ToDate" class="form-label">To Date</label>
-        <input asp-for="ToDate" type="date" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label asp-for="MemberId" class="form-label">Member ID (optional)</label>
-        <input asp-for="MemberId" type="number" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label asp-for="BookId" class="form-label">Book ID (optional)</label>
-        <input asp-for="BookId" type="number" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label asp-for="CategoryId" class="form-label">Category ID (optional)</label>
-        <input asp-for="CategoryId" type="number" class="form-control" />
-    </div>
-    <div class="form-check mb-3">
-        <input asp-for="IncludeDetails" class="form-check-input" />
-        <label asp-for="IncludeDetails" class="form-check-label">Include Details</label>
-    </div>
-    <button type="submit" class="btn btn-primary">Generate Report</button>
-</form> 
+</div>
