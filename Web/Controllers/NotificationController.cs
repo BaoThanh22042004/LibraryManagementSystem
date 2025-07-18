@@ -20,10 +20,10 @@ public class NotificationController : Controller
         _auditService = auditService;
     }
 
-    // GET: /Notification
-    public async Task<IActionResult> Index(bool unreadOnly = false, int page = 1, int pageSize = 10, string sortBy = "SentAt", string sortOrder = "desc")
+    // GET: /Notification/MyNotifications
+    [HttpGet("/Notification/MyNotifications")]
+    public async Task<IActionResult> MyNotifications(bool unreadOnly = false, int page = 1, int pageSize = 10, string sortBy = "SentAt", string sortOrder = "desc")
     {
-        // Get current user ID (assume claim-based)
         if (!User.TryGetUserId(out int userId))
         {
             return RedirectToAction("Login", "Auth");
@@ -34,21 +34,23 @@ public class NotificationController : Controller
         if (!result.IsSuccess)
             return View("Error", result.Error);
 
-        return View(result.Value); // View: Views/Notification/Index.cshtml
+        return View(result.Value); // View: Views/Notification/MyNotification.cshtml
     }
 
-    // GET: /Notification/Admin
+    // GET: /Notification
     [Authorize(Roles = "Admin,Librarian")]
-    [HttpGet("Notification/Admin")]
-    public async Task<IActionResult> AdminNotification(string? search, int page = 1, int pageSize = 10, string sortBy = "SentAt", string sortOrder = "desc")
+    [HttpGet]
+    [Route("Notification")]
+    public async Task<IActionResult> Index(string? search, int page = 1, int pageSize = 10, string sortBy = "SentAt", string sortOrder = "desc")
     {
         var result = await _notificationService.GetPagedAdminNotificationsAsync(search, page, pageSize, sortBy, sortOrder);
 
         if (!result.IsSuccess)
             return View("Error", result.Error);
 
-        return View("Admin", result.Value); // View: /Views/Notification/Admin.cshtml
+        return View(result.Value);
     }
+
 
 
     // GET: /Notification/Details/5
@@ -92,11 +94,17 @@ public class NotificationController : Controller
     public async Task<IActionResult> Create([FromForm] NotificationCreateDto dto)
     {
         if (!User.TryGetUserId(out int userId))
-        {
             return RedirectToAction("Login", "Auth");
-        }
+        if (dto.Subject.Length > 200)
+            ModelState.AddModelError("Subject", "Subject cannot be longer than 200 characters.");
+        if (dto.Message.Length > 500)
+            ModelState.AddModelError("Message", "Message cannot be longer than 500 characters.");
+
+        if (!ModelState.IsValid)
+            return View(dto);
 
         var result = await _notificationService.CreateNotificationAsync(dto);
+
         await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
         {
             UserId = userId,
@@ -108,9 +116,16 @@ public class NotificationController : Controller
             IsSuccess = result.IsSuccess,
             ErrorMessage = result.IsSuccess ? null : result.Error
         });
-        if (!result.IsSuccess) return BadRequest(result.Error);
-        return RedirectToAction("Admin");
+
+        if (!result.IsSuccess)
+        {
+            ModelState.AddModelError(string.Empty, result.Error);
+            return View(dto);
+        }
+
+        return RedirectToAction("Index");
     }
+
 
     // POST: /Notification/CreateBulk (Staff only)
     [Authorize(Roles = "Admin,Librarian")]
@@ -171,16 +186,16 @@ public class NotificationController : Controller
         }
 
         var result = await _notificationService.MarkAsReadAsync(dto, userId);
+
         int successCount = 0;
         List<(int Id, string Reason)> failures = new();
+
         if (result.IsSuccess)
         {
             (successCount, failures) = result.Value;
         }
-        else if (result.IsFailure)
-        {
-            (successCount, failures) = result.Value;
-        }
+
+        // Ghi log audit
         await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
         {
             UserId = userId,
@@ -188,23 +203,34 @@ public class NotificationController : Controller
             EntityType = "Notification",
             Details = result.IsSuccess
                 ? $"Marked {successCount} notifications as read. Failures: {string.Join(", ", failures.Select(f => $"Id {f.Id}: {f.Reason}"))}"
-                : $"Failed to mark notifications as read. Failures: {string.Join(", ", failures.Select(f => $"Id {f.Id}: {f.Reason}"))}",
+                : $"Failed to mark notifications as read.",
             IsSuccess = result.IsSuccess,
-            ErrorMessage = result.IsSuccess ? (failures.Count > 0 ? string.Join(", ", failures.Select(f => $"Id {f.Id}: {f.Reason}")) : null) : result.Error
+            ErrorMessage = result.IsSuccess
+                ? (failures.Count > 0 ? string.Join(", ", failures.Select(f => $"Id {f.Id}: {f.Reason}")) : null)
+                : result.Error
         });
+
         if (!result.IsSuccess)
         {
-            // Optionally, show which failed and why
-            TempData["MarkAsReadFailures"] = string.Join(", ", failures.Select(f => $"Id {f.Id}: {f.Reason}"));
+            if (result.Error == "No unread notifications found to mark as read.")
+            {
+                return Redirect(Request.Headers["Referer"].ToString());
+            }
+
+            TempData["MarkAsReadFailures"] = result.Error;
             return BadRequest(result.Error);
         }
+
+
         if (failures.Count > 0)
         {
             TempData["MarkAsReadFailures"] = string.Join(", ", failures.Select(f => $"Id {f.Id}: {f.Reason}"));
         }
+
         TempData["MarkAsReadSuccess"] = $"Marked {successCount} notifications as read.";
-        return RedirectToAction("Index");
+        return RedirectToAction("MyNotifications");
     }
+
 
     // GET: /Notification/UnreadCount
     public async Task<IActionResult> UnreadCount()

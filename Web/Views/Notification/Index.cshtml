@@ -1,29 +1,39 @@
 ﻿@model Application.Common.PagedResult<Application.DTOs.NotificationListDto>
 
 @{
-    ViewData["Title"] = "Notifications";
+    ViewData["Title"] = "Admin Notifications";
+    var searchTerm = Context.Request.Query["search"].ToString();
 }
 
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Notifications</h2>
+        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Admin Notifications</h2>
 
-        <form asp-action="MarkAsRead" method="post" class="flex items-center gap-2">
-            <input type="hidden" name="NotificationIds" value="@string.Join(",", Model.Items.Where(n => !n.IsRead).Select(n => n.Id))" />
-            <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded shadow">
-                Mark All as Read
-            </button>
-        </form>
+        <div class="flex items-center gap-3">
+            <form method="get" class="flex items-center gap-2">
+                <input type="text" name="search" value="@searchTerm"
+                       placeholder="Search..."
+                       class="border border-gray-300 dark:border-gray-700 px-3 py-2 rounded-md w-64 dark:bg-gray-800 dark:text-white" />
+                <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                    Search
+                </button>
+            </form>
+
+            <a href="/Notification/Create"
+               class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">
+                Send notification
+            </a>
+        </div>
     </div>
 
     <div class="overflow-x-auto bg-white dark:bg-gray-800 shadow rounded-lg">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-100 dark:bg-gray-700">
                 <tr>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Email</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Subject</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Message</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Status</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Sent At</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Actions</th>
                 </tr>
@@ -31,41 +41,16 @@
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                 @foreach (var notification in Model.Items)
                 {
-                    <tr class="@(notification.IsRead ? "bg-white dark:bg-gray-800" : "bg-yellow-50 dark:bg-yellow-100")">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">@notification.Subject</td>
+                    <tr>
+                        <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">@notification.Email</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">@notification.Subject</td>
                         <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">@notification.Message</td>
-                        <td class="px-6 py-4 text-sm">
-                            @if (notification.IsRead)
-                            {
-                                <span class="text-green-600 font-medium">Read</span>
-                            }
-                            else
-                            {
-                                <span class="inline-flex items-center gap-1 text-yellow-800 font-medium">
-                                    <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M9 2a1 1 0 0 1 .993.883L10 3v6h3a1 1 0 0 1 .117 1.993L13 11h-4a1 1 0 0 1-.993-.883L8 10V3a1 1 0 0 1 1-1z" />
-                                    </svg>
-                                    Unread
-                                </span>
-                            }
-                        </td>
                         <td class="px-6 py-4 text-sm text-gray-500">@notification.SentAt?.ToString("g")</td>
-                        <td class="px-6 py-4 text-sm flex gap-2 items-center">
+                        <td class="px-6 py-4 text-sm">
                             <a asp-action="Details" asp-route-id="@notification.Id"
                                class="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1 rounded text-xs font-medium">
                                 Details
                             </a>
-
-                            @if (!notification.IsRead)
-                            {
-                                <form asp-action="MarkAsRead" method="post">
-                                    <input type="hidden" name="NotificationIds" value="@notification.Id" />
-                                    <button type="submit"
-                                            class="bg-green-100 text-green-800 hover:bg-green-200 px-3 py-1 rounded text-xs font-medium">
-                                        Mark as Read
-                                    </button>
-                                </form>
-                            }
                         </td>
                     </tr>
                 }
@@ -78,7 +63,10 @@
         int currentPage = Model.Page;
         int startPage = Math.Max(1, currentPage - 2);
         int endPage = Math.Min(totalPages, currentPage + 2);
-        var unreadOnly = Context.Request.Query["unreadOnly"];
+
+        var pageSize = Model.PageSize;
+        var sortBy = Context.Request.Query["sortBy"].ToString() ?? "SentAt";
+        var sortOrder = Context.Request.Query["sortOrder"].ToString() ?? "desc";
     }
 
     <nav class="mt-6 flex justify-center">
@@ -86,16 +74,28 @@
             @if (currentPage > 1)
             {
                 <li>
-                    <a href="@Url.Action("Index", new { page = currentPage - 1, unreadOnly = unreadOnly })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition">«</a>
+                    <a href="@Url.Action("Index", "Notification", new {
+                            page = currentPage - 1,
+                            search = searchTerm,
+                            pageSize = pageSize,
+                            sortBy = sortBy,
+                            sortOrder = sortOrder
+                        })"
+                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">«</a>
                 </li>
             }
 
             @if (startPage > 1)
             {
                 <li>
-                    <a href="@Url.Action("Index", new { page = 1, unreadOnly = unreadOnly })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">1</a>
+                    <a href="@Url.Action("Index", "Notification", new {
+                            page = 1,
+                            search = searchTerm,
+                            pageSize = pageSize,
+                            sortBy = sortBy,
+                            sortOrder = sortOrder
+                        })"
+                       class="px-4 py-2 border border-gray-300 dark:border-gray-700">1</a>
                 </li>
                 @if (startPage > 2)
                 {
@@ -106,8 +106,14 @@
             @for (int i = startPage; i <= endPage; i++)
             {
                 <li>
-                    <a href="@Url.Action("Index", new { page = i, unreadOnly = unreadOnly })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 @(i == currentPage ? "bg-blue-500 text-white" : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200") hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                    <a href="@Url.Action("Index", "Notification", new {
+                            page = i,
+                            search = searchTerm,
+                            pageSize = pageSize,
+                            sortBy = sortBy,
+                            sortOrder = sortOrder
+                        })"
+                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 @(i == currentPage ? "bg-blue-500 text-white" : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200") hover:bg-blue-100 dark:hover:bg-gray-700">
                         @i
                     </a>
                 </li>
@@ -120,19 +126,30 @@
                     <li><span class="px-4 py-2">...</span></li>
                 }
                 <li>
-                    <a href="@Url.Action("Index", new { page = totalPages, unreadOnly = unreadOnly })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">@totalPages</a>
+                    <a href="@Url.Action("Index", "Notification", new {
+                            page = totalPages,
+                            search = searchTerm,
+                            pageSize = pageSize,
+                            sortBy = sortBy,
+                            sortOrder = sortOrder
+                        })"
+                       class="px-4 py-2 border border-gray-300 dark:border-gray-700">@totalPages</a>
                 </li>
             }
 
             @if (currentPage < totalPages)
             {
                 <li>
-                    <a href="@Url.Action("Index", new { page = currentPage + 1, unreadOnly = unreadOnly })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition">»</a>
+                    <a href="@Url.Action("Index", "Notification", new {
+                            page = currentPage + 1,
+                            search = searchTerm,
+                            pageSize = pageSize,
+                            sortBy = sortBy,
+                            sortOrder = sortOrder
+                        })"
+                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">»</a>
                 </li>
             }
         </ul>
     </nav>
-
 </div>

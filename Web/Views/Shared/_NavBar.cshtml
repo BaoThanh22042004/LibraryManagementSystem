@@ -40,7 +40,7 @@
         @if (isAuthenticated && !isStaff)
         {
             <!-- Notification Bell -->
-            <a href="@Url.Action("Index", "Notification")"
+            <a href="@Url.Action("MyNotifications", "Notification")"
                class="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-alt dark:hover:bg-surface-dark-alt focus:outline-none focus:ring-2 focus:ring-primary"
                aria-label="Notifications">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-on-surface dark:text-on-surface-dark">
