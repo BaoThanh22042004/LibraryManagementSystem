@@ -1,4 +1,4 @@
-using Application.DTOs;
+﻿using Application.DTOs;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +12,7 @@ public class NotificationController : Controller
 {
     private readonly INotificationService _notificationService;
     private readonly IAuditService _auditService;
+    //private readonly IUserService _userService;
 
     public NotificationController(INotificationService notificationService, IAuditService auditService)
     {
@@ -20,7 +21,7 @@ public class NotificationController : Controller
     }
 
     // GET: /Notification
-    public async Task<IActionResult> Index(bool unreadOnly = false)
+    public async Task<IActionResult> Index(bool unreadOnly = false, int page = 1, int pageSize = 10, string sortBy = "SentAt", string sortOrder = "desc")
     {
         // Get current user ID (assume claim-based)
         if (!User.TryGetUserId(out int userId))
@@ -28,10 +29,27 @@ public class NotificationController : Controller
             return RedirectToAction("Login", "Auth");
         }
 
-        var result = await _notificationService.GetNotificationsAsync(userId, unreadOnly);
-        if (!result.IsSuccess) return View("Error", result.Error);
+        var result = await _notificationService.GetPagedNotificationsAsync(userId, unreadOnly, page, pageSize);
+
+        if (!result.IsSuccess)
+            return View("Error", result.Error);
+
         return View(result.Value); // View: Views/Notification/Index.cshtml
     }
+
+    // GET: /Notification/Admin
+    [Authorize(Roles = "Admin,Librarian")]
+    [HttpGet("Notification/Admin")]
+    public async Task<IActionResult> AdminNotification(string? search, int page = 1, int pageSize = 10, string sortBy = "SentAt", string sortOrder = "desc")
+    {
+        var result = await _notificationService.GetPagedAdminNotificationsAsync(search, page, pageSize, sortBy, sortOrder);
+
+        if (!result.IsSuccess)
+            return View("Error", result.Error);
+
+        return View("Admin", result.Value); // View: /Views/Notification/Admin.cshtml
+    }
+
 
     // GET: /Notification/Details/5
     public async Task<IActionResult> Details(int id)
@@ -57,6 +75,17 @@ public class NotificationController : Controller
         return View(result.Value); // View: Views/Notification/Details.cshtml
     }
 
+    // GET: /Notification/Create
+    [Authorize(Roles = "Admin,Librarian")]
+    [HttpGet]
+    public IActionResult Create()
+    {
+        //var users = await _userService.(); // lấy danh sách user
+        //ViewBag.Users = new SelectList(users, "Id", "Email"); // truyền sang view
+        return View();
+    }
+
+
     // POST: /Notification/Create (Staff only)
     [Authorize(Roles = "Admin,Librarian")]
     [HttpPost]
@@ -80,7 +109,7 @@ public class NotificationController : Controller
             ErrorMessage = result.IsSuccess ? null : result.Error
         });
         if (!result.IsSuccess) return BadRequest(result.Error);
-        return RedirectToAction("Index");
+        return RedirectToAction("Admin");
     }
 
     // POST: /Notification/CreateBulk (Staff only)

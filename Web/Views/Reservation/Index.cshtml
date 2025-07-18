@@ -3,11 +3,11 @@
 @{
     ViewData["Title"] = "Reservations";
 }
-
+<div class="max-w-7xl mx-auto px-7 sm:px-6 lg:px-8 py-6">
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold">Reservation Management</h1>
     <div class="flex justify-between items-center">
-        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold ml-4 py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+        <button class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg">
             <a asp-action="Create">
                 Add New Reservation
             </a>
@@ -18,94 +18,76 @@
 
 @await Html.PartialAsync("_AlertsPartial")
 
-<div class="bg-white shadow-md rounded-lg overflow-hidden">
     <!-- Reservations Table -->
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Member Name
-                    </th>
-                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Book Title
-                    </th>
-                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Book Copy Id
-                    </th>
-                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Reservation Date
-                    </th>
-                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Pickup Deadline
-                    </th>
-                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Queue Position
-                    </th>
-                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                    </th>
-                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                    </th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @if (Model.Items.Any())
-                {
-                    @foreach (var reservation in Model.Items)
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+        <div class="flex items-center justify-between px-4 py-3">
+            <h2 class="text-lg font-semibold">Reservation List</h2>
+            <span class="text-sm">Total: @Model.Count reservations</span>
+        </div>
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+        <table class="w-full text-left text-sm text-on-surface dark:text-on-surface-dark">
+            <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark-strong">
+                    <tr>
+                        <th class="p-4 text-center">MEMBER NAME</th>
+                        <th class="p-4 text-center">BOOK TITLE</th>
+                        <th class="p-4 text-center">BOOK COPY ID</th>
+                        <th class="p-4 text-center">RESERVATION DATE</th>
+                        <th class="p-4 text-center">PICKUP DEADLINE</th>
+                        <th class="p-4 text-center">QUEUE POSITION</th>
+                        <th class="p-4 text-center">STATUS</th>
+                        <th class="p-4 text-center">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline dark:divide-outline-dark bg-surface dark:bg-surface-dark">
+                    @if (Model.Items.Any())
                     {
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">@reservation.MemberName</div>
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900 ">@reservation.BookTitle</div>
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500 text-center">@reservation.BookCopyId</div>
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500 text-center">@reservation.ReservationDate</div>
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500 text-center">@reservation.PickupDeadline</div>
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500 text-center">@reservation.QueuePosition</div>
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-center">
-                                @{
-                                    var statusClasses = reservation.Status switch
-                                    {
-                                        Domain.Enums.ReservationStatus.Active => "bg-green-100 text-green-800",
-                                        Domain.Enums.ReservationStatus.Fulfilled => "bg-blue-100 text-blue-800",
-                                        Domain.Enums.ReservationStatus.Cancelled => "bg-red-100 text-red-800",
-                                        Domain.Enums.ReservationStatus.Expired => "bg-gray-100 text-gray-800",
-                                        _ => "bg-gray-100 text-gray-800"
-                                    };
-                                }
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @statusClasses">
-                                    @reservation.Status
-                                </span>
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                <a asp-action="Details" asp-route-id="@reservation.Id" class="text-blue-600 hover:text-blue-900">Details</a>
+                        @foreach (var reservation in Model.Items)
+                        {
+                            <tr class="hover:bg-surface-alt/50 dark:hover:bg-surface-dark-alt/50">
+                                <td class="p-4 whitespace-nowrap text-center font-medium">@reservation.MemberName</td>
+                                <td class="p-4 whitespace-nowrap text-center">@reservation.BookTitle</td>
+                                <td class="p-4 whitespace-nowrap text-center text-on-surface/70 dark:text-on-surface-dark/70">@reservation.BookCopyId</td>
+                                <td class="p-4 whitespace-nowrap text-center text-on-surface/70 dark:text-on-surface-dark/70">@reservation.ReservationDate</td>
+                                <td class="p-4 whitespace-nowrap text-center text-on-surface/70 dark:text-on-surface-dark/70">@reservation.PickupDeadline</td>
+                                <td class="p-4 whitespace-nowrap text-center text-on-surface/70 dark:text-on-surface-dark/70">@reservation.QueuePosition</td>
+                                <td class="p-4 text-center">
+                                    @{
+                                        var statusClasses = reservation.Status switch
+                                        {
+                                            Domain.Enums.ReservationStatus.Active => "bg-green-100 text-green-700",
+                                            Domain.Enums.ReservationStatus.Fulfilled => "bg-blue-100 text-blue-700",
+                                            Domain.Enums.ReservationStatus.Cancelled => "bg-red-100 text-red-700",
+                                            Domain.Enums.ReservationStatus.Expired => "bg-gray-100 text-gray-700",
+                                            _ => "bg-gray-100 text-gray-600"
+                                        };
+                                    }
+                                    <span class="inline-block px-2 py-1 rounded text-xs font-semibold @statusClasses">
+                                        @reservation.Status
+                                    </span>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <a asp-action="Details" asp-route-id="@reservation.Id"
+                                       class="whitespace-nowrap rounded-radius bg-transparent p-0.5 font-semibold text-primary outline-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 active:opacity-100 active:outline-offset-0 dark:text-primary-dark dark:outline-primary-dark"
+                                       title="View details">
+                                        Details
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="p-6 text-center text-on-surface/60 dark:text-on-surface-dark/60">
+                                No reservations found.
                             </td>
                         </tr>
                     }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="7" class="px-4 py-4 text-center text-gray-500">
-                            No loans found.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
+
     <!-- Pagination -->
     @if (Model.Count > 0)
     {
@@ -198,4 +180,4 @@
             </div>
         </div>
     }
-</div>
+    </div>
