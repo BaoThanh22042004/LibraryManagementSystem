@@ -1,63 +1,86 @@
 @model Application.Common.PagedResult<Application.DTOs.FineBasicDto>
+
 @{
     ViewData["Title"] = "Fines Report";
 }
-<h2>Fines Report</h2>
+
+<h2 class="text-2xl font-semibold mb-4">Fines Report</h2>
+
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    <div class="bg-red-100 text-red-700 p-4 rounded mb-4">
+        @TempData["ErrorMessage"]
+    </div>
 }
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Member</th>
-            <th>Amount</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var fine in Model.Items)
-    {
-        <tr>
-            <td>
-                <div><strong>@fine.MemberName</strong></div>
-                <div><strong>Email:</strong> @fine.MemberEmail</div>
-                @if (!string.IsNullOrEmpty(fine.MemberPhone)) {
-                    <div><strong>Phone:</strong> @fine.MemberPhone</div>
-                }
-                @if (!string.IsNullOrEmpty(fine.MemberAddress)) {
-                    <div><strong>Address:</strong> @fine.MemberAddress</div>
-                }
-            </td>
-            <td>@fine.Amount.ToString("C")</td>
-            <td>@fine.FineDate.ToString("yyyy-MM-dd")</td>
-            <td>@fine.Status</td>
-            <td>@fine.Description</td>
-        </tr>
-    }
-    @if (!Model.Items.Any())
-    {
-        <tr>
-            <td colspan="5" class="text-center">No pending fines found.</td>
-        </tr>
-    }
-    </tbody>
-</table>
-<div>
-    <a class="btn btn-primary" asp-action="DownloadFinesReportCsv">Export CSV</a>
+
+<div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+    <table class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+        <thead>
+            <tr class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark-strong">
+                <th class="p-3 border-b">Member</th>
+                <th class="p-3 border-b">Amount</th>
+                <th class="p-3 border-b">Date</th>
+                <th class="p-3 border-b">Status</th>
+                <th class="p-3 border-b">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var fine in Model.Items)
+            {
+                <tr class="hover:bg-gray-50 text-sm text-gray-800">
+                    <td class="p-3 border-b">
+                        <div class="font-medium">@fine.MemberName</div>
+                        <div><span class="font-semibold">Email:</span> @fine.MemberEmail</div>
+                        @if (!string.IsNullOrEmpty(fine.MemberPhone))
+                        {
+                            <div><span class="font-semibold">Phone:</span> @fine.MemberPhone</div>
+                        }
+                        @if (!string.IsNullOrEmpty(fine.MemberAddress))
+                        {
+                            <div><span class="font-semibold">Address:</span> @fine.MemberAddress</div>
+                        }
+                    </td>
+                    <td class="p-3 border-b">@fine.Amount.ToString("C")</td>
+                    <td class="p-3 border-b">@fine.FineDate.ToString("yyyy-MM-dd")</td>
+                    <td class="p-3 border-b">@fine.Status</td>
+                    <td class="p-3 border-b">@fine.Description</td>
+                </tr>
+            }
+
+            @if (!Model.Items.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-gray-500 p-4">No pending fines found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
+
+<div class="mt-4">
+    <a class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded" asp-action="DownloadFinesReportCsv">
+        Export CSV
+    </a>
+</div>
+
 @if (Model.TotalPages > 1)
 {
-    <nav>
-        <ul class="pagination">
+    <nav class="mt-6">
+        <ul class="flex space-x-1 justify-start">
             @for (int i = 1; i <= Model.TotalPages; i++)
             {
-                <li class="page-item @(i == Model.Page ? "active" : "")">
-                    <a class="page-link" asp-action="FinesReport" asp-route-page="@i" asp-route-pageSize="@Model.PageSize">@i</a>
-                </li>
-            }
+                <li>
+                    <a class="px-3 py-1 rounded border text-sm
+                                @(i == Model.Page
+                                                   ? "bg-blue-600 text-white border-blue-600"
+                                                   : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100")"
+               asp-action="FinesReport"
+               asp-route-page="@i"
+               asp-route-pageSize="@Model.PageSize">
+                @i
+            </a>
+        </li>
+                }
         </ul>
     </nav>
-} 
+}

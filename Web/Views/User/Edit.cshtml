@@ -6,11 +6,11 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
     <div class="flex justify-between mb-6">
         <div class="space-x-4">
-            <a asp-action="Details" asp-route-id="@Model.Id" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
-                ← Back to Details
+            <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
+                ← Back to List
             </a>
-            <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-gray-500 hover:bg-gray-100 text-sm rounded-md transition">
-                ← Back to List   
+            <a asp-action="Details" asp-route-id="@Model.Id" class="inline-flex items-center px-3 py-1.5 border border-gray-500 hover:bg-gray-100 text-sm rounded-md transition">
+                ← Back to Details
             </a>
         </div>
     </div>
