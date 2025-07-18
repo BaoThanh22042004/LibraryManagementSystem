@@ -14,4 +14,6 @@ public interface INotificationService
     Task<Common.Result<int>> GetUnreadCountAsync(int memberId);
     Task<Common.Result<(int SuccessCount, List<string> Errors)>> SendOverdueNotificationsAsync(); // For scheduled job
     Task<Common.Result<(int SuccessCount, List<string> Errors)>> SendAvailabilityNotificationsAsync(); // For scheduled job
+    Task<Result<PagedResult<NotificationListDto>>> GetPagedNotificationsAsync(int userId, bool unreadOnly, int page, int pageSize);
+    Task<Result<PagedResult<NotificationListDto>>> GetPagedAdminNotificationsAsync(string? search, int page, int pageSize, string sortBy, string sortOrder);
 }
