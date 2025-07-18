@@ -369,9 +369,9 @@ public class BookService : IBookService
                 var searchTerm = request.SearchTerm.ToLower();
                 var categoryId = request.CategoryId.Value;
 
-				predicate = b => (b.Title.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) ||
-								 b.Author.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) ||
-								 b.ISBN.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase)) &&
+				predicate = b => (b.Title.ToLower().Contains(searchTerm.ToLower()) ||
+								 b.Author.ToLower().Contains(searchTerm.ToLower()) ||
+								 b.ISBN.ToLower().Contains(searchTerm.ToLower())) &&
                                  b.Categories.Any(c => c.Id == categoryId);
             }
             // Filter by search term only
@@ -379,9 +379,9 @@ public class BookService : IBookService
             {
                 var searchTerm = request.SearchTerm.ToLower();
                 
-                predicate = b => b.Title.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) || 
-                                b.Author.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) || 
-                                b.ISBN.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase);
+                predicate = b => b.Title.ToLower().Contains(searchTerm.ToLower()) || 
+                                b.Author.ToLower().Contains(searchTerm.ToLower()) || 
+                                b.ISBN.ToLower().Contains(searchTerm.ToLower());
             }
             // Filter by category only
             else if (request.CategoryId.HasValue)
