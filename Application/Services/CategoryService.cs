@@ -212,8 +212,8 @@ public class CategoryService : ICategoryService
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var searchTerm = request.SearchTerm.ToLower();
-                predicate = c => c.Name.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) || 
-                                (c.Description != null && c.Description.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase));
+                predicate = c => c.Name.ToLower().Contains(searchTerm.ToLower()) || 
+                                (c.Description != null && c.Description.ToLower().Contains(searchTerm.ToLower()));
             }
 
             // If pagination is not applied, get all categories
@@ -305,11 +305,11 @@ public class CategoryService : ICategoryService
             Expression<Func<Category, bool>> predicate;
             if (excludeId.HasValue)
             {
-                predicate = c => c.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase) && c.Id != excludeId.Value;
-            }
+				predicate = c => c.Name.ToLower() == name.ToLower() && c.Id != excludeId.Value;
+			}
             else
             {
-                predicate = c => c.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase);
+                predicate = c => c.Name.ToLower() == name.ToLower();
             }
 
             var exists = await _unitOfWork.Repository<Category>().ExistsAsync(predicate);

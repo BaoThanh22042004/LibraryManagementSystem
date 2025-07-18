@@ -1,15 +1,16 @@
 using Application.Common;
 using Application.DTOs;
 using Application.Interfaces;
+using Application.Services;
 using Application.Validators;
 using Domain.Enums;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
 using System.Security.Claims;
 using Web.Extensions;
-using Microsoft.AspNetCore.Http;
-using System.IO;
 
 namespace Web.Controllers
 {
@@ -209,7 +210,7 @@ namespace Web.Controllers
 					userId, model.Name, DateTime.UtcNow);
 
 				TempData["SuccessMessage"] = $"Category '{model.Name}' created successfully.";
-				return RedirectToAction(nameof(Details), new { id = result.Value });
+				return RedirectToAction(nameof(Details), new { id = result.Value.Id });
 			}
 			catch (Exception ex)
 			{
@@ -468,6 +469,20 @@ namespace Web.Controllers
 			{
 				_logger.LogError(ex, "Error retrieving categories for selection");
 				return Json(new { success = false, error = "An error occurred while retrieving categories." });
+			}
+		}
+
+		public async Task<JsonResult> NameExists(string name, int? id = null)
+		{
+			try
+			{
+				var result = await _categoryService.CategoryNameExistsAsync(name, id);
+				return Json(!(result.IsSuccess && result.Value));
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Error checking if category name exists: {Name}", name);
+				return Json(true);
 			}
 		}
 	}
