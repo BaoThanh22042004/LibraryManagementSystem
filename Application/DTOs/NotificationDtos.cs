@@ -1,4 +1,4 @@
-using Domain.Enums;
+﻿using Domain.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -43,6 +43,7 @@ public class NotificationListDto
     public NotificationType Type { get; set; }
     public string Subject { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
     public NotificationStatus Status { get; set; }
     public DateTime? SentAt { get; set; }
     public DateTime CreatedAt { get; set; }

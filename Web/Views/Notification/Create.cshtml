@@ -1,0 +1,61 @@
+﻿@model Application.DTOs.NotificationCreateDto
+@{
+    ViewData["Title"] = "Create Notification";
+}
+
+<div class="max-w-2xl mx-auto px-4 py-10">
+    <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6 text-center">
+        Send Notification
+    </h2>
+
+    <form asp-action="Create" method="post" class="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <div>
+            <label asp-for="UserId" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">User ID</label>
+            <input asp-for="UserId" type="number"
+                   class="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-base" />
+            <span asp-validation-for="UserId" class="text-sm text-red-500"></span>
+        </div>
+
+        <div>
+            <label asp-for="Type" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">Notification Type</label>
+            <select asp-for="Type"
+                    class="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-base">
+                <option value="">-- Select Type --</option>
+                <option value="LoanReminder">Loan Reminder</option>
+                <option value="OverdueNotice">Overdue Notice</option>
+                <option value="ReservationAvailable">Reservation Available</option>
+                <option value="SystemMaintenance">System Maintenance</option>
+                <option value="ReservationConfirmation">Reservation Confirmation</option>
+                <option value="ReservationCancellation">Reservation Cancellation</option>
+            </select>
+            <span asp-validation-for="Type" class="text-sm text-red-500"></span>
+        </div>
+
+        <div>
+            <label asp-for="Subject" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
+            <input asp-for="Subject"
+                   class="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-base" />
+            <span asp-validation-for="Subject" class="text-sm text-red-500"></span>
+        </div>
+
+        <div>
+            <label asp-for="Message" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
+            <textarea asp-for="Message" rows="5"
+                      class="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-base"></textarea>
+            <span asp-validation-for="Message" class="text-sm text-red-500"></span>
+        </div>
+
+        <div class="text-right">
+            <button type="submit"
+                    class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow">
+                Send Notification
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,14 +1,15 @@
-using Application.Common;
+﻿using Application.Common;
 using Application.DTOs;
 using Application.Interfaces;
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Domain.Entities;
 using Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-// using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services;
 
@@ -36,6 +37,7 @@ public class NotificationService : INotificationService
         var notification = _mapper.Map<Notification>(dto);
         notification.Status = NotificationStatus.Pending;
         notification.CreatedAt = DateTime.UtcNow;
+        notification.SentAt = DateTime.UtcNow;
         var repo = _unitOfWork.Repository<Notification>();
         await repo.AddAsync(notification);
         await _unitOfWork.SaveChangesAsync();
@@ -278,4 +280,74 @@ public class NotificationService : INotificationService
         if (sentCount > 0) await _unitOfWork.SaveChangesAsync();
         return Result.Success((sentCount, errors));
     }
+    public async Task<Result<PagedResult<NotificationListDto>>> GetPagedNotificationsAsync(int userId, bool unreadOnly, int page, int pageSize)
+    {
+        var query = _unitOfWork.Repository<Notification>()
+            .Query()
+            .Where(n => n.UserId == userId);
+
+        if (unreadOnly)
+        {
+            query = query.Where(n => n.ReadAt == null);
+        }
+
+        var totalRecords = await query.CountAsync();
+
+        var data = await query
+        .OrderByDescending(n => n.SentAt ?? DateTime.MinValue) // 👈 Sắp xếp giảm dần theo SentAt
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ProjectTo<NotificationListDto>(_mapper.ConfigurationProvider)
+        .ToListAsync();
+
+        var pagedResult = new PagedResult<NotificationListDto>
+        {
+            Items = data,
+            Page = page,
+            PageSize = pageSize,
+            Count = totalRecords
+        };
+
+        return Result<PagedResult<NotificationListDto>>.Success(pagedResult); 
+    }
+    public async Task<Result<PagedResult<NotificationListDto>>> GetPagedAdminNotificationsAsync(string? search, int page, int pageSize, string sortBy, string sortOrder)
+    {
+        var query = _unitOfWork.Repository<Notification>().Query();
+
+        // Tìm kiếm theo Subject, Message, Email
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            string keyword = search.Trim().ToLower();
+            query = query.Where(n =>
+                n.Subject.ToLower().Contains(keyword) ||
+                n.Message.ToLower().Contains(keyword) ||
+                (n.User != null && n.User.Email.ToLower().Contains(keyword)));
+        }
+
+        var totalRecords = await query.CountAsync();
+
+        // Sắp xếp
+        query = sortBy switch
+        {
+            "CreatedAt" => sortOrder == "asc" ? query.OrderBy(n => n.CreatedAt) : query.OrderByDescending(n => n.CreatedAt),
+            _ => sortOrder == "asc" ? query.OrderBy(n => n.SentAt ?? DateTime.MinValue) : query.OrderByDescending(n => n.SentAt ?? DateTime.MinValue)
+        };
+
+        var data = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ProjectTo<NotificationListDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        var result = new PagedResult<NotificationListDto>
+        {
+            Items = data,
+            Page = page,
+            PageSize = pageSize,
+            Count = totalRecords
+        };
+
+        return Result.Success(result);
+    }
+
 }
