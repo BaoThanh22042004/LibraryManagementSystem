@@ -23,34 +23,49 @@
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="SearchTerm">Search</label>
                     <div class="relative">
-                        <input type="text" id="SearchTerm" name="SearchTerm" value="@ViewBag.SearchTerm" 
+                        <input type="text" id="SearchTerm" name="SearchTerm"
+                               value="@ViewBag.SearchTerm"
                                class="w-full p-2 pl-10 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="Search by title, author, or ISBN...">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3">
                             <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
                     </div>
                 </div>
-                
+
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="CategoryId">Category</label>
-                    <select id="CategoryId" name="CategoryId" 
+                    <select id="CategoryId" name="CategoryId"
                             class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Categories</option>
+                        @if (ViewBag.CategoryId == null)
+                        {
+                            <option value="" selected>All Categories</option>
+                        }
+                        else
+                        {
+                            <option value="">All Categories</option>
+                        }
+
                         @if (ViewBag.Categories != null)
                         {
-                            @foreach (var category in ViewBag.Categories)
+                            foreach (var category in ViewBag.Categories)
                             {
-                                <option value="@category.Id" selected="@(ViewBag.CategoryId != null && ViewBag.CategoryId == category.Id ? "true" : "false")">
-                                    @category.Name
-                                </option>
+                                if (ViewBag.CategoryId != null && ViewBag.CategoryId.ToString() == category.Id.ToString())
+                                {
+                                    <option value="@category.Id" selected>@category.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@category.Id">@category.Name</option>
+                                }
                             }
                         }
                     </select>
                 </div>
-                
+
                 <div class="flex items-end">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
                         Search
@@ -61,6 +76,7 @@
                 </div>
             </div>
         </form>
+
     </div>
 
     <!-- Books Table -->
@@ -193,7 +209,7 @@
                         
                         @if (Model.Page > 1)
                         {
-                            routeData["PageNumber"] = (Model.Page - 1).ToString();
+                            routeData["Page"] = (Model.Page - 1).ToString();
                             <a asp-action="Index" asp-all-route-data="@routeData"
                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                 <span class="sr-only">Previous</span>
@@ -223,7 +239,7 @@
                             }
                             else
                             {
-                                routeData["PageNumber"] = i.ToString();
+                                routeData["Page"] = i.ToString();
                                 <a asp-action="Index" asp-all-route-data="@routeData"
                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
                                     @i
@@ -233,7 +249,7 @@
 
                         @if (Model.Page < totalPages)
                         {
-                            routeData["PageNumber"] = (Model.Page + 1).ToString();
+                            routeData["Page"] = (Model.Page + 1).ToString();
                             <a asp-action="Index" asp-all-route-data="@routeData"
                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                                 <span class="sr-only">Next</span>
