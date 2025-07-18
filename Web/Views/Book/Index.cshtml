@@ -2,12 +2,12 @@
 @{
     ViewData["Title"] = "Books";
 }
-
-<div class="flex justify-between items-center mb-6">
+<div class="max-w-7xl mx-auto px-7 sm:px-6 lg:px-8 py-6">
+    <div class="flex items-center justify-between mb-6">
     <h1 class="text-3xl font-bold">Book Management</h1>
     @if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
     {
-        <a asp-action="Create" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+         <a asp-action="Create" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg">
             Add New Book
         </a>
     }
@@ -15,7 +15,6 @@
 
 @await Html.PartialAsync("_AlertsPartial")
 
-<div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
     <!-- Search Form -->
     <div class="bg-gray-50 p-4 border-b">
         <form asp-action="Index" method="get" class="space-y-4">
@@ -48,11 +47,11 @@
                         {
                             <option value="">All Categories</option>
                         }
-
                         @if (ViewBag.Categories != null)
                         {
                             foreach (var category in ViewBag.Categories)
                             {
+
                                 if (ViewBag.CategoryId != null && ViewBag.CategoryId.ToString() == category.Id.ToString())
                                 {
                                     <option value="@category.Id" selected>@category.Name</option>
@@ -65,7 +64,6 @@
                         }
                     </select>
                 </div>
-
                 <div class="flex items-end">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">
                         Search
@@ -75,93 +73,93 @@
                     </a>
                 </div>
             </div>
+
+            <!-- Search Buttons -->
+            <div>
+                <button type="submit"
+                        class="whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">
+                    Search
+                </button>
+            </div>
         </form>
 
     </div>
-
     <!-- Books Table -->
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+        <div class="flex items-center justify-between px-4 py-3">
+            <h2 class="text-lg font-semibold">Book List</h2>
+            <span class="text-sm">Total: @Model.Count books</span>
+        </div>
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+        <table class="w-full text-left text-sm text-on-surface dark:text-on-surface-dark">
+            <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark-strong">
                 <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Cover
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Title
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Author
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        ISBN
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Copies
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                    </th>
+                    <th class="p-4">COVER</th>
+                    <th class="p-4">TITLE</th>
+                    <th class="p-4">AUTHOR</th>
+                    <th class="p-4">ISBN</th>
+                    <th class="p-4">STATUS</th>
+                    <th class="p-4">COPIES</th>
+                    <th class="p-4 text-right">ACTIONS</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="divide-y divide-outline dark:divide-outline-dark bg-surface dark:bg-surface-dark">
                 @if (Model.Items.Any())
                 {
                     @foreach (var book in Model.Items)
                     {
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap">
+                        <tr class="hover:bg-surface-alt/50 dark:hover:bg-surface-dark-alt/50">
+                            <td class="p-4 whitespace-nowrap">
                                 @if (!string.IsNullOrEmpty(book.CoverImageUrl))
                                 {
                                     <img src="@book.CoverImageUrl" alt="@book.Title" class="h-16 w-12 object-cover rounded">
                                 }
                                 else
                                 {
-                                    <div class="h-16 w-12 rounded bg-gray-200 flex items-center justify-center text-gray-500">
+                                    <div class="h-16 w-12 rounded bg-outline/30 dark:bg-outline-dark/30 flex items-center justify-center text-on-surface/40 dark:text-on-surface-dark/40">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                         </svg>
                                     </div>
                                 }
                             </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm font-medium text-gray-900">@book.Title</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-500">@book.Author</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500">@book.ISBN</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="p-4 font-medium">@book.Title</td>
+                            <td class="p-4 text-on-surface/70 dark:text-on-surface-dark/70">@book.Author</td>
+                            <td class="p-4 text-on-surface/70 dark:text-on-surface-dark/70">@book.ISBN</td>
+                            <td class="p-4">
                                 @{
                                     var statusClasses = book.Status switch
                                     {
-                                        Domain.Enums.BookStatus.Available => "bg-green-100 text-green-800",
-                                        Domain.Enums.BookStatus.Unavailable => "bg-red-100 text-red-800",
+                                        Domain.Enums.BookStatus.Available => "bg-green-100 text-green-700",
+                                        Domain.Enums.BookStatus.Unavailable => "bg-red-100 text-red-700",
                                         Domain.Enums.BookStatus.UnderMaintenance => "bg-yellow-100 text-yellow-800",
-                                        _ => "bg-gray-100 text-gray-800"
+                                        _ => "bg-gray-100 text-gray-600"
                                     };
                                 }
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @statusClasses">
+                                <span class="inline-block px-2 py-1 rounded text-xs font-semibold @statusClasses">
                                     @book.Status
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">
-                                    <span class="font-semibold text-green-600">@book.AvailableCopies</span> / <span>@book.TotalCopies</span>
-                                </div>
+                            <td class="p-4">
+                                <span class="text-sm font-semibold text-green-600">@book.AvailableCopies</span>
+                                <span class="text-on-surface/60 dark:text-on-surface-dark/60"> / @book.TotalCopies</span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a asp-action="Details" asp-route-id="@book.Id" class="text-blue-600 hover:text-blue-900 mr-3">Details</a>
-                                @if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
-                                {
-                                    <a asp-action="Edit" asp-route-id="@book.Id" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                    <a asp-action="Delete" asp-route-id="@book.Id" class="text-red-600 hover:text-red-900">Delete</a>
-                                }
+                            <td class="p-4 text-right">
+                                <div class="flex justify-end gap-2">
+                                    <a asp-action="Details" asp-route-id="@book.Id"
+                                       class="whitespace-nowrap rounded-radius bg-transparent p-0.5 font-semibold text-primary outline-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 active:opacity-100 active:outline-offset-0 dark:text-primary-dark dark:outline-primary-dark"
+                                       title="View details">
+                                        Details
+                                    </a>
+                                    @if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@book.Id"
+                                           class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">Edit</a>
+                                        <a asp-action="Delete" asp-route-id="@book.Id"
+                                           class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</a>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
@@ -169,14 +167,17 @@
                 else
                 {
                     <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
-                            No books found. @(ViewBag.SearchTerm != null || ViewBag.CategoryId != null ? "Try different search criteria." : "")
+                        <td colspan="7" class="p-6 text-center text-on-surface/60 dark:text-on-surface-dark/60">
+                            No books found.
+                            @(ViewBag.SearchTerm != null || ViewBag.CategoryId != null ? "Try different search criteria." : "")
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
+</div>
+
 
     <!-- Pagination -->
     @if (Model.Count > 0)
