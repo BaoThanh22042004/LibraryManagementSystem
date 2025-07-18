@@ -25,6 +25,10 @@ public interface IFineService
 
     Task<Result<PagedResult<FineBasicDto>>> GetFinesAsync(FineSearchRequest request);
 
+    Task<Result<PagedResult<FineBasicDto>>> GetMyFinesAsync(int userId, int page, int pageSize);
+
+    Task<Result<FineDetailDto>> GetMyFineDetailsAsync(int fineId, int userId);
+
     Task<Result<IEnumerable<FineBasicDto>>> GetFinesByLoanIdAsync(int loanId);
 
     Task<Result<int>> GenerateOverdueFinesAsync();

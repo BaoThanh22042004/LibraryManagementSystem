@@ -1,5 +1,140 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model PagedResult<FineBasicDto>
+@using Application.Common
+@using Application.DTOs
+@using Domain.Enums
+
 @{
+    var memberDetails = ViewBag.MemberDetails as UserDetailsDto;
+    var memberId = ViewBag.MemberId as int?;
+    var totalPendingFines = ViewBag.TotalPendingFines as decimal?;
+
+    ViewData["Title"] = memberDetails != null ? $"Fines for {memberDetails.FullName}" : "Member Fines";
+
+    Func<FineStatus, string> GetStatusColorClass = status => status switch
+    {
+        FineStatus.Pending => "bg-yellow-500/10 text-yellow-400",
+        FineStatus.Paid => "bg-green-500/10 text-green-400",
+        FineStatus.Waived => "bg-gray-500/10 text-gray-400",
+        _ => "bg-blue-500/10 text-blue-400"
+    };
 }
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface dark:text-on-surface-dark">
+    @if (memberDetails != null)
+    {
+        <div class="sm:flex sm:items-center sm:justify-between mb-6">
+            <div>
+                <h1 class="text-3xl font-bold">@ViewData["Title"]</h1>
+                <p class="mt-2 text-sm text-on-surface-weak dark:text-on-surface-dark-weak">
+                    A complete history of all fines issued to this member (ID: @memberDetails.Id).
+                </p>
+            </div>
+            <a asp-action="Details" asp-controller="User" asp-route-id="@memberDetails.Id" class="mt-4 sm:mt-0 inline-flex items-center justify-center rounded-md border border-outline px-4 py-2 text-sm font-medium shadow-sm hover:bg-white/5">
+                ← Back to Member Details
+            </a>
+        </div>
+
+        @if (totalPendingFines.HasValue && totalPendingFines.Value > 0)
+        {
+            <div class="mb-6 p-4 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg flex items-center justify-between">
+                <div>
+                    <h4 class="font-semibold">Outstanding Balance</h4>
+                    <p class="text-sm">This member has an outstanding fine balance of <strong class="text-lg">@totalPendingFines.Value.ToString("C")</strong>.</p>
+                </div>
+            </div>
+        }
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="mb-6 p-4 bg-red-100 text-red-800 border border-red-300 rounded-md">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="bg-surface-alt dark:bg-surface-dark-alt rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-outline dark:divide-outline-dark">
+                <thead class="bg-surface dark:bg-surface-dark">
+                    <tr>
+                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6">Fine Info</th>
+                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Amount</th>
+                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Date Issued</th>
+                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Status</th>
+                        <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                            <span class="sr-only">Details</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline dark:divide-outline-dark">
+                    @if (Model != null && Model.Items.Any())
+                    {
+                        foreach (var fine in Model.Items)
+                        {
+                            <tr>
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+                                    <a asp-action="Details" asp-controller="Fine" asp-route-id="@fine.Id" class="font-semibold text-primary hover:underline">#@fine.Id</a>
+                                    @if (fine.LoanId.HasValue)
+                                    {
+                                        <div class="text-xs">
+                                            Loan:
+                                            <a asp-controller="Loan" asp-action="Details" asp-route-id="@fine.LoanId" class="text-on-surface-weak hover:underline">#@fine.LoanId</a>
+                                        </div>
+                                    }
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm font-bold">
+                                    @fine.Amount.ToString("C")
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    @fine.FineDate.ToString("dd MMM, yyyy")
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium @GetStatusColorClass(fine.Status)">
+                                        @fine.Status.ToString()
+                                    </span>
+                                </td>
+                                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                    <a asp-action="Details" asp-controller="Fine" asp-route-id="@fine.Id" class="text-primary hover:text-primary-dark">
+                                        View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="px-6 py-20 text-center">
+                                <div class="flex flex-col items-center">
+                                    <svg class="h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                    </svg>
+                                    <h3 class="mt-2 text-sm font-semibold">No Fines Found</h3>
+                                    <p class="mt-1 text-sm text-gray-500">This member currently has no fines on their record.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @if (Model != null && Model.TotalPages > 1)
+    {
+        <div class="mt-6 flex items-center justify-between">
+            <div class="text-sm text-on-surface-weak dark:text-on-surface-dark-weak">
+                Showing @(((Model.Page - 1) * Model.PageSize) + 1)
+                to @(Math.Min(Model.Page * Model.PageSize, Model.Count))
+                of @Model.Count results
+            </div>
+            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                <a asp-action="MemberFines" asp-route-memberId="@memberId" asp-route-page="@(Model.Page - 1)" class="relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-outline dark:ring-outline-dark hover:bg-gray-50 dark:hover:bg-gray-800 @(Model.HasPreviousPage ? "" : "pointer-events-none opacity-40")">
+                    Previous
+                </a>
+                <span class="relative z-10 inline-flex items-center bg-primary px-4 py-2 text-sm font-semibold text-white">Page @Model.Page of @Model.TotalPages</span>
+                <a asp-action="MemberFines" asp-route-memberId="@memberId" asp-route-page="@(Model.Page + 1)" class="relative inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-outline dark:ring-outline-dark hover:bg-gray-50 dark:hover:bg-gray-800 @(Model.HasNextPage ? "" : "pointer-events-none opacity-40")">
+                    Next
+                </a>
+            </nav>
+        </div>
+    }
+</div>

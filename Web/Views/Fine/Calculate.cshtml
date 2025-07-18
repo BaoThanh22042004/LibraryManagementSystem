@@ -1,5 +1,126 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model Application.DTOs.CalculateFineRequest
+@using Application.DTOs
+@using Domain.Enums
+
 @{
+    ViewData["Title"] = "Calculate Overdue Fine";
+    var loanDetails = ViewBag.LoanDetails as LoanDetailDto;
+
+    Func<LoanStatus, string> GetLoanStatusColorClass = status => status switch
+    {
+        LoanStatus.Overdue => "bg-red-500/10 text-red-400",
+        LoanStatus.Active => "bg-blue-500/10 text-blue-400",
+        LoanStatus.Returned => "bg-green-500/10 text-green-400",
+        LoanStatus.Lost => "bg-gray-500/10 text-gray-400",
+        _ => "bg-gray-500/10 text-gray-400"
+    };
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface dark:text-on-surface-dark">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">@ViewData["Title"]</h1>
+            <p class="mt-1 text-sm text-on-surface-weak dark:text-on-surface-dark-weak">Calculate and create a new fine record for an overdue loan.</p>
+        </div>
+    </div>
+
+    <hr class="border-outline dark:border-outline-dark mb-8" />
+
+    @if (loanDetails == null)
+    {
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative" role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline">Loan details could not be loaded. Please ensure the loan exists and try again.</span>
+            <div class="mt-2">
+                <a asp-action="Index" asp-controller="Loan" class="font-semibold text-red-800 hover:text-red-600">Return to Loan List →</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-5/12">
+                <div class="bg-surface-alt dark:bg-surface-dark-alt shadow-md rounded-lg p-6 sticky top-8">
+                    <h2 class="text-xl font-semibold mb-4 flex justify-between items-center">
+                        <span>Loan Information</span>
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium @GetLoanStatusColorClass(loanDetails.Status)">
+                            @loanDetails.Status
+                        </span>
+                    </h2>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Member:</span>
+                            <span>@loanDetails.MemberName</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Book Title:</span>
+                            <span class="text-right">@loanDetails.BookTitle</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Loan Date:</span>
+                            <span>@loanDetails.LoanDate.ToString("dd MMM, yyyy")</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Due Date:</span>
+                            <span class="font-bold text-red-500">@loanDetails.DueDate.ToString("dd MMM, yyyy")</span>
+                        </div>
+                    </div>
+
+                    @if (loanDetails.Status != LoanStatus.Overdue)
+                    {
+                        <div class="mt-6 p-3 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-md text-sm">
+                            <strong class="font-semibold">Notice:</strong> This loan is not yet overdue. Calculating a fine now might not be necessary.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="lg:w-7/12">
+                <div class="bg-surface-alt dark:bg-surface-dark-alt shadow-md rounded-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4">Fine Calculation Process</h2>
+                    <p class="text-sm text-on-surface-weak dark:text-on-surface-dark-weak mb-4">
+                        You are about to automatically calculate the fine for the loan detailed on the left. The system will use:
+                    </p>
+                    <ul class="list-disc list-inside space-y-2 text-sm mb-6">
+                        <li>Number of days overdue as of <strong>@DateTime.Now.ToString("dd MMM, yyyy")</strong>.</li>
+                        <li>The library's pre-defined fine policies (e.g., daily fine rate).</li>
+                    </ul>
+                    <hr class="border-outline dark:border-outline-dark mb-6" />
+
+                    <form asp-action="Calculate" method="post">
+                        @Html.AntiForgeryToken()
+
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div asp-validation-summary="ModelOnly" class="mb-6 p-4 bg-red-100 text-red-800 border border-red-300 rounded-md" role="alert"></div>
+                        }
+
+                        <input type="hidden" asp-for="LoanId" />
+
+                        <div class="p-4 bg-primary/10 text-primary-dark border border-primary/20 rounded-md">
+                            <h4 class="font-semibold">Confirmation Required</h4>
+                            <p class="mt-1 text-sm">
+                                By clicking the button below, a new <strong>Pending</strong> fine record will be created for the member. This action is recorded in the system's audit log. Please confirm before proceeding.
+                            </p>
+                        </div>
+
+                        <div class="mt-8 flex justify-end space-x-3">
+                            <a asp-action="Details" asp-controller="Loan" asp-route-id="@Model.LoanId" class="inline-flex items-center justify-center rounded-md border border-outline px-4 py-2 text-sm font-medium text-on-surface-strong shadow-sm hover:bg-white/5">
+                                Cancel
+                            </a>
+                            <button type="submit" class="inline-flex items-center justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-dark">
+                                Calculate & Create Fine
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

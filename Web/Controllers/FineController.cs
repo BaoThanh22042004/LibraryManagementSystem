@@ -1,4 +1,4 @@
-using Application.Common;
+﻿using Application.Common;
 using Application.DTOs;
 using Application.Interfaces;
 using Domain.Enums;
@@ -20,7 +20,8 @@ namespace Web.Controllers
 		private readonly ILoanService _loanService;
 		private readonly IAuditService _auditService;
 		private readonly INotificationService _notificationService;
-		private readonly ILogger<FineController> _logger;
+        private readonly IUserService _userService;
+        private readonly ILogger<FineController> _logger;
 		private readonly IValidator<CreateFineRequest> _createFineValidator;
 		private readonly IValidator<CalculateFineRequest> _calculateFineValidator;
 		private readonly IValidator<PayFineRequest> _payFineValidator;
@@ -31,7 +32,8 @@ namespace Web.Controllers
 			ILoanService loanService,
 			IAuditService auditService,
 			INotificationService notificationService,
-			ILogger<FineController> logger,
+            IUserService userService,
+            ILogger<FineController> logger,
 			IValidator<CreateFineRequest> createFineValidator,
 			IValidator<CalculateFineRequest> calculateFineValidator,
 			IValidator<PayFineRequest> payFineValidator,
@@ -41,7 +43,8 @@ namespace Web.Controllers
 			_loanService = loanService;
 			_auditService = auditService;
 			_notificationService = notificationService;
-			_logger = logger;
+            _userService = userService;
+            _logger = logger;
 			_createFineValidator = createFineValidator;
 			_calculateFineValidator = calculateFineValidator;
 			_payFineValidator = payFineValidator;
@@ -114,6 +117,13 @@ namespace Web.Controllers
         {
             try
             {
+                var userDetailsResult = await _userService.GetUserDetailsByMemberIdAsync(memberId);
+
+                if (userDetailsResult.IsSuccess)
+                {
+                    ViewBag.MemberDetails = userDetailsResult.Value;
+                }
+
                 var search = new FineSearchRequest
                 {
                     MemberId = memberId,
@@ -136,7 +146,7 @@ namespace Web.Controllers
                 }
 
                 ViewBag.MemberId = memberId;
-                return View("Index", result.Value);
+                return View(result.Value);
             }
             catch (Exception ex)
             {
@@ -669,47 +679,46 @@ namespace Web.Controllers
 			}
 		}
 
-		/// <summary>
-		/// Allows members to view their fines.
-		/// Implements member-facing part of UC029 (View Fine History).
-		/// </summary>
-		[HttpGet]
+        /// <summary>
+        /// Allows members to view their fines.
+        /// Implements member-facing part of UC029 (View Fine History).
+        /// </summary>
+        [HttpGet]
         [Authorize(Roles = "Member")]
         public async Task<IActionResult> MyFines(int page = 1, int pageSize = 10)
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
 
-                var search = new FineSearchRequest
-                {
-                    MemberId = memberId,
-                    Page = page,
-                    PageSize = pageSize
-                };
+                var result = await _fineService.GetMyFinesAsync(userId, page, pageSize);
 
-                var result = await _fineService.GetFinesAsync(search);
                 if (!result.IsSuccess)
                 {
                     TempData["ErrorMessage"] = result.Error;
                     return RedirectToAction("Index", "Home");
                 }
 
-                // Get total pending fine amount
-                var totalFinesResult = await _fineService.GetTotalPendingFineAmountAsync(memberId);
-                if (totalFinesResult.IsSuccess)
+                var userDetailsResult = await _userService.GetUserDetailsAsync(userId);
+                if (userDetailsResult.IsSuccess && userDetailsResult.Value.MemberDetails != null)
                 {
-                    ViewBag.TotalPendingFines = totalFinesResult.Value;
+                    var memberId = userDetailsResult.Value.MemberDetails.Id;
+
+                    var totalFinesResult = await _fineService.GetTotalPendingFineAmountAsync(memberId);
+                    if (totalFinesResult.IsSuccess)
+                    {
+                        ViewBag.TotalPendingFines = totalFinesResult.Value;
+                    }
                 }
 
                 return View(result.Value);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving member fines");
+                _logger.LogError(ex, "Error retrieving member fines", ex);
                 TempData["ErrorMessage"] = "An error occurred while retrieving your fines.";
                 return RedirectToAction("Index", "Home");
             }
@@ -724,22 +733,16 @@ namespace Web.Controllers
         {
             try
             {
-                if (!User.TryGetUserId(out int memberId))
+                if (!User.TryGetUserId(out int userId))
                 {
                     return RedirectToAction("Login", "Auth");
                 }
 
-                var result = await _fineService.GetFineByIdAsync(id);
+                var result = await _fineService.GetMyFineDetailsAsync(id, userId);
+
                 if (!result.IsSuccess)
                 {
                     TempData["ErrorMessage"] = result.Error;
-                    return RedirectToAction(nameof(MyFines));
-                }
-
-                // Verify this fine belongs to the current member (BR-03: User Information Access)
-                if (result.Value.MemberId != memberId)
-                {
-                    TempData["ErrorMessage"] = "You can only view your own fines.";
                     return RedirectToAction(nameof(MyFines));
                 }
 
@@ -845,7 +848,7 @@ namespace Web.Controllers
                 if (!result.IsSuccess)
                 {
                     TempData["ErrorMessage"] = result.Error;
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Details", "User", new { id = memberId });
                 }
                 // Audit log
                 if (User.TryGetUserId(out int staffId))

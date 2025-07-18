@@ -4,7 +4,7 @@
 @{
     ViewData["Title"] = "Home Page";
     var categories = ViewBag.Categories as IEnumerable<CategoryDto>;
-    var booksPaged = Model as PagedResult<BookBasicDto>;
+    var booksPaged = Model as PagedResult<BookBasicDto>; 
     var books = booksPaged?.Items ?? Enumerable.Empty<BookBasicDto>();
     var statuses = Enum.GetValues(typeof(BookStatus)).Cast<BookStatus>();
 
@@ -145,29 +145,37 @@
                                 }
                             </div>
                             <div class="flex-1 flex flex-col p-4">
-                                <!-- Book Title: max 2 lines, ellipsis -->
-                                <span class="block text-lg font-semibold text-on-surface dark:text-on-surface-dark group-hover:text-primary transition mb-2 break-words overflow-hidden line-clamp-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-                                    @book.Title
-                                </span>
-                                <!-- Author row: bold italic, font size same as ISBN -->
-                                <div class="mb-1">
-                                    <span class="text-xs font-bold italic text-on-surface-weak dark:text-on-surface-dark-weak">
-                                        by <span>@book.Author</span>
+                                <!-- This div grows to push the next element to the bottom -->
+                                <div class="flex-grow">
+                                    <!-- Book Title: max 2 lines, ellipsis -->
+                                    <span class="block text-lg font-semibold text-on-surface dark:text-on-surface-dark group-hover:text-primary transition mb-2 break-words overflow-hidden line-clamp-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                        @book.Title
+                                    </span>
+                                    <!-- Author row: bold italic, font size same as ISBN -->
+                                    <div class="mb-1">
+                                        <span class="text-xs font-bold italic text-on-surface-weak dark:text-on-surface-dark-weak">
+                                            by <span>@book.Author</span>
+                                        </span>
+                                    </div>
+                                    <!-- ISBN row: italic, same font size as author -->
+                                    <div class="text-xs italic text-on-surface-weak dark:text-on-surface-dark-weak mb-2">
+                                        ISBN: @book.ISBN
+                                    </div>
+                                </div>
+                                
+                                <!-- Footer section for status and button, aligned to the bottom -->
+                                <div>
+                                    <!-- Status badge: positioned consistently above the button -->
+                                    <div class="mb-3 flex justify-start">
+                                        <span class="px-2 py-1 border rounded text-xs font-bold @statusColor(book.Status)">
+                                            @book.Status.ToString()
+                                        </span>
+                                    </div>
+                                    <!-- The button no longer needs mt-auto, and is styled to be full-width -->
+                                    <span class="block w-full text-center px-4 py-2 bg-primary text-white rounded-radius font-medium group-hover:bg-primary-dark transition">
+                                        View Details
                                     </span>
                                 </div>
-                                <!-- ISBN row: italic, same font size as author -->
-                                <div class="text-xs italic text-on-surface-weak dark:text-on-surface-dark-weak mb-2">
-                                    ISBN: @book.ISBN
-                                </div>
-                                <!-- Status badge: always at bottom left above View Details -->
-                                <div class="mb-3 flex justify-start">
-                                    <span class="px-2 py-1 border rounded text-xs font-bold @statusColor(book.Status)">
-                                        @book.Status.ToString()
-                                    </span>
-                                </div>
-                                <span class="mt-auto inline-block px-4 py-2 bg-primary text-white rounded-radius font-medium group-hover:bg-primary-dark transition">
-                                    View Details
-                                </span>
                             </div>
                         </a>
                     }

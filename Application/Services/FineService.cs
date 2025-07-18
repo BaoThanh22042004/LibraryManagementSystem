@@ -572,12 +572,82 @@ public class FineService : IFineService
 		}
 	}
 
-	/// <summary>
-	/// Gets all fines for a specific loan
-	/// </summary>
-	/// <param name="loanId">ID of the loan</param>
-	/// <returns>Result with list of fines for the loan</returns>
-	public async Task<Result<IEnumerable<FineBasicDto>>> GetFinesByLoanIdAsync(int loanId)
+    /// <summary>
+    /// Gets a paged list of fines for the currently authenticated user.
+    /// This method translates a user ID into a member ID before querying.
+    /// </summary>
+    /// <param name="userId">The ID of the currently logged-in user.</param>
+    /// <param name="page">The current page number.</param>
+    /// <param name="pageSize">The number of items to show per page.</param>
+    /// <returns>A paged result of fines belonging to the user.</returns>
+    public async Task<Result<PagedResult<FineBasicDto>>> GetMyFinesAsync(int userId, int page, int pageSize)
+    {
+        var member = await _unitOfWork.Repository<Member>().GetAsync(m => m.UserId == userId);
+        if (member == null)
+        {
+            return Result.Success(new PagedResult<FineBasicDto>());
+        }
+
+        var searchRequest = new FineSearchRequest
+        {
+            MemberId = member.Id,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        return await GetFinesAsync(searchRequest);
+    }
+
+    /// <summary>
+    /// Gets fine details for the currently logged-in member, ensuring ownership.
+    /// </summary>
+    /// <param name="fineId">The ID of the fine to retrieve.</param>
+    /// <param name="userId">The ID of the currently authenticated user.</param>
+    /// <returns>Result with fine details if the user is the owner.</returns>
+    public async Task<Result<FineDetailDto>> GetMyFineDetailsAsync(int fineId, int userId)
+    {
+        try
+        {
+            var member = await _unitOfWork.Repository<Member>().GetAsync(m => m.UserId == userId);
+            if (member == null)
+            {
+                _logger.LogWarning("User with ID {UserId} has no member profile.", userId);
+                return Result.Failure<FineDetailDto>("You do not have a member profile to view fines.");
+            }
+            var memberId = member.Id;
+
+            var fine = await _unitOfWork.Repository<Fine>().GetAsync(
+                f => f.Id == fineId,
+                f => f.Member.User,
+                f => f.Loan!.BookCopy.Book);
+
+            if (fine == null)
+                return Result.Failure<FineDetailDto>($"Fine with ID {fineId} not found.");
+
+            if (fine.MemberId != memberId)
+            {
+                _logger.LogWarning("Security Violation: User {UserId} (Member {MemberId}) attempted to access fine {FineId} belonging to another member.",
+                   userId, memberId, fineId);
+                return Result.Failure<FineDetailDto>("You do not have permission to view this fine.");
+            }
+
+            var fineDto = _mapper.Map<FineDetailDto>(fine);
+
+            return Result.Success(fineDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting fine details for user ID {UserId} and fine ID {FineId}", userId, fineId);
+            return Result.Failure<FineDetailDto>("An error occurred while retrieving the fine details.");
+        }
+    }
+
+    /// <summary>
+    /// Gets all fines for a specific loan
+    /// </summary>
+    /// <param name="loanId">ID of the loan</param>
+    /// <returns>Result with list of fines for the loan</returns>
+    public async Task<Result<IEnumerable<FineBasicDto>>> GetFinesByLoanIdAsync(int loanId)
 	{
 		try
 		{

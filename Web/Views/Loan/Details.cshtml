@@ -22,6 +22,10 @@
                 </a>
             </button>              
         }
+
+        <a asp-controller="Fine" asp-action="LoanFines" asp-route-loanId="@Model.Id" class="bg-gray-500 hover:bg-gray-600 text-white font-bold ml-4 py-2 px-3 rounded focus:outline-none focus:shadow-outline">
+            View Fines
+        </a>
     </div>
 </div>
 

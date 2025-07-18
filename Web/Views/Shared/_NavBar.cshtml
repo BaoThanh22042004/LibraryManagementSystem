@@ -97,41 +97,18 @@
         @if (isAuthenticated && !isStaff)
         {
             <!-- Notification Bell -->
-            <div class="relative" x-data="{ notifMenuOpen: false }"
-                 x-on:mouseenter="notifMenuOpen = true" x-on:mouseleave="notifMenuOpen = false">
-                <button type="button"
-                        x-on:click="notifMenuOpen = !notifMenuOpen"
-                        class="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-alt dark:hover:bg-surface-dark-alt focus:outline-none focus:ring-2 focus:ring-primary"
-                        aria-label="Notifications"
-                        aria-haspopup="true"
-                        :aria-expanded="notifMenuOpen">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-on-surface dark:text-on-surface-dark">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    <span id="notif-badge"
-                          class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-600 text-xs text-white font-bold flex items-center justify-center"
-                          style="display:none;">
-                        0
-                    </span>
-                </button>
-                <!-- Dropdown -->
-                <div x-cloak x-show="notifMenuOpen"
-                     x-transition
-                     class="absolute right-0 mt-2 w-80 bg-white dark:bg-surface-dark-alt border border-outline dark:border-outline-dark rounded shadow-lg z-30 py-2">
-                    <div class="px-4 py-2 border-b border-outline dark:border-outline-dark font-semibold text-on-surface dark:text-on-surface-dark">
-                        Notifications
-                    </div>
-                    <ul id="notif-list" class="max-h-80 overflow-y-auto">
-                        <li class="px-4 py-2 text-sm text-gray-500 dark:text-gray-300">Loading...</li>
-                    </ul>
-                    <div class="px-4 py-2 border-t border-outline dark:border-outline-dark text-right">
-                        <a href="@Url.Action("Index", "Notification")"
-                           class="text-primary dark:text-primary-dark hover:underline font-medium">
-                            View all notifications
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <a href="@Url.Action("Index", "Notification")"
+               class="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-alt dark:hover:bg-surface-dark-alt focus:outline-none focus:ring-2 focus:ring-primary"
+               aria-label="Notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-on-surface dark:text-on-surface-dark">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span id="notif-badge"
+                      class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-600 text-xs text-white font-bold flex items-center justify-center"
+                      style="display:none;">
+                    0
+                </span>
+            </a>
         }
         @if (!isAuthenticated)
         {
@@ -185,7 +162,7 @@
                         </li>
                         <li>
                             <a class="block px-4 py-2 text-on-surface hover:bg-primary hover:text-white dark:text-on-surface-dark dark:hover:bg-primary-dark rounded"
-                               asp-controller="Home" asp-action="Index">
+                               asp-controller="Reservation" asp-action="MyReservations">
                                 My Reservations
                             </a>
                         </li>
@@ -202,49 +179,4 @@
         }
     </div>
 </nav>
-
-@section Scripts {
-    @if (isAuthenticated)
-    {
-        <script>
-            // Fetch unread count and last 5 notifications
-            function loadNotifications() {
-                // Unread count
-                fetch('/Notification/UnreadCount')
-                    .then(r => r.json())
-                    .then(data => {
-                        const badge = document.getElementById('notif-badge');
-                        if (data.count > 0) {
-                            badge.textContent = data.count;
-                            badge.style.display = 'flex';
-                        } else {
-                            badge.style.display = 'none';
-                        }
-                    });
-
-                // Last 5 notifications
-                fetch('/Notification?unreadOnly=false')
-                    .then(r => r.text())
-                    .then(html => {
-                        // Parse notifications from the returned HTML (server-side rendering)
-                        // For a real API, use a JSON endpoint. Here, we use a workaround.
-                        // You should ideally expose an endpoint like /Notification/Latest for JSON.
-                        // For now, we'll just show a message.
-                        const notifList = document.getElementById('notif-list');
-                        if (notifList) {
-                            // Try to extract notifications from the HTML (not robust, but works for demo)
-                            // Replace this with a proper API in production.
-                            notifList.innerHTML = '<li class="px-4 py-2 text-sm text-gray-500 dark:text-gray-300">Recent notifications are not available in this demo. Please check the notifications page.</li>';
-                        }
-                    });
-            }
-
-            document.addEventListener('DOMContentLoaded', function () {
-                loadNotifications();
-                // Optionally, refresh every 60 seconds
-                setInterval(loadNotifications, 60000);
-            });
-        </script>
-    }
-}
 
