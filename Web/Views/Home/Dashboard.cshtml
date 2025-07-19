@@ -63,6 +63,11 @@
             <div class="text-3xl font-bold mb-1">@Model.TotalBooks</div>
             <div class="text-xs opacity-70">Total books in library</div>
         </a>
+        <a href="@Url.Action("Index", "Category")" class="block bg-indigo-500 text-white rounded-lg shadow-lg hover:shadow-xl transition p-6 group">
+            <div class="font-semibold text-lg mb-2">Categories</div>
+            <div class="text-3xl font-bold mb-1">@Model.TotalCategories</div>
+            <div class="text-xs opacity-70">Total book categories</div>
+        </a>
         <a href="@Url.Action("Index", "Loan")" class="block bg-yellow-400 text-white rounded-lg shadow-lg hover:shadow-xl transition p-6 group">
             <div class="font-semibold text-lg mb-2">Active Loans</div>
             <div class="text-3xl font-bold mb-1">@Model.ActiveLoans</div>

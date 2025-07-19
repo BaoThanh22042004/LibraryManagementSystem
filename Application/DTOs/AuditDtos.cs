@@ -70,6 +70,7 @@ public record DashboardStatsDto
     public int Reservations { get; set; }
     public int NotificationsSent { get; set; }
     public DateTime StatsGeneratedAt { get; set; }
+    public int TotalCategories { get; set; }
 }
 
 public record AuditLogExportDto

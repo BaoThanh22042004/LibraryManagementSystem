@@ -126,6 +126,7 @@ public class AuditService : IAuditService
         var pendingFines = await _unitOfWork.Repository<Fine>().CountAsync(f => f.Status == Domain.Enums.FineStatus.Pending);
         var reservations = await _unitOfWork.Repository<Reservation>().CountAsync();
         var notificationsSent = await _unitOfWork.Repository<Notification>().CountAsync();
+        var totalCategories = await _unitOfWork.Repository<Category>().CountAsync();
         var dto = new DashboardStatsDto
         {
             TotalMembers = totalMembers,
@@ -136,6 +137,7 @@ public class AuditService : IAuditService
             PendingFines = pendingFines,
             Reservations = reservations,
             NotificationsSent = notificationsSent,
+            TotalCategories = totalCategories,
             StatsGeneratedAt = now
         };
         return Result.Success(dto);
