@@ -294,7 +294,7 @@ public class NotificationService : INotificationService
         var totalRecords = await query.CountAsync();
 
         var data = await query
-        .OrderByDescending(n => n.SentAt ?? DateTime.MinValue) // 👈 Sắp xếp giảm dần theo SentAt
+        .OrderByDescending(n => n.SentAt ?? DateTime.MinValue) 
         .Skip((page - 1) * pageSize)
         .Take(pageSize)
         .ProjectTo<NotificationListDto>(_mapper.ConfigurationProvider)
