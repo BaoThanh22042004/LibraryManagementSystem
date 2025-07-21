@@ -82,8 +82,6 @@ public class NotificationController : Controller
     [HttpGet]
     public IActionResult Create()
     {
-        //var users = await _userService.(); // lấy danh sách user
-        //ViewBag.Users = new SelectList(users, "Id", "Email"); // truyền sang view
         return View();
     }
 
