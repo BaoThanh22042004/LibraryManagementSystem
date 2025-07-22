@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>@ViewData["Title"] - Web</title>
+	<title>@ViewData["Title"]</title>
 	<script type="importmap"></script>
 	<style>
 		[x-cloak] {
@@ -21,14 +21,6 @@
 
 	<div class="flex-grow">
 		<main role="main" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-			@* Error checking *@
-			@if (TempData["ErrorMessage"] != null)
-			{
-				<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-					<span class="block sm:inline">@TempData["ErrorMessage"]</span>
-				</div>
-			}
-
 			@RenderBody()
 		</main>
 	</div>
