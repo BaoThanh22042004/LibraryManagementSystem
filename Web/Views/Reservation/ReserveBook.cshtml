@@ -5,9 +5,9 @@
 }
 
 <div class="mb-6">
-    <div class="flex items-center">
-        <h1 class="text-3xl font-bold">Add Reservation</h1>
-    </div>
+    <a asp-action="MyReservations" class="inline-flex items-center px-3 py-1.5 border border-blue-600 font-bold text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
+        ← Back to List
+    </a>
 </div>
 
 @await Html.PartialAsync("_AlertsPartial")
@@ -37,11 +37,7 @@
     </form>
 </div>
 
-<button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-    <a asp-action="MyReservations">
-        Back to List
-    </a>
-</button>
+
 
 @section Scripts {
     @{

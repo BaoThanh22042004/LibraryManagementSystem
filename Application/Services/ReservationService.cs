@@ -74,12 +74,11 @@ public class ReservationService : IReservationService
                 return Result.Failure<ReservationDetailDto>($"Book with ID {request.BookId} not found.");
 
             // Check if book is unavailable (all copies borrowed) - BR-17
-            bool anyAvailableCopies = book.Copies.Any(c => c.Status == CopyStatus.Available);
-            if (anyAvailableCopies)
-                return Result.Failure<ReservationDetailDto>("Cannot create reservation because copies of this book are currently available. Please borrow an available copy instead.");
+            if (book.Copies.All(c => c.Status != CopyStatus.Available))
+                return Result.Failure<ReservationDetailDto>($"Book '{book.Title}' is currently unavailable for reservation. All copies are borrowed.");
 
-            // Check for existing active reservation by this member for this book
-            bool hasExistingReservation = await _unitOfWork.Repository<Reservation>().ExistsAsync(
+			// Check for existing active reservation by this member for this book
+			bool hasExistingReservation = await _unitOfWork.Repository<Reservation>().ExistsAsync(
                 r => r.MemberId == request.MemberId && 
                      r.BookId == request.BookId && 
                      (r.Status == ReservationStatus.Active || r.Status == ReservationStatus.Fulfilled));

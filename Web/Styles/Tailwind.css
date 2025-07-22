@@ -13,17 +13,6 @@
     --color-on-secondary: var(--color-slate-100);
     --color-outline: var(--color-slate-300);
     --color-outline-strong: var(--color-slate-800);
-    /* dark theme */
-    --color-surface-dark: var(--color-slate-900);
-    --color-surface-dark-alt: var(--color-slate-800);
-    --color-on-surface-dark: var(--color-slate-300);
-    --color-on-surface-dark-strong: var(--color-white);
-    --color-primary-dark: var(--color-blue-600);
-    --color-on-primary-dark: var(--color-slate-100);
-    --color-secondary-dark: var(--color-indigo-600);
-    --color-on-secondary-dark: var(--color-slate-100);
-    --color-outline-dark: var(--color-slate-700);
-    --color-outline-dark-strong: var(--color-slate-300);
     /* shared colors */
     --color-info: var(--color-sky-600);
     --color-on-info: var(--color-white);
@@ -51,6 +40,38 @@
     }
 
     body {
-        @apply bg-surface dark:bg-surface-dark text-on-surface-strong dark:text-on-surface-dark-strong font-inter antialiased md:subpixel-antialiased;
+        @apply bg-surface text-on-surface-strong font-inter antialiased md:subpixel-antialiased;
+    }
+
+    .btn-success {
+        @apply whitespace-nowrap rounded-radius bg-success border border-success px-4 py-2 text-sm font-medium tracking-wide text-on-success transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed;
+    }
+
+    .btn-primary {
+        @apply whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed;
+    }
+
+    .btn-secondary {
+        @apply whitespace-nowrap rounded-radius bg-secondary border border-secondary px-4 py-2 text-sm font-medium tracking-wide text-on-secondary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed;
+    }
+
+    .btn-danger {
+        @apply whitespace-nowrap rounded-radius bg-danger border border-danger px-4 py-2 text-sm font-medium tracking-wide text-on-danger transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed;
+    }
+
+    .btn-outline-primary {
+        @apply whitespace-nowrap bg-transparent rounded-radius border border-primary px-4 py-2 text-sm font-medium tracking-wide text-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed;
+    }
+
+    .card {
+        @apply rounded-radius shadow-md flex-col overflow-hidden border border-outline bg-surface text-on-surface;
+    }
+
+    .label {
+        @apply block text-sm font-medium mb-1;
+    }
+
+    .text-input {
+        @apply rounded-radius border border-outline bg-surface px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
     }
 }

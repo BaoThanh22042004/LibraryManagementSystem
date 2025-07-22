@@ -23,6 +23,10 @@
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\images\categories\" />
+  </ItemGroup>
+
 	<Target Name="BuildCss" BeforeTargets="Compile">
 		<Exec Command="npm run build:css" />
 	</Target>

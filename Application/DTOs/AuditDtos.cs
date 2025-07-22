@@ -71,6 +71,7 @@ public record DashboardStatsDto
     public int NotificationsSent { get; set; }
     public DateTime StatsGeneratedAt { get; set; }
     public int TotalCategories { get; set; }
+    public int Reports { get; set; }
 }
 
 public record AuditLogExportDto

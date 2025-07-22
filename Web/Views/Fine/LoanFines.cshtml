@@ -17,13 +17,13 @@
     };
 }
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface dark:text-on-surface-dark">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface">
     @if (loanDetails != null)
     {
         <div class="sm:flex sm:items-center sm:justify-between mb-6">
             <div>
                 <h1 class="text-3xl font-bold">@ViewData["Title"]</h1>
-                <p class="mt-2 text-sm text-on-surface-weak dark:text-on-surface-dark-weak">
+                <p class="mt-2 text-sm text-on-surface-weak">
                     Showing all fines associated with the loan for the book '<strong>@loanDetails.BookTitle</strong>'.
                 </p>
             </div>
@@ -33,15 +33,12 @@
         </div>
     }
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="mb-6 p-4 bg-red-100 text-red-800 border border-red-300 rounded-md">@TempData["ErrorMessage"]</div>
-    }
+    @await Html.PartialAsync("_AlertsPartial")
 
-    <div class="bg-surface-alt dark:bg-surface-dark-alt rounded-lg shadow overflow-hidden">
+    <div class="bg-surface-alt rounded-lg shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-outline dark:divide-outline-dark">
-                <thead class="bg-surface dark:bg-surface-dark">
+            <table class="min-w-full divide-y divide-outline">
+                <thead class="bg-surface">
                     <tr>
                         <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6">Fine ID</th>
                         <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Type</th>
@@ -53,7 +50,7 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-outline dark:divide-outline-dark">
+                <tbody class="divide-y divide-outline">
                     @if (Model != null && Model.Any())
                     {
                         foreach (var fine in Model)

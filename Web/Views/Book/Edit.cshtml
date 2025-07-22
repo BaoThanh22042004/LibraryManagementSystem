@@ -19,6 +19,7 @@
 <div class="bg-white shadow-md rounded-lg overflow-hidden p-6 mb-6">
     <form asp-action="Edit" method="post" enctype="multipart/form-data">
         <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="CoverImageUrl" />
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Left column - Basic Information -->
@@ -125,11 +126,7 @@
             </div>
         </div>
         
-        <div class="flex items-center justify-between mt-8">
-            <div>
-                <a asp-action="Details" asp-route-id="@Model.Id" class="text-blue-600 hover:text-blue-800 font-semibold mr-4">Cancel</a>
-                <a asp-action="Index" class="text-gray-600 hover:text-gray-800 font-semibold">Back to List</a>
-            </div>
+        <div class="flex items-center justify-end mt-8">
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                 Save Changes
             </button>

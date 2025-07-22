@@ -13,8 +13,8 @@
 
 @await Html.PartialAsync("_AlertsPartial")
 
-<div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark rounded-radius">
-    <div class="text-white px-6 rounded-t-radius rounded-b-radius">
+<div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface rounded-radius">
+    <div class="px-6 rounded-t-radius rounded-b-radius">
         <h5 class="text-3xl text-center font-bold">Create Book</h5>
     </div>
 
@@ -26,32 +26,32 @@
                 <!-- Left Column -->
                 <div class="space-y-6">
                     <div>
-                        <input asp-for="Title" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" placeholder="Enter book title" />
+                        <input asp-for="Title" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="Enter book title" />
                         <span asp-validation-for="Title" class="text-red-600 text-sm"></span>
                     </div>
 
                     <div>
-                        <input asp-for="Author" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" placeholder="Enter author name" />
+                        <input asp-for="Author" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="Enter author name" />
                         <span asp-validation-for="Author" class="text-red-600 text-sm"></span>
                     </div>
 
                     <div>
-                        <input asp-for="ISBN" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" placeholder="Enter ISBN" data-val-remote-url="@Url.Action("IsbnExists")" data-val-remote="A book with this ISBN already exists." data-val-remote-additionalfields="*.ISBN" />
+                        <input asp-for="ISBN" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="Enter ISBN" data-val-remote-url="@Url.Action("IsbnExists")" data-val-remote="A book with this ISBN already exists." data-val-remote-additionalfields="*.ISBN" />
                         <span asp-validation-for="ISBN" class="text-red-600 text-sm"></span>
                     </div>
 
                     <div>
-                        <input asp-for="Publisher" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" placeholder="Enter publisher name" />
+                        <input asp-for="Publisher" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="Enter publisher name" />
                         <span asp-validation-for="Publisher" class="text-red-600 text-sm"></span>
                     </div>
 
                     <div>
-                        <input asp-for="PublicationDate" type="date" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" />
+                        <input asp-for="PublicationDate" type="date" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" />
                         <span asp-validation-for="PublicationDate" class="text-red-600 text-sm"></span>
                     </div>
 
                     <div>
-                        <input asp-for="InitialCopies" type="number" min="1" max="50" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" placeholder="Initial number of copies" />
+                        <input asp-for="InitialCopies" type="number" min="1" max="50" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="Initial number of copies" />
                         <span asp-validation-for="InitialCopies" class="text-red-600 text-sm"></span>
                         <p class="text-sm text-gray-500 mt-1">Number of copies to create initially (1–50)</p>
                     </div>
@@ -59,33 +59,63 @@
 
                 <!-- Right Column -->
                 <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Categories</label>
-                        @if (ViewBag.Categories != null && ((IEnumerable<CategoryDto>)ViewBag.Categories).Any())
-                        {
-                            <div class="h-60 overflow-y-auto rounded-radius border border-outline bg-surface-alt p-3 dark:border-outline-dark dark:bg-surface-dark-alt/50">
-                                @foreach (var category in (IEnumerable<CategoryDto>)ViewBag.Categories)
+                        <div x-data="{ isOpen: false, selected: @Html.Raw(Json.Serialize(Model.CategoryIds)) }" class="relative w-fit" x-on:keydown.esc.window="isOpen = false">
+                            <label class="block text-sm font-medium mb-1">Categories</label>
+
+                            <!-- Toggle Button -->
+                            <button type="button"
+                                    x-on:click="isOpen = !isOpen"
+                                    class="inline-flex items-center gap-2 rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm font-medium tracking-wide text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline-strong dark:focus-visible:outline-outline-dark-strong"
+                                    aria-haspopup="true"
+                                    :aria-expanded="isOpen.toString()">
+                                <span x-text="selected.length > 0 ? `${selected.length} selected` : 'Select Categories'"></span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <!-- Dropdown Content -->
+                            <div x-show="isOpen"
+                                 x-transition
+                                 x-cloak
+                                 x-on:click.outside="isOpen = false"
+                                 class="absolute top-full left-0 z-10 w-64 min-w-48 max-h-60 overflow-y-auto rounded-radius border bg-gray-800 dark:bg-gray-800 p-3 shadow-md">
+                                @if (ViewBag.Categories != null && ((IEnumerable<CategoryDto>)ViewBag.Categories).Any())
                                 {
-                                    <div class="flex items-center mb-2">
-                                        <input type="checkbox" name="CategoryIds" value="@category.Id" id="category-@category.Id"
-                                               class="h-4 w-4 text-primary border-outline rounded focus:ring-primary"
-                                               @(Model.CategoryIds.Contains(category.Id) ? "checked" : "") />
-                                        <label for="category-@category.Id" class="ml-2 text-sm">@category.Name</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach (var category in (IEnumerable<CategoryDto>)ViewBag.Categories)
+                                        {
+                                            <button type="button"
+                                                    x-on:click="selected.includes(@category.Id)
+                                                    ? selected=selected.filter(i =>
+                                                i !== @category.Id)
+                                                : selected.push(@category.Id)"
+                                                x-bind:class="selected.includes(@category.Id)
+                                                ? 'bg-primary text-on-primary dark:bg-primary-dark dark:text-on-primary-dark'
+                                                : 'bg-surface-alt text-on-surface border border-outline hover:bg-surface dark:bg-surface-dark-alt dark:text-on-surface-dark dark:border-outline-dark dark:hover:bg-surface-dark'"
+                                                class="rounded-radius px-3 py-1 text-sm transition whitespace-nowrap">
+                                                @category.Name
+                                            </button>
+                                        }
                                     </div>
                                 }
+                                else
+                                {
+                                    <p class="text-sm text-yellow-600">No categories available.</p>
+                                }
                             </div>
-                        }
-                        else
-                        {
-                            <p class="text-yellow-600 text-sm">No categories available. You can add categories later.</p>
-                        }
-                        <span asp-validation-for="CategoryIds" class="text-red-600 text-sm"></span>
-                    </div>
 
+                            <!-- Hidden Inputs for Selected IDs -->
+                            <template x-for="id in selected" :key="id">
+                                <input type="hidden" name="CategoryIds" :value="id">
+                            </template>
+
+                            <span asp-validation-for="CategoryIds" class="text-red-600 text-sm mt-1 block"></span>
+                        </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Cover Image</label>
                         <input type="file" name="CoverImageFile" accept="image/*"
-                               class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-primary file:text-on-primary dark:border-outline-dark dark:bg-surface-dark-alt/50" />
+                               class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-primary file:text-on-primary" />
                         @if (ViewData.ModelState["CoverImageFile"]?.Errors.Count > 0)
                         {
                             <span class="text-red-600 text-sm">@ViewData.ModelState["CoverImageFile"]!.Errors[0].ErrorMessage</span>
@@ -95,7 +125,7 @@
 
                     <div>
                         <textarea asp-for="Description" rows="6"
-                                  class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                                  class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                                   placeholder="Enter book description"></textarea>
                         <span asp-validation-for="Description" class="text-red-600 text-sm"></span>
                     </div>
@@ -104,7 +134,7 @@
 
             <!-- Actions -->
                 <div class="pt-4">
-                    <button type="submit" class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">
+                    <button type="submit" class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
                         Create
                     </button>
                 </div>

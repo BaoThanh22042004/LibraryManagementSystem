@@ -9,18 +9,18 @@
 
     Func<FineStatus, (string, string)> GetStatusStyles = status => status switch
     {
-        FineStatus.Pending => ("Unpaid", "bg-yellow-100 text-yellow-800 dark:bg-yellow-500/10 dark:text-yellow-400"),
-        FineStatus.Paid => ("Paid", "bg-green-100 text-green-800 dark:bg-green-500/10 dark:text-green-400"),
-        FineStatus.Waived => ("Waived", "bg-gray-100 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400"),
+        FineStatus.Pending => ("Unpaid", "bg-yellow-100 text-yellow-800"),
+        FineStatus.Paid => ("Paid", "bg-green-100 text-green-800"),
+        FineStatus.Waived => ("Waived", "bg-gray-100 text-gray-700"),
         _ => ("", "bg-gray-100 text-gray-700")
     };
 }
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface dark:text-on-surface-dark">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface">
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
             <h1 class="text-3xl font-bold">@ViewData["Title"]</h1>
-            <p class="mt-2 text-sm text-on-surface-weak dark:text-on-surface-dark-weak">
+            <p class="mt-2 text-sm text-on-surface-weak">
                 A history of all fines on your account.
             </p>
         </div>
@@ -29,10 +29,7 @@
         </a>
     </div>
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="mb-6 p-4 bg-red-100 text-red-800 border border-red-300 rounded-md">@TempData["ErrorMessage"]</div>
-    }
+    @await Html.PartialAsync("_AlertsPartial")
 
     @if (totalPendingFines.HasValue && totalPendingFines.Value > 0)
     {
@@ -42,7 +39,6 @@
                 <p class="text-4xl font-bold text-white mt-1">@totalPendingFines.Value.ToString("C")</p>
                 <p class="text-sm mt-2 text-red-300/80">Please visit the library front desk to settle your pending fines.</p>
             </div>
-            <!-- Trong tương lai, nút thanh toán online có thể được đặt ở đây -->
         </div>
     }
     else
@@ -53,11 +49,11 @@
         </div>
     }
 
-    <div class="bg-surface-alt dark:bg-surface-dark-alt rounded-lg shadow overflow-hidden">
-        <h2 class="text-lg font-semibold px-6 py-4 border-b border-outline dark:border-outline-dark">Fine History</h2>
+    <div class="bg-surface-alt rounded-lg shadow overflow-hidden">
+        <h2 class="text-lg font-semibold px-6 py-4 border-b border-outline">Fine History</h2>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-outline dark:divide-outline-dark">
-                <thead class="bg-surface dark:bg-surface-dark">
+            <table class="min-w-full divide-y divide-outline">
+                <thead class="bg-surface">
                     <tr>
                         <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6">Fine Info</th>
                         <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Amount</th>
@@ -65,7 +61,7 @@
                         <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Status</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-outline dark:divide-outline-dark">
+                <tbody class="divide-y divide-outline">
                     @if (Model != null && Model.Items.Any())
                     {
                         foreach (var fine in Model.Items)
@@ -76,7 +72,7 @@
                                     <a asp-action="MyFineDetails" asp-controller="Fine" asp-route-id="@fine.Id" class="font-semibold text-primary hover:underline">
                                         #@fine.Id
                                     </a>
-                                    <div class="text-xs text-on-surface-weak dark:text-on-surface-dark-weak max-w-xs truncate" title="@fine.Description">
+                                    <div class="text-xs text-on-surface-weak max-w-xs truncate" title="@fine.Description">
                                         Reason: @fine.Description
                                     </div>
                                 </td>
@@ -116,17 +112,17 @@
     @if (Model != null && Model.TotalPages > 1)
     {
         <div class="mt-6 flex items-center justify-between">
-            <div class="text-sm text-on-surface-weak dark:text-on-surface-dark-weak">
+            <div class="text-sm text-on-surface-weak">
                 Showing @(((Model.Page - 1) * Model.PageSize) + 1)
                 to @(Math.Min(Model.Page * Model.PageSize, Model.Count))
                 of @Model.Count results
             </div>
             <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                <a asp-action="MyFines" asp-route-page="@(Model.Page - 1)" class="relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-outline dark:ring-outline-dark hover:bg-gray-50 dark:hover:bg-gray-800 @(Model.HasPreviousPage ? "" : "pointer-events-none opacity-40")">
+                <a asp-action="MyFines" asp-route-page="@(Model.Page - 1)" class="relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-outline hover:bg-gray-50 @(Model.HasPreviousPage ? "" : "pointer-events-none opacity-40")">
                     Previous
                 </a>
                 <span class="relative z-10 inline-flex items-center bg-primary px-4 py-2 text-sm font-semibold text-white">Page @Model.Page of @Model.TotalPages</span>
-                <a asp-action="MyFines" asp-route-page="@(Model.Page + 1)" class="relative inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-outline dark:ring-outline-dark hover:bg-gray-50 dark:hover:bg-gray-800 @(Model.HasNextPage ? "" : "pointer-events-none opacity-40")">
+                <a asp-action="MyFines" asp-route-page="@(Model.Page + 1)" class="relative inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-outline hover:bg-gray-50 @(Model.HasNextPage ? "" : "pointer-events-none opacity-40")">
                     Next
                 </a>
             </nav>

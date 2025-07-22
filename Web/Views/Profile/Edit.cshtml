@@ -5,67 +5,60 @@
 
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark rounded-radius">
-            
-            <!-- Đưa nút Back vào trong card -->
             <div class="mb-4">
-                <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
+                <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm font-bold rounded-md transition">
                     ← Back to Profile
                 </a>
             </div>
 
             <!-- Header -->
-            <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark rounded-radius">
+            <div class="p-6 mb-6 overflow-hidden border border-gray-700 bg-surface-alt text-on-surface rounded-radius">
                 <h3 class="text-3xl text-center font-bold">Update Information</h3>
                 <!-- Form -->
-                <div class="px-6 py-6 bg-white dark:bg-surface-dark-alt">
                     <form asp-action="Edit" method="post" class="space-y-6">
                         <div asp-validation-summary="ModelOnly" class="text-sm text-red-600"></div>
                         <input type="hidden" asp-for="UserId" />
 
                         <!-- Full Name -->
-                        <fieldset class="border border-outline dark:border-outline-dark rounded-radius p-4 mb-4">
-                            <legend class="px-2 text-sm font-medium text-on-surface dark:text-on-surface-dark">Full Name</legend>
-                            <input asp-for="FullName" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus:ring-primary-dark" placeholder="Enter full name" />
+                        <fieldset class="border border-gray-700 rounded-radius p-4 mb-4">
+                            <legend class="px-2 text-sm font-bold text-on-surface">Full Name</legend>
+                        <input asp-for="FullName" class="w-full rounded-radius border border-gray-700 bg-surface-alt px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter full name" />
                             <span asp-validation-for="FullName" class="text-sm text-red-600 mt-1 block"></span>
                         </fieldset>
 
                         <!-- Email -->
-                        <fieldset class="border border-outline dark:border-outline-dark rounded-radius p-4 mb-4">
-                            <legend class="px-2 text-sm font-medium text-on-surface dark:text-on-surface-dark">Email Address</legend>
-                            <input asp-for="Email" type="email" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus:ring-primary-dark" placeholder="Enter email" />
-                            <p class="text-gray-400 text-xs text-muted mt-1">If you change your email, a verification link will be sent to the new address.</p>
+                        <fieldset class="border border-gray-700 rounded-radius p-4 mb-4">
+                        <legend class="px-2 text-sm font-bold text-on-surface">Email Address</legend>
+                        <input asp-for="Email" type="email" class="w-full rounded-radius border border-gray-700 bg-surface-alt px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter email" />
+                            <p class="text-gray-500 text-xs text-muted mt-1">If you change your email, a verification link will be sent to the new address.</p>
                             <span asp-validation-for="Email" class="text-sm text-red-600 mt-1 block"></span>
                         </fieldset>
 
                         <!-- Phone -->
-                        <fieldset class="border border-outline dark:border-outline-dark rounded-radius p-4 mb-4">
-                            <legend class="px-2 text-sm font-medium text-on-surface dark:text-on-surface-dark">Phone Number (Optional)</legend>
-                            <input asp-for="Phone" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus:ring-primary-dark" placeholder="Enter phone number" />
+                        <fieldset class="border border-gray-700 rounded-radius p-4 mb-4">
+                        <legend class="px-2 text-sm font-bold text-on-surface">Phone Number (Optional)</legend>
+                        <input asp-for="Phone" class="w-full rounded-radius border border-gray-700 bg-surface-alt px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter phone number" />
                             <span asp-validation-for="Phone" class="text-sm text-red-600 mt-1 block"></span>
                         </fieldset>
 
                         <!-- Address -->
-                        <fieldset class="border border-outline dark:border-outline-dark rounded-radius p-4 mb-4">
-                            <legend class="block text-sm font-medium text-on-surface dark:text-on-surface-dark mb-1">Address (Optional)</legend>
-                            <textarea asp-for="Address" rows="3" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus:ring-primary-dark" placeholder="Enter your address"></textarea>
+                        <fieldset class="border border-gray-700 rounded-radius p-4 mb-4">
+                        <legend class="block text-sm font-bold text-on-surface mb-1">Address (Optional)</legend>
+                        <textarea asp-for="Address" rows="3" class="w-full rounded-radius border border-gray-700 bg-surface-alt px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter your address"></textarea>
                             <span asp-validation-for="Address" class="text-sm text-red-600 mt-1 block"></span>
                         </fieldset>
 
                         <!-- Save button -->
                         <div class="pt-4">
-                            <button type="submit" class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">
+                            <button type="submit" class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
                                 Save Changes
                             </button>
                         </div>
                     </form>
-                </div>
             </div>
 
         </div>
     </div>
-</div>
-
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

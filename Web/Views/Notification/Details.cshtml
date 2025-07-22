@@ -4,9 +4,21 @@
 }
 
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
+    @{
+        string returnUrl;
+        if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
+        {
+            returnUrl = Url.Action("Index", "Notification");
+        }
+        else
+        {
+            returnUrl = Url.Action("MyNotifications", "Notification");
+        }
+    }
+    <a href="@returnUrl" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
         Å© Back to List
     </a>
+
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-8 border border-gray-200 dark:border-gray-700">
         <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">
             Notification Details

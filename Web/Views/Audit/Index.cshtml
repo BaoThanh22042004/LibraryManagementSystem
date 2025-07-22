@@ -2,11 +2,10 @@
 @{
     ViewData["Title"] = "Audit Logs";
 }
-<h2>Audit Logs</h2>
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
-}
+<h1 class="text-3xl font-bold">Audit Logs</h1>
+
+@await Html.PartialAsync("_AlertsPartial")
+
 <table class="table table-striped">
     <thead>
         <tr>

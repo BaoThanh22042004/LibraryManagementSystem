@@ -71,10 +71,10 @@ public class LoanService : ILoanService
             if (bookCopy == null)
                 return Result.Failure<LoanDetailDto>($"Book copy with ID {request.BookCopyId} not found.");
 
-            if (bookCopy.Status != CopyStatus.Available && !allowOverride)
-                return Result.Failure<LoanDetailDto>($"Book copy is not available. Current status: {bookCopy.Status}.");
+            if (bookCopy.Status != CopyStatus.Available && bookCopy.Status != CopyStatus.Reserved && !allowOverride)
+                return Result.Failure<LoanDetailDto>($"Book copy with ID {request.BookCopyId} is not available for loan. Current status: {bookCopy.Status}.");
 
-            var loan = _mapper.Map<Loan>(request);
+			var loan = _mapper.Map<Loan>(request);
             loan.LoanDate = DateTime.UtcNow;
             loan.DueDate = request.CustomDueDate ?? DateTime.UtcNow.AddDays(DefaultLoanPeriodDays);
             loan.Status = LoanStatus.Active;

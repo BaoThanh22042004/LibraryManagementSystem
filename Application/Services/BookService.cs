@@ -204,7 +204,7 @@ public class BookService : IBookService
                 
                 // Get and add updated categories
                 var categories = await _unitOfWork.Repository<Category>().ListAsync(
-                    c => request.CategoryIds.Contains(c.Id));
+                    c => request.CategoryIds.Contains(c.Id), asNoTracking: false);
                 
                 foreach (var category in categories)
                 {

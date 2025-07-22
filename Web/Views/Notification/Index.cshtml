@@ -7,13 +7,13 @@
 
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Admin Notifications</h2>
+        <h2 class="text-2xl font-semibold text-gray-800">Admin Notifications</h2>
 
         <div class="flex items-center gap-3">
             <form method="get" class="flex items-center gap-2">
                 <input type="text" name="search" value="@searchTerm"
                        placeholder="Search..."
-                       class="border border-gray-300 dark:border-gray-700 px-3 py-2 rounded-md w-64 dark:bg-gray-800 dark:text-white" />
+                       class="border border-gray-300 px-3 py-2 rounded-md w-64" />
                 <button type="submit"
                         class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
                     Search
@@ -27,24 +27,24 @@
         </div>
     </div>
 
-    <div class="overflow-x-auto bg-white dark:bg-gray-800 shadow rounded-lg">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-100 dark:bg-gray-700">
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-100">
                 <tr>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Email</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Subject</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Message</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Sent At</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Actions</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Email</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Subject</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Message</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Sent At</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody class="divide-y divide-gray-200">
                 @foreach (var notification in Model.Items)
                 {
                     <tr>
-                        <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">@notification.Email</td>
-                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">@notification.Subject</td>
-                        <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">@notification.Message</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">@notification.Email</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">@notification.Subject</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">@notification.Message</td>
                         <td class="px-6 py-4 text-sm text-gray-500">@notification.SentAt?.ToString("g")</td>
                         <td class="px-6 py-4 text-sm">
                             <a asp-action="Details" asp-route-id="@notification.Id"
@@ -81,7 +81,7 @@
                             sortBy = sortBy,
                             sortOrder = sortOrder
                         })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">«</a>
+                       class="px-4 py-2 border border-gray-300 hover:bg-gray-200">«</a>
                 </li>
             }
 
@@ -95,7 +95,7 @@
                             sortBy = sortBy,
                             sortOrder = sortOrder
                         })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700">1</a>
+                       class="px-4 py-2 border border-gray-300">1</a>
                 </li>
                 @if (startPage > 2)
                 {
@@ -113,7 +113,7 @@
                             sortBy = sortBy,
                             sortOrder = sortOrder
                         })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 @(i == currentPage ? "bg-blue-500 text-white" : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200") hover:bg-blue-100 dark:hover:bg-gray-700">
+                       class="px-4 py-2 border border-gray-300 @(i == currentPage ? "bg-blue-500 text-white" : "bg-white text-gray-700") hover:bg-blue-100">
                         @i
                     </a>
                 </li>
@@ -133,7 +133,7 @@
                             sortBy = sortBy,
                             sortOrder = sortOrder
                         })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700">@totalPages</a>
+                       class="px-4 py-2 border border-gray-300">@totalPages</a>
                 </li>
             }
 
@@ -147,7 +147,7 @@
                             sortBy = sortBy,
                             sortOrder = sortOrder
                         })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">»</a>
+                       class="px-4 py-2 border border-gray-300 hover:bg-gray-200">»</a>
                 </li>
             }
         </ul>
