@@ -6,7 +6,7 @@
 <div class="max-w-5xl mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <div class="space-x-2">
-            <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
+            <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 font-bold   text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
                 ← Back to List
             </a>
             <a asp-action="Edit" asp-route-id="@Model.Id" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition">
@@ -42,17 +42,17 @@
         </div>
     }
 
-    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-gray-700">
         <div class="px-6 py-4 flex justify-between items-center">
             <h2 class="text-lg font-semibold">Details</h2>
             <div class="flex items-center space-x-2">
-                <span class="px-2 py-1 text-xs rounded font-medium 
+                <span class="px-2 py-1 text-xs rounded font-medium border border-gray-800
                     @(Model.Role == UserRole.Admin ? "bg-red-100 text-red-700" :
                       Model.Role == UserRole.Librarian ? "bg-blue-100 text-blue-700" :
                       "bg-green-100 text-green-700")">
                     @Model.Role
                 </span>
-                <span class="px-2 py-1 text-xs rounded font-medium 
+                <span class="px-2 py-1 text-xs rounded font-medium border border-gray-800
                     @(Model.Status == UserStatus.Active ? "bg-green-100 text-green-700" :
                       Model.Status == UserStatus.Suspended ? "bg-yellow-100 text-yellow-800" :
                       "bg-gray-100 text-gray-600")">
@@ -60,45 +60,45 @@
                 </span>
             </div>
         </div>
-        <div class="p-6 bg-surface-alt border border-outline rounded-radius">
+        <div class="p-6 bg-surface-alt border border-gray-700 rounded-radius">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative text-sm text-on-surface">
                 <!-- Cột trái -->
                 <div class="space-y-4">
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong">User ID</div>
+                        <div class="text-sm font-semibold uppercase text-on-surface-strong">User ID</div>
                         <div class="mt-1">@Model.Id</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Email</div>
+                        <div class="text-sm font-semibold uppercase text-on-surface-strong">Email</div>
                         <div class="mt-1">
                             <a href="mailto:@Model.Email" class="text-primary hover:underline">@Model.Email</a>
                         </div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Address</div>
+                        <div class="text-sm font-semibold uppercase text-on-surface-strong">Address</div>
                         <div class="mt-1">@(!string.IsNullOrEmpty(Model.Address) ? Model.Address : "Not provided")</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Created At</div>
+                        <div class="text-sm font-semibold uppercase text-on-surface-strong">Created At</div>
                         <div class="mt-1">@Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm:ss")</div>
                     </div>
                 </div>
 
                 <!-- Line dọc chia giữa -->
-                <div class="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-outline"></div>
+                <div class="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-gray-800"></div>
 
                 <!-- Cột phải -->
                 <div class="space-y-4 md:pl-8">
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Full Name</div>
+                        <div class="text-sm font-semibold uppercase text-on-surface-strong">Full Name</div>
                         <div class="mt-1">@Model.FullName</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Phone</div>
+                        <div class="text-sm font-semibold uppercase text-on-surface-strong">Phone</div>
                         <div class="mt-1">@(!string.IsNullOrEmpty(Model.Phone) ? Model.Phone : "Not provided")</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Last Updated</div>
+                        <div class="text-sm font-semibold uppercase text-on-surface-strong">Last Updated</div>
                         <div class="mt-1">@((Model.UpdatedAt.HasValue) ? Model.UpdatedAt.Value.ToString("MMMM dd, yyyy HH:mm:ss") : "Never")</div>
                     </div>
                 </div>

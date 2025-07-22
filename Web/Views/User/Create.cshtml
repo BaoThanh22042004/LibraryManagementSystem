@@ -6,13 +6,13 @@
 
 <div class="max-w-4xl mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
-        <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
+        <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 font-bold text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
             ← Back to List
         </a>
     </div>
 
-    <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface rounded-radius">
-        <div class="text-white px-6 rounded-t-radius rounded-b-radius">
+    <div class="p-6 mb-6 overflow-hidden border border-gray-700 bg-surface-alt text-on-surface rounded-radius">
+        <div class="text-black px-6 rounded-t-radius rounded-b-radius">
             <h5 class="text-3xl text-center font-bold">Create User</h5>
         </div>
             
@@ -21,7 +21,7 @@
                 <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm"></div>
 
                 <div>
-                    <select asp-for="Role" class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" id="roleSelect">
+                    <select asp-for="Role" class="w-full rounded-radius border border-gray-700 font-bold bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" id="roleSelect">
                         <option value="@UserRole.Member">Member</option>
                         @if (canCreateLibrarian)
                         {
@@ -33,23 +33,21 @@
                 </div>
 
                 <div>
-                    <input asp-for="FullName" class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter full name" />
+                    <input asp-for="FullName" class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter full name" />
                     <span asp-validation-for="FullName" class="text-red-600 text-sm"></span>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <input asp-for="Email" type="email" class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter email address" />
-                        <span asp-validation-for="Email" class="text-red-600 text-sm"></span>
+                        <input asp-for="Email" type="email" class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter email address" />
                         <p class="text-sm text-gray-500 mt-1">(e.g., user@example.com)</p>
-                        <span asp-validation-for="Password" class="text-red-600 text-sm"></span>
+                        <span asp-validation-for="Email" class="text-red-600 text-sm"></span>
                     </div>
 
                     <div>
                         <div class="relative">
-                            <input asp-for="Password" type="password" id="password" class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter password" />
+                            <input asp-for="Password" type="password" id="password" class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter password" />
                             <button type="button" class="absolute inset-y-0 right-0 px-3 text-gray-500 password-toggle" data-target="password">
-                                <i class="bi bi-eye"></i>
                             </button>
                         </div>
                         <p class="text-sm text-gray-500 mt-1">Password must be at least 8 characters long and contain letters, numbers, and special characters.</p>
@@ -59,7 +57,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <input asp-for="Phone" class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter phone number" />
+                        <input asp-for="Phone" class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter phone number" />
                         <span asp-validation-for="Phone" class="text-red-600 text-sm"></span>
                     </div>
 
@@ -71,13 +69,13 @@
                     </div>
 
                     <div class="librarian-field hidden">
-                        <input asp-for="EmployeeId" class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter employee ID" />
+                        <input asp-for="EmployeeId" class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter employee ID" />
                         <span asp-validation-for="EmployeeId" class="text-red-600 text-sm"></span>
                     </div>
                 </div>
 
                 <div>
-                    <textarea asp-for="Address" rows="3" class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter address"></textarea>
+                    <textarea asp-for="Address" rows="3" class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" placeholder="Enter address"></textarea>
                     <span asp-validation-for="Address" class="text-red-600 text-sm"></span>
                 </div>
 

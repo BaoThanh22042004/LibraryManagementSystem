@@ -31,23 +31,23 @@
     }
 
     <!-- Filter Section -->
-    <div class="p-6 mb-6 rounded-radius overflow-hidden border border-outline bg-surface-alt text-on-surface">
+    <div class="p-6 mb-6 rounded-radius overflow-hidden border border-gray-700 bg-gray-200 text-on-surface">
         <form asp-action="Index" method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <!-- Search -->
             <div>
-                <label class="block text-sm font-medium mb-1">Search</label>
+                <label class="block text-sm font-bold mb-1">Search</label>
                 <input type="text" name="SearchTerm" value="@searchTerm"
                        placeholder="Name, Email or ID"
-                       class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" />
+                       class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" />
             </div>
 
             <!-- Filters -->
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium mb-1">Filters</label>
+                <label class="block text-sm font-bold mb-1">Filters</label>
                 <div class="flex gap-2">
                     <!-- Role -->
                     <div class="relative w-full">
-                        <select name="Role" class="peer w-full appearance-none rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark">
+                        <select name="Role" class="peer w-full appearance-none rounded-radius border border-gray-700 bg-surface-alt px-4 py-2 text-sm text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark">
                             <option value="">All Roles</option>
                             @foreach (UserRole r in Enum.GetValues(typeof(UserRole)))
                             {
@@ -61,7 +61,7 @@
 
                     <!-- Status -->
                     <div class="relative w-full">
-                        <select name="Status" class="peer w-full appearance-none rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark">
+                        <select name="Status" class="peer w-full appearance-none rounded-radius border border-gray-700 bg-surface-alt px-4 py-2 text-sm text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark">
                             <option value="">All Statuses</option>
                             @foreach (UserStatus s in Enum.GetValues(typeof(UserStatus)))
                             {
@@ -85,17 +85,17 @@
     </div>
 
     <!-- User Table -->
-    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-gray-700">
         <div class="flex items-center justify-between px-4 py-3">
             <h2 class="text-lg font-semibold">User List</h2>
-            <span class="text-sm">Total: @Model.Count users</span>
+            <span class="text-sm font-bold">Total: @Model.Count users</span>
         </div>
 
         @if (Model.Items.Any())
         {
-            <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
+            <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-gray-700">
                 <table class="w-full text-left text-sm text-on-surface">
-                    <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong">
+                    <thead class="border-b border-gray-700 bg-gray-200 text-sm text-on-surface-strong">
                         <tr>
                             <th class="p-4">ID</th>
                             <th class="p-4">NAME</th>
@@ -105,7 +105,7 @@
                             <th class="p-4">ACTIONS</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-outline bg-surface">
+                    <tbody class="divide-y divide-gray-700 bg-surface">
                         @foreach (var user in Model.Items)
                         {
                             <tr>
@@ -170,13 +170,13 @@
                             @if (Model.Page > 1)
                             {
                                 routeData["Page"] = (Model.Page - 1).ToString();
-                                <a asp-action="Index" asp-all-route-data="@routeData" class="flex items-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark">
+                                <a asp-action="Index" asp-all-route-data="@routeData" class="flex items-center rounded-radius p-1 text-gray-700 hover:text-primary dark:text-on-surface-dark">
                                     Previous
                                 </a>
                             }
                             else
                             {
-                                <span class="flex items-center rounded-radius p-1 text-gray-400 cursor-not-allowed">Previous</span>
+                                <span class="flex items-center rounded-radius p-1 text-gray-700  cursor-not-allowed">Previous</span>
                             }
                         </li>
 
@@ -201,13 +201,13 @@
                             @if (Model.Page < totalPages)
                             {
                                 routeData["Page"] = (Model.Page + 1).ToString();
-                                <a asp-action="Index" asp-all-route-data="@routeData" class="flex items-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark">
+                                <a asp-action="Index" asp-all-route-data="@routeData" class="flex items-center rounded-radius p-1 text-gray-700 text-on-surface hover:text-primary">
                                     Next
                                 </a>
                             }
                             else
                             {
-                                <span class="flex items-center rounded-radius p-1 text-gray-400 cursor-not-allowed">Next</span>
+                                <span class="flex items-center rounded-radius p-1 text-gray-700 cursor-not-allowed">Next</span>
                             }
                         </li>
                     </ul>
