@@ -6,7 +6,7 @@
 
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Notifications</h2>
+        <h2 class="text-2xl font-semibold text-gray-800">Notifications</h2>
 
         @{
             var unreadIds = Model.Items.Where(n => !n.IsRead).Select(n => n.Id).ToList();
@@ -25,23 +25,23 @@
         </form>
     </div>
 
-    <div class="overflow-x-auto bg-white dark:bg-gray-800 shadow rounded-lg">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-100 dark:bg-gray-700">
+    <div class="overflow-x-auto bg-white shadow rounded-lg">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-100">
                 <tr>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Subject</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Message</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Status</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Sent At</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Actions</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Subject</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Message</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Sent At</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody class="divide-y divide-gray-200">
                 @foreach (var notification in Model.Items)
                 {
-                    <tr class="@(notification.IsRead ? "bg-white dark:bg-gray-800" : "bg-yellow-50 dark:bg-yellow-100")">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">@notification.Subject</td>
-                        <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">@notification.Message</td>
+                    <tr class="@(notification.IsRead ? "bg-white" : "bg-yellow-50")">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">@notification.Subject</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">@notification.Message</td>
                         <td class="px-6 py-4 text-sm">
                             @if (notification.IsRead)
                             {
@@ -95,7 +95,7 @@
             {
                 <li>
                     <a href="@Url.Action("MyNotifications", new { page = currentPage - 1, unreadOnly = unreadOnly })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition">«</a>
+                       class="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-200 transition">«</a>
                 </li>
             }
 
@@ -103,7 +103,7 @@
             {
                 <li>
                     <a href="@Url.Action("MyNotifications", new { page = 1, unreadOnly = unreadOnly })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">1</a>
+                       class="px-4 py-2 border border-gray-300 hover:bg-gray-200">1</a>
                 </li>
                 @if (startPage > 2)
                 {
@@ -115,7 +115,7 @@
             {
                 <li>
                     <a href="@Url.Action("MyNotifications", new { page = i, unreadOnly = unreadOnly })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 @(i == currentPage ? "bg-blue-500 text-white" : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200") hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                       class="px-4 py-2 border border-gray-300 @(i == currentPage ? "bg-blue-500 text-white" : "bg-white text-gray-700") hover:bg-gray-200 transition">
                         @i
                     </a>
                 </li>
@@ -129,7 +129,7 @@
                 }
                 <li>
                     <a href="@Url.Action("MyNotifications", new { page = totalPages, unreadOnly = unreadOnly })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700">@totalPages</a>
+                       class="px-4 py-2 border border-gray-300 hover:bg-gray-200">@totalPages</a>
                 </li>
             }
 
@@ -137,7 +137,7 @@
             {
                 <li>
                     <a href="@Url.Action("MyNotifications", new { page = currentPage + 1, unreadOnly = unreadOnly })"
-                       class="px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition">»</a>
+                       class="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-200 transition">»</a>
                 </li>
             }
         </ul>

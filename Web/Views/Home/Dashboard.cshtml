@@ -12,8 +12,8 @@
 }
 
 <div class="max-w-7xl mx-auto px-4 py-8">
-    <h2 class="text-2xl font-bold text-on-surface-strong dark:text-on-surface-dark-strong">
-        Library <span class="text-primary dark:text-primary-dark">Dashboard</span>
+    <h2 class="text-2xl font-bold text-on-surface-strong">
+        Library <span class="text-primary">Dashboard</span>
         </h2>
     
     @if (TempData["ErrorMessage"] != null)
@@ -24,29 +24,29 @@
     }
 
     <div class="flex items-center gap-2 mb-8">
-        <svg class="w-5 h-5 text-primary dark:text-primary-dark" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         <div class="flex items-center gap-2">
-            <span class="text-xs sm:text-sm font-medium text-primary dark:text-primary-dark">Last updated:</span>
-            <span class="text-xs sm:text-sm font-medium text-on-surface-weak bg-surface-alt px-3 py-1 rounded-radius shadow dark:text-primary-dark">
+            <span class="text-xs sm:text-sm font-medium text-primary">Last updated:</span>
+            <span class="text-xs sm:text-sm font-medium text-on-surface-weak bg-surface-alt px-3 py-1 rounded-radius shadow">
                 @Model.StatsGeneratedAt.ToString("g")
             </span>
         </div>
     </div>
 
-    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg flex items-start gap-4 mb-8 dark:bg-gray-800 dark:border-blue-500">
+    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg flex items-start gap-4 mb-8">
         <div class="flex-shrink-0">
-            <svg class="w-6 h-6 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
         </div>
         <div>
             <div class="flex items-baseline gap-3">
-                <span class="text-3xl font-bold text-on-surface-strong dark:text-on-surface-dark-strong">@Model.TotalBookCopies</span>
-                <h3 class="text-lg font-semibold text-on-surface dark:text-on-surface-dark">Total Book Copies</h3>
+                <span class="text-3xl font-bold text-on-surface-strong">@Model.TotalBookCopies</span>
+                <h3 class="text-lg font-semibold text-on-surface">Total Book Copies</h3>
             </div>
-            <p class="text-sm text-on-surface-weak mt-1 dark:text-on-surface-dark-weak">
+            <p class="text-sm text-on-surface-weak mt-1">
                 This is the total number of physical book copies available in the library across all titles.
             </p>
         </div>

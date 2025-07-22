@@ -14,20 +14,20 @@
 <div class="flex flex-col items-center justify-center py-16 text-center">
 
     <!-- Error Icon -->
-    <div class="flex items-center justify-center w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/50 mb-6">
-        <svg class="w-12 h-12 text-red-500 dark:text-red-400"
+    <div class="flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mb-6">
+        <svg class="w-12 h-12 text-red-500"
              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
         </svg>
     </div>
 
     <!-- Error Title -->
-    <h1 class="text-4xl font-bold text-on-surface-strong dark:text-on-surface-dark-strong">
+    <h1 class="text-4xl font-bold text-on-surface-strong">
         An Unexpected Error Occurred
     </h1>
 
     <!-- User-friendly Message -->
-    <p class="mt-4 text-lg text-on-surface-weak dark:text-on-surface-dark-weak max-w-2xl">
+    <p class="mt-4 text-lg text-on-surface-weak max-w-2xl">
         We apologize for the inconvenience. Our team has been notified of the issue.
         Please try again later or return to the homepage.
     </p>
@@ -54,14 +54,14 @@
     -->
     @if (Model.ShowRequestId)
     {
-        <div class="mt-12 w-full max-w-2xl p-4 bg-surface-alt dark:bg-surface-dark-alt border border-outline dark:border-outline-dark rounded-lg">
-            <h3 class="text-lg font-semibold text-on-surface dark:text-on-surface-dark">
+        <div class="mt-12 w-full max-w-2xl p-4 bg-surface-alt border border-outline rounded-lg">
+            <h3 class="text-lg font-semibold text-on-surface">
                 Developer Details
             </h3>
-            <p class="mt-2 text-sm text-on-surface-weak dark:text-on-surface-dark-weak">
+            <p class="mt-2 text-sm text-on-surface-weak">
                 This ID can help our team track down the specific error you encountered.
             </p>
-            <div class="mt-3 text-sm text-left bg-surface dark:bg-surface-dark p-3 rounded font-mono break-all">
+            <div class="mt-3 text-sm text-left bg-surface p-3 rounded font-mono break-all">
                 <strong class="text-red-500">Request ID:</strong> <code>@Model.RequestId</code>
             </div>
         </div>

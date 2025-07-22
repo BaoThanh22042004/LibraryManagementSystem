@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark rounded-radius">
+    <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface rounded-radius">
         <h3 class="text-3xl text-center font-bold">Edit User</h3>
 
         <form asp-action="Edit" method="post" class="space-y-6">
@@ -23,7 +23,7 @@
             <fieldset class="border border-outline rounded-radius p-4">
                 <legend class="text-sm font-medium">Full Name</legend>
                 <input asp-for="FullName"
-                       class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                       class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75"
                        placeholder="Enter full name" />
                 <span asp-validation-for="FullName" class="text-sm text-red-600 mt-1 block"></span>
             </fieldset>
@@ -33,7 +33,7 @@
                     <legend class="text-sm font-medium">Email</legend>
                     <input asp-for="Email"
                            type="email"
-                           class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                           class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75"
                            placeholder="Enter email" />
                     <span asp-validation-for="Email" class="text-sm text-red-600 mt-1 block"></span>
                 </fieldset>
@@ -43,7 +43,7 @@
                     <select asp-for="Status"
                             id="statusSelect"
                             data-initial-value="@Model.Status"
-                            class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark">
+                            class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75">
                         <option value="@UserStatus.Active">Active</option>
                         <option value="@UserStatus.Suspended">Suspended</option>
                         <option value="@UserStatus.Inactive">Inactive</option>
@@ -54,7 +54,7 @@
                 <fieldset id="statusReasonContainer" class="border border-outline rounded-radius p-4 mt-4 hidden">
                     <legend class="text-sm font-medium">Reason for Status Change</legend>
                     <textarea asp-for="StatusChangeReason"
-                              class="block w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                              class="block w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75"
                               rows="2"
                               placeholder="Provide reason for status change"></textarea>
                     <span asp-validation-for="StatusChangeReason" class="text-sm text-red-600 mt-1 block"></span>
@@ -63,7 +63,7 @@
                 <fieldset class="border border-outline rounded-radius p-4">
                     <legend class="text-sm font-medium">Phone Number</legend>
                     <input asp-for="Phone"
-                           class="block w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                           class="block w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75"
                            placeholder="Enter phone number" />
                     <span asp-validation-for="Phone" class="text-sm text-red-600 mt-1 block"></span>
                 </fieldset>
@@ -71,7 +71,7 @@
                 <fieldset class="border border-outline rounded-radius p-4">
                     <legend class="text-sm font-medium">Address</legend>
                     <textarea asp-for="Address"
-                              class="block w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                              class="block w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75"
                               rows="3"
                               placeholder="Enter address"></textarea>
                     <span asp-validation-for="Address" class="text-sm text-red-600 mt-1 block"></span>
@@ -79,7 +79,7 @@
             </div>
             <div class="pt-6 flex justify-center">
                 <button type="submit"
-                        class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">
+                        class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
                     Save
                 </button>
             </div>

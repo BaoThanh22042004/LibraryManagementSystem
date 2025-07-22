@@ -16,7 +16,7 @@
     @await Html.PartialAsync("_AlertsPartial")
 
     <!-- Search Form -->
-    <div class="p-6 mb-6 rounded-radius overflow-hidden border border-outline bg-surface-alt text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">
+    <div class="p-6 mb-6 rounded-radius overflow-hidden border border-outline bg-surface-alt text-on-surface">
         <form asp-action="Index" method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
 
             <!-- Search Input -->
@@ -24,7 +24,7 @@
                 <label class="block text-sm font-medium mb-1">Search</label>
                 <input type="text" id="SearchTerm" name="SearchTerm" value="@ViewBag.SearchTerm"
                        placeholder="Search by title, author, or ISBN..."
-                       class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" />
+                       class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" />
             </div>
 
             <!-- Category Filter -->
@@ -32,7 +32,7 @@
                 <label for="CategoryId" class="block text-sm font-medium mb-1">Category</label>
                 <div class="relative">
                     <select id="CategoryId" name="CategoryId"
-                            class="peer w-full appearance-none rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm text-on-surface transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline-strong disabled:cursor-not-allowed disabled:opacity-75 dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:text-on-surface-dark dark:focus-visible:outline-outline-dark-strong">
+                            class="peer w-full appearance-none rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm text-on-surface transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline-strong disabled:cursor-not-allowed disabled:opacity-75">
                         <option value="">All Categories</option>
                         @if (ViewBag.Categories != null)
                         {
@@ -45,7 +45,7 @@
                         }
                     </select>
                     <!-- Dropdown icon -->
-                    <svg class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-on-surface/50 dark:text-on-surface-dark/50"
+                    <svg class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-on-surface/50"
                          fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                     </svg>
@@ -55,21 +55,21 @@
             <!-- Search Buttons -->
             <div>
                 <button type="submit"
-                        class="whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">
+                        class="whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
                     Search
                 </button>
             </div>
         </form>
     </div>
     <!-- Books Table -->
-    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
         <div class="flex items-center justify-between px-4 py-3">
             <h2 class="text-lg font-semibold">Book List</h2>
             <span class="text-sm">Total: @Model.Count books</span>
         </div>
-        <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
-            <table class="w-full text-left text-sm text-on-surface dark:text-on-surface-dark">
-                <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark-strong">
+        <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
+            <table class="w-full text-left text-sm text-on-surface">
+                <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong">
                     <tr>
                         <th class="p-4">COVER</th>
                         <th class="p-4">TITLE</th>
@@ -80,12 +80,12 @@
                         <th class="p-4 text-right">ACTIONS</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-outline dark:divide-outline-dark bg-surface dark:bg-surface-dark">
+                <tbody class="divide-y divide-outline bg-surface">
                     @if (Model.Items.Any())
                     {
                         @foreach (var book in Model.Items)
                         {
-                            <tr class="hover:bg-surface-alt/50 dark:hover:bg-surface-dark-alt/50">
+                            <tr class="hover:bg-surface-alt/50">
                                 <td class="p-4 whitespace-nowrap">
                                     @if (!string.IsNullOrEmpty(book.CoverImageUrl))
                                     {
@@ -93,7 +93,7 @@
                                     }
                                     else
                                     {
-                                        <div class="h-16 w-12 rounded bg-outline/30 dark:bg-outline-dark/30 flex items-center justify-center text-on-surface/40 dark:text-on-surface-dark/40">
+                                        <div class="h-16 w-12 rounded bg-outline/30 flex items-center justify-center text-on-surface/40">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                       d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -102,8 +102,8 @@
                                     }
                                 </td>
                                 <td class="p-4 font-medium">@book.Title</td>
-                                <td class="p-4 text-on-surface/70 dark:text-on-surface-dark/70">@book.Author</td>
-                                <td class="p-4 text-on-surface/70 dark:text-on-surface-dark/70">@book.ISBN</td>
+                                <td class="p-4 text-on-surface/70">@book.Author</td>
+                                <td class="p-4 text-on-surface/70">@book.ISBN</td>
                                 <td class="p-4">
                                     @{
                                         var statusClasses = book.Status switch
@@ -120,21 +120,21 @@
                                 </td>
                                 <td class="p-4">
                                     <span class="text-sm font-semibold text-green-600">@book.AvailableCopies</span>
-                                    <span class="text-on-surface/60 dark:text-on-surface-dark/60"> / @book.TotalCopies</span>
+                                    <span class="text-on-surface/60"> / @book.TotalCopies</span>
                                 </td>
                                 <td class="p-4 text-right">
                                     <div class="flex justify-end gap-2">
                                         <a asp-action="Details" asp-route-id="@book.Id"
-                                           class="whitespace-nowrap rounded-radius bg-transparent p-0.5 font-semibold text-primary outline-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 active:opacity-100 active:outline-offset-0 dark:text-primary-dark dark:outline-primary-dark"
+                                           class="whitespace-nowrap rounded-radius bg-transparent p-0.5 font-semibold text-primary outline-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 active:opacity-100 active:outline-offset-0"
                                            title="View details">
                                             Details
                                         </a>
                                         @if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
                                         {
                                             <a asp-action="Edit" asp-route-id="@book.Id"
-                                               class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">Edit</a>
+                                               class="text-indigo-600 hover:text-indigo-800">Edit</a>
                                             <a asp-action="Delete" asp-route-id="@book.Id"
-                                               class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Delete</a>
+                                               class="text-red-600 hover:text-red-800">Delete</a>
                                         }
                                     </div>
                                 </td>
@@ -144,7 +144,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="7" class="p-6 text-center text-on-surface/60 dark:text-on-surface-dark/60">
+                            <td colspan="7" class="p-6 text-center text-on-surface/60">
                                 No books found.
                                 @(ViewBag.SearchTerm != null || ViewBag.CategoryId != null ? "Try different search criteria." : "")
                             </td>

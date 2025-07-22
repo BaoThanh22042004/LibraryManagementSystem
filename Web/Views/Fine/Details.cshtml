@@ -15,11 +15,11 @@
     };
 }
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface dark:text-on-surface-dark">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface">
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
             <h1 class="text-3xl font-bold">@ViewData["Title"]</h1>
-            <p class="mt-2 text-sm text-on-surface-weak dark:text-on-surface-dark-weak">
+            <p class="mt-2 text-sm text-on-surface-weak">
                 Detailed information for the selected fine.
             </p>
         </div>
@@ -39,12 +39,12 @@
 
     <div class="flex flex-col lg:flex-row gap-8">
         <div class="lg:w-2/3">
-            <div class="bg-surface-alt dark:bg-surface-dark-alt shadow-md rounded-lg overflow-hidden">
+            <div class="bg-surface-alt shadow-md rounded-lg overflow-hidden">
                 <div class="p-6">
                     <div class="flex justify-between items-start">
                         <div>
                             <h2 class="text-xl font-semibold">Fine for @Model.MemberName</h2>
-                            <p class="text-sm text-on-surface-weak dark:text-on-surface-dark-weak mt-1">Issued on @Model.FineDate.ToString("dd MMM, yyyy")</p>
+                            <p class="text-sm text-on-surface-weak mt-1">Issued on @Model.FineDate.ToString("dd MMM, yyyy")</p>
                         </div>
                         <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold @GetStatusColorClass(Model.Status)">
                             @Model.Status
@@ -52,18 +52,18 @@
                     </div>
                 </div>
 
-                <div class="border-t border-outline dark:border-outline-dark p-6 space-y-4">
+                <div class="border-t border-outline p-6 space-y-4">
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                         <div>
-                            <dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Fine Amount</dt>
-                            <dd class="mt-1 text-2xl font-bold text-primary dark:text-primary-dark">@Model.Amount.ToString("C")</dd>
+                            <dt class="text-sm font-medium text-on-surface-weak">Fine Amount</dt>
+                            <dd class="mt-1 text-2xl font-bold text-primary">@Model.Amount.ToString("C")</dd>
                         </div>
                         <div>
-                            <dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Fine Type</dt>
+                            <dt class="text-sm font-medium text-on-surface-weak">Fine Type</dt>
                             <dd class="mt-1 text-base font-semibold">@Model.Type</dd>
                         </div>
                         <div class="sm:col-span-2">
-                            <dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Description / Reason</dt>
+                            <dt class="text-sm font-medium text-on-surface-weak">Description / Reason</dt>
                             <dd class="mt-1 text-base whitespace-pre-wrap">@Model.Description</dd>
                         </div>
                     </dl>
@@ -71,23 +71,23 @@
 
                 @if (Model.LoanId.HasValue)
                 {
-                    <div class="border-t border-outline dark:border-outline-dark p-6">
+                    <div class="border-t border-outline p-6">
                         <h3 class="text-lg font-semibold mb-3">Related Loan Details</h3>
                         <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                             <div>
-                                <dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Loan ID</dt>
+                                <dt class="text-sm font-medium text-on-surface-weak">Loan ID</dt>
                                 <dd class="mt-1"><a asp-action="Details" asp-controller="Loan" asp-route-id="@Model.LoanId" class="text-primary hover:underline">#@Model.LoanId</a></dd>
                             </div>
                             <div>
-                                <dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Book Title</dt>
+                                <dt class="text-sm font-medium text-on-surface-weak">Book Title</dt>
                                 <dd class="mt-1">@Model.BookTitle</dd>
                             </div>
                             <div>
-                                <dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Due Date</dt>
+                                <dt class="text-sm font-medium text-on-surface-weak">Due Date</dt>
                                 <dd class="mt-1">@(Model.DueDate?.ToString("dd MMM, yyyy") ?? "N/A")</dd>
                             </div>
                             <div>
-                                <dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Days Overdue</dt>
+                                <dt class="text-sm font-medium text-on-surface-weak">Days Overdue</dt>
                                 <dd class="mt-1">@(Model.DaysOverdue?.ToString() ?? "N/A")</dd>
                             </div>
                         </dl>
@@ -96,23 +96,23 @@
 
                 @if (Model.Status == FineStatus.Paid)
                 {
-                    <div class="border-t border-outline dark:border-outline-dark p-6 bg-green-500/5">
+                    <div class="border-t border-outline p-6 bg-green-500/5">
                         <h3 class="text-lg font-semibold text-green-600 mb-3">Payment Information</h3>
                         <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                            <div><dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Payment Date</dt><dd class="mt-1">@(Model.PaymentDate?.ToString("dd MMM, yyyy, HH:mm"))</dd></div>
-                            <div><dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Payment Method</dt><dd class="mt-1">@(Model.PaymentMethod?.ToString() ?? "N/A")</dd></div>
-                            <div><dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Processed By</dt><dd class="mt-1">@(Model.ProcessedByStaffName ?? "N/A")</dd></div>
+                            <div><dt class="text-sm font-medium text-on-surface-weak">Payment Date</dt><dd class="mt-1">@(Model.PaymentDate?.ToString("dd MMM, yyyy, HH:mm"))</dd></div>
+                            <div><dt class="text-sm font-medium text-on-surface-weak">Payment Method</dt><dd class="mt-1">@(Model.PaymentMethod?.ToString() ?? "N/A")</dd></div>
+                            <div><dt class="text-sm font-medium text-on-surface-weak">Processed By</dt><dd class="mt-1">@(Model.ProcessedByStaffName ?? "N/A")</dd></div>
                         </dl>
                     </div>
                 }
 
                 @if (Model.Status == FineStatus.Waived)
                 {
-                    <div class="border-t border-outline dark:border-outline-dark p-6 bg-gray-500/5">
+                    <div class="border-t border-outline p-6 bg-gray-500/5">
                         <h3 class="text-lg font-semibold text-gray-600 mb-3">Waiver Information</h3>
                         <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                            <div><dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Processed By</dt><dd class="mt-1">@(Model.ProcessedByStaffName ?? "N/A")</dd></div>
-                            <div class="sm:col-span-2"><dt class="text-sm font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Reason</dt><dd class="mt-1 whitespace-pre-wrap">@(Model.WaiverReason ?? "N/A")</dd></div>
+                            <div><dt class="text-sm font-medium text-on-surface-weak">Processed By</dt><dd class="mt-1">@(Model.ProcessedByStaffName ?? "N/A")</dd></div>
+                            <div class="sm:col-span-2"><dt class="text-sm font-medium text-on-surface-weak">Reason</dt><dd class="mt-1 whitespace-pre-wrap">@(Model.WaiverReason ?? "N/A")</dd></div>
                         </dl>
                     </div>
                 }
@@ -122,7 +122,7 @@
         <div class="lg:w-1/3">
             @if (userIsStaff)
             {
-                <div class="bg-surface-alt dark:bg-surface-dark-alt shadow-md rounded-lg p-6 sticky top-8">
+                <div class="bg-surface-alt shadow-md rounded-lg p-6 sticky top-8">
                     <h2 class="text-xl font-semibold mb-4">Actions</h2>
 
                     @if (Model.Status == FineStatus.Pending)
@@ -131,7 +131,7 @@
                             <a asp-action="Pay" asp-route-id="@Model.Id" class="w-full inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-green-700">
                                 <i class="bi bi-credit-card-fill mr-2"></i> Process Payment
                             </a>
-                            <a asp-action="Waive" asp-route-id="@Model.Id" class="w-full inline-flex items-center justify-center rounded-md border border-outline dark:border-outline-dark px-4 py-3 text-sm font-medium shadow-sm hover:bg-white/5">
+                            <a asp-action="Waive" asp-route-id="@Model.Id" class="w-full inline-flex items-center justify-center rounded-md border border-outline px-4 py-3 text-sm font-medium shadow-sm hover:bg-white/5">
                                 <i class="bi bi-bookmark-x-fill mr-2"></i> Waive Fine
                             </a>
                         </div>
@@ -152,7 +152,7 @@
                     }
                 </div>
             }
-            <div class="mt-8 bg-surface-alt dark:bg-surface-dark-alt shadow-md rounded-lg p-6">
+            <div class="mt-8 bg-surface-alt shadow-md rounded-lg p-6">
                 <h3 class="text-lg font-semibold mb-3">Member Contact</h3>
                 @* SỬA LỖI HTML TẠI ĐÂY (để cho code sạch hơn) *@
                 <dl class="text-sm space-y-3">
