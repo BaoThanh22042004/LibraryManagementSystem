@@ -110,6 +110,15 @@
                             </a>
                         </li>
                     }
+                    @if (isStaff)
+                    {
+                        <li>
+                            <a class="block px-4 py-2 text-on-surface hover:bg-primary hover:text-white rounded"
+                               asp-controller="Profile" asp-action="Index">
+                                Profile
+                            </a>
+                        </li>
+                    }
                     <li>
                         <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
                             <button type="submit" class="w-full text-left px-4 py-2 text-on-surface hover:bg-red-500 hover:text-white rounded">
