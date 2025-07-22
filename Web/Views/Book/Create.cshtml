@@ -59,29 +59,59 @@
 
                 <!-- Right Column -->
                 <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Categories</label>
-                        @if (ViewBag.Categories != null && ((IEnumerable<CategoryDto>)ViewBag.Categories).Any())
-                        {
-                            <div class="h-60 overflow-y-auto rounded-radius border border-outline bg-surface-alt p-3 dark:border-outline-dark dark:bg-surface-dark-alt/50">
-                                @foreach (var category in (IEnumerable<CategoryDto>)ViewBag.Categories)
+                        <div x-data="{ isOpen: false, selected: @Html.Raw(Json.Serialize(Model.CategoryIds)) }" class="relative w-fit" x-on:keydown.esc.window="isOpen = false">
+                            <label class="block text-sm font-medium mb-1">Categories</label>
+
+                            <!-- Toggle Button -->
+                            <button type="button"
+                                    x-on:click="isOpen = !isOpen"
+                                    class="inline-flex items-center gap-2 rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm font-medium tracking-wide text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline-strong dark:focus-visible:outline-outline-dark-strong"
+                                    aria-haspopup="true"
+                                    :aria-expanded="isOpen.toString()">
+                                <span x-text="selected.length > 0 ? `${selected.length} selected` : 'Select Categories'"></span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <!-- Dropdown Content -->
+                            <div x-show="isOpen"
+                                 x-transition
+                                 x-cloak
+                                 x-on:click.outside="isOpen = false"
+                                 class="absolute top-full left-0 z-10 w-64 min-w-48 max-h-60 overflow-y-auto rounded-radius border bg-gray-800 dark:bg-gray-800 p-3 shadow-md">
+                                @if (ViewBag.Categories != null && ((IEnumerable<CategoryDto>)ViewBag.Categories).Any())
                                 {
-                                    <div class="flex items-center mb-2">
-                                        <input type="checkbox" name="CategoryIds" value="@category.Id" id="category-@category.Id"
-                                               class="h-4 w-4 text-primary border-outline rounded focus:ring-primary"
-                                               @(Model.CategoryIds.Contains(category.Id) ? "checked" : "") />
-                                        <label for="category-@category.Id" class="ml-2 text-sm">@category.Name</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach (var category in (IEnumerable<CategoryDto>)ViewBag.Categories)
+                                        {
+                                            <button type="button"
+                                                    x-on:click="selected.includes(@category.Id)
+                                                    ? selected=selected.filter(i =>
+                                                i !== @category.Id)
+                                                : selected.push(@category.Id)"
+                                                x-bind:class="selected.includes(@category.Id)
+                                                ? 'bg-primary text-on-primary dark:bg-primary-dark dark:text-on-primary-dark'
+                                                : 'bg-surface-alt text-on-surface border border-outline hover:bg-surface dark:bg-surface-dark-alt dark:text-on-surface-dark dark:border-outline-dark dark:hover:bg-surface-dark'"
+                                                class="rounded-radius px-3 py-1 text-sm transition whitespace-nowrap">
+                                                @category.Name
+                                            </button>
+                                        }
                                     </div>
                                 }
+                                else
+                                {
+                                    <p class="text-sm text-yellow-600">No categories available.</p>
+                                }
                             </div>
-                        }
-                        else
-                        {
-                            <p class="text-yellow-600 text-sm">No categories available. You can add categories later.</p>
-                        }
-                        <span asp-validation-for="CategoryIds" class="text-red-600 text-sm"></span>
-                    </div>
 
+                            <!-- Hidden Inputs for Selected IDs -->
+                            <template x-for="id in selected" :key="id">
+                                <input type="hidden" name="CategoryIds" :value="id">
+                            </template>
+
+                            <span asp-validation-for="CategoryIds" class="text-red-600 text-sm mt-1 block"></span>
+                        </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Cover Image</label>
                         <input type="file" name="CoverImageFile" accept="image/*"

@@ -9,21 +9,21 @@
             <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
                 ← Back to List
             </a>
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="inline-flex items-center px-4 py-1 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition">
                 Edit
             </a>
-            <a asp-action="Delete" asp-route-id="@Model.Id" class="inline-flex items-center px-4 py-1 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition">
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition">
                 Delete
             </a>
 
             <a asp-action="MemberFines" asp-controller="Fine" asp-route-memberId="@Model.MemberDetails.Id"
-               class="inline-flex items-center px-4 py-1 text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 rounded-md transition">
-                <i class="bi bi-cash-stack mr-2"></i> View Full Fine History
+               class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 rounded-md transition">
+                View Full Fine History
             </a>
 
             <a asp-action="OutstandingFines" asp-controller="Fine" asp-route-memberId="@Model.MemberDetails.Id"
-               class="inline-flex items-center px-4 py-1 text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 rounded-md transition">
-                <i class="bi bi-cash-stack mr-2"></i> View Outstanding Fines
+               class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 rounded-md transition">
+                View Outstanding Fines
             </a>
         </div>
     </div>
