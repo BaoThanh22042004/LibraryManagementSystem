@@ -16,31 +16,22 @@
                 Delete
             </a>
 
-            <a asp-action="MemberFines" asp-controller="Fine" asp-route-memberId="@Model.MemberDetails.Id"
-               class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 rounded-md transition">
-                View Full Fine History
-            </a>
+            @if (@Model.MemberDetails != null) 
+            {
+                <a asp-action="MemberFines" asp-controller="Fine" asp-route-memberId="@Model.MemberDetails.Id" 
+                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 rounded-md transition">
+                    View Full Fine History
+                </a>
 
-            <a asp-action="OutstandingFines" asp-controller="Fine" asp-route-memberId="@Model.MemberDetails.Id"
-               class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 rounded-md transition">
-                View Outstanding Fines
-            </a>
+                <a asp-action="OutstandingFines" asp-controller="Fine" asp-route-memberId="@Model.MemberDetails.Id"
+                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 rounded-md transition">
+                    View Outstanding Fines
+                </a>
+            }
         </div>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="mb-4 p-4 text-sm text-green-700 bg-green-100 rounded-lg">
-            @TempData["SuccessMessage"]
-        </div>
-    }
-
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg">
-            @TempData["ErrorMessage"]
-        </div>
-    }
+    @await Html.PartialAsync("_AlertsPartial")
 
     <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-gray-700">
         <div class="px-6 py-4 flex justify-between items-center">

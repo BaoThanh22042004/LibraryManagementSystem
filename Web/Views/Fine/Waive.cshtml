@@ -36,10 +36,7 @@
                     <div class="bg-surface-alt shadow-md rounded-lg p-6">
                         <h2 class="text-xl font-semibold mb-6">Waiver Justification</h2>
 
-                         @if (!ViewData.ModelState.IsValid)
-                        {
-                            <div asp-validation-summary="ModelOnly" class="mb-6 p-4 bg-red-100 text-red-800 border border-red-300 rounded-md" role="alert"></div>
-                        }
+                        @await Html.PartialAsync("_AlertsPartial")
                         
                         <div>
                             <label asp-for="WaiverReason" class="block text-sm font-medium mb-1">Reason for Waiving <span class="text-red-500">*</span></label>

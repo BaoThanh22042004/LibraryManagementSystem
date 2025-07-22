@@ -16,19 +16,7 @@
     </div>
 
     <!-- Messages -->
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg">
-            @TempData["SuccessMessage"]
-        </div>
-    }
-
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg">
-            @TempData["ErrorMessage"]
-        </div>
-    }
+    @await Html.PartialAsync("_AlertsPartial")
 
     <!-- Filter Section -->
     <div class="p-6 mb-6 rounded-radius overflow-hidden border border-gray-700 bg-gray-200 text-on-surface">
@@ -147,7 +135,7 @@
         }
     </div>
 
-    <!-- Pagination (tách riêng) -->
+    <!-- Pagination (tï¿½ch riï¿½ng) -->
     @if (Model.Items.Any() && Model.Count > 0)
     {
         <div class="overflow-hidden w-full overflow-x-auto rounded-radius mt-6">

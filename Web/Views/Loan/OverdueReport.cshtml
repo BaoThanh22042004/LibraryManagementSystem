@@ -10,12 +10,7 @@
     </a>
 </div>
 
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="mb-4 rounded-radius bg-red-100 px-4 py-3 text-red-800">
-        @TempData["ErrorMessage"]
-    </div>
-}
+@await Html.PartialAsync("_AlertsPartial")
 
 <!-- Overdue Loans Table -->
 <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline mb-6">

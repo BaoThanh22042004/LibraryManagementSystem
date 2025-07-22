@@ -7,14 +7,7 @@
     <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface rounded-radius">
         <h3 class="text-3xl text-center font-bold mb-6">Generate Report</h3>
 
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success mb-4">@TempData["SuccessMessage"]</div>
-        }
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="alert alert-danger mb-4">@TempData["ErrorMessage"]</div>
-        }
+        @await Html.PartialAsync("_AlertsPartial")
 
         <form asp-action="Generate" method="post" class="space-y-6">
             <fieldset class="border border-outline rounded-radius p-4">
