@@ -16,24 +16,25 @@
         }
     }
     <a href="@returnUrl" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
-        ‚Üê Back to List
+        Å© Back to List
     </a>
-    <div class="bg-white shadow-lg rounded-xl p-8 border border-gray-200">
-        <h2 class="text-3xl font-bold text-gray-800 mb-6">
+
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-8 border border-gray-200 dark:border-gray-700">
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">
             Notification Details
         </h2>
 
-        <div class="space-y-6 text-base text-gray-700">
+        <div class="space-y-6 text-base text-gray-700 dark:text-gray-300">
             <div>
-                <span class="font-semibold text-gray-900">Subject:</span>
+                <span class="font-semibold text-gray-900 dark:text-white">Subject:</span>
                 <span class="ml-2">@Model.Subject</span>
             </div>
             <div>
-                <span class="font-semibold text-gray-900">Message:</span>
+                <span class="font-semibold text-gray-900 dark:text-white">Message:</span>
                 <p class="mt-1 ml-2 whitespace-pre-line">@Model.Message</p>
             </div>
             <div>
-                <span class="font-semibold text-gray-900">Status:</span>
+                <span class="font-semibold text-gray-900 dark:text-white">Status:</span>
                 @{
                     var statusClass = Model.Status switch
                     {
@@ -48,17 +49,17 @@
                 </span>
             </div>
             <div>
-                <span class="font-semibold text-gray-900">Sent At:</span>
+                <span class="font-semibold text-gray-900 dark:text-white">Sent At:</span>
                 <span class="ml-2">@Model.SentAt?.ToString("g")</span>
             </div>
             <div>
-                <span class="font-semibold text-gray-900">Created At:</span>
+                <span class="font-semibold text-gray-900 dark:text-white">Created At:</span>
                 <span class="ml-2">@Model.CreatedAt.ToString("g")</span>
             </div>
             @if (!string.IsNullOrEmpty(Model.UserName))
             {
                 <div>
-                    <span class="font-semibold text-gray-900">Member:</span>
+                    <span class="font-semibold text-gray-900 dark:text-white">Member:</span>
                     <span class="ml-2">@Model.UserName</span>
                 </div>
             }
