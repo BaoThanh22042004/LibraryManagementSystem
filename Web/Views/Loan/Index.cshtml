@@ -51,7 +51,7 @@
                         <td class="p-4 text-center text-on-surface/70">@loan.LoanDate.ToString("yyyy-MM-dd")</td>
                         <td class="p-4 text-center text-on-surface/70">@loan.DueDate.ToString("yyyy-MM-dd")</td>
                         <td class="p-4 text-center text-on-surface/70">
-                            @loan.ReturnDate?.ToString("yyyy-MM-dd") ?? "-"
+                            @(loan.ReturnDate?.ToString("yyyy-MM-dd") ?? "-")
                         </td>
                         <td class="p-4 text-center">
                             @{
