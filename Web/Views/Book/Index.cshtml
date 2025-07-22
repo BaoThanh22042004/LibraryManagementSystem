@@ -1,249 +1,253 @@
 @model PagedResult<BookBasicDto>
 @{
-    ViewData["Title"] = "Books";
+	ViewData["Title"] = "Books";
 }
 <div class="max-w-7xl mx-auto px-7 sm:px-6 lg:px-8 py-6">
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-3xl font-bold">Book Management</h1>
-        @if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
-        {
-            <a asp-action="Create" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg">
-                Add New Book
-            </a>
-        }
-    </div>
+	<div class="flex items-center justify-between mb-6">
+		<h1 class="text-3xl font-bold">Book List</h1>
+		@if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
+		{
+			<a asp-action="Create" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg">
+				Add New Book
+			</a>
+		}
+	</div>
 
-    @await Html.PartialAsync("_AlertsPartial")
+	@await Html.PartialAsync("_AlertsPartial")
 
-    <!-- Search Form -->
-    <div class="p-6 mb-6 rounded-radius overflow-hidden border border-outline bg-surface-alt text-on-surface">
-        <form asp-action="Index" method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+	<!-- Search Form -->
+	<div class="p-6 mb-6 rounded-radius overflow-hidden border border-outline bg-surface-alt text-on-surface">
+		<form asp-action="Index" method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
 
-            <!-- Search Input -->
-            <div>
-                <label class="block text-sm font-medium mb-1">Search</label>
-                <input type="text" id="SearchTerm" name="SearchTerm" value="@ViewBag.SearchTerm"
-                       placeholder="Search by title, author, or ISBN..."
-                       class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" />
-            </div>
+			<!-- Search Input -->
+			<div>
+				<label class="block text-sm font-medium mb-1">Search</label>
+				<input type="text" id="SearchTerm" name="SearchTerm" value="@ViewBag.SearchTerm"
+					   placeholder="Search by title, author, or ISBN..."
+					   class="w-full rounded-radius border border-outline bg-surface px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" />
+			</div>
 
-            <!-- Category Filter -->
-            <div>
-                <label for="CategoryId" class="block text-sm font-medium mb-1">Category</label>
-                <div class="relative">
-                    <select id="CategoryId" name="CategoryId"
-                            class="peer w-full appearance-none rounded-radius border border-outline bg-surface-alt px-4 py-2 text-sm text-on-surface transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline-strong disabled:cursor-not-allowed disabled:opacity-75">
-                        <option value="">All Categories</option>
-                        @if (ViewBag.Categories != null)
-                        {
-                            foreach (var category in ViewBag.Categories)
-                            {
-                                <option value="@category.Id" selected="@(ViewBag.CategoryId != null && ViewBag.CategoryId == category.Id)">
-                                    @category.Name
-                                </option>
-                            }
-                        }
-                    </select>
-                    <!-- Dropdown icon -->
-                    <svg class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-on-surface/50"
-                         fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
-                </div>
-            </div>
+			<!-- Category Filter -->
+			<div>
+				<label for="CategoryId" class="block text-sm font-medium mb-1">Category</label>
+				<div class="relative">
+					<select id="CategoryId" name="CategoryId"
+							class="peer w-full appearance-none rounded-radius border border-outline bg-surface px-4 py-2 text-sm text-on-surface transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline-strong disabled:cursor-not-allowed disabled:opacity-75">
+						<option value="">All Categories</option>
+						@if (ViewBag.Categories != null)
+						{
+							foreach (var category in ViewBag.Categories)
+							{
+								<option value="@category.Id" selected="@(ViewBag.CategoryId != null && ViewBag.CategoryId == category.Id)">
+									@category.Name
+								</option>
+							}
+						}
+					</select>
+					<!-- Dropdown icon -->
+					<svg class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-on-surface/50"
+						 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+					</svg>
+				</div>
+			</div>
 
-            <!-- Search Buttons -->
-            <div>
-                <button type="submit"
-                        class="whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
-                    Search
-                </button>
-            </div>
-        </form>
-    </div>
-    <!-- Books Table -->
-    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
-        <div class="flex items-center justify-between px-4 py-3">
-            <h2 class="text-lg font-semibold">Book List</h2>
-            <span class="text-sm">Total: @Model.Count books</span>
-        </div>
-        <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
-            <table class="w-full text-left text-sm text-on-surface">
-                <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong">
-                    <tr>
-                        <th class="p-4">COVER</th>
-                        <th class="p-4">TITLE</th>
-                        <th class="p-4">AUTHOR</th>
-                        <th class="p-4">ISBN</th>
-                        <th class="p-4">STATUS</th>
-                        <th class="p-4">COPIES</th>
-                        <th class="p-4">ACTIONS</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-outline bg-surface">
-                    @if (Model.Items.Any())
-                    {
-                        @foreach (var book in Model.Items)
-                        {
-                            <tr class="hover:bg-surface-alt/50">
-                                <td class="p-4 whitespace-nowrap">
-                                    @if (!string.IsNullOrEmpty(book.CoverImageUrl))
-                                    {
-                                        <img src="@book.CoverImageUrl" alt="@book.Title" class="h-16 w-12 object-cover rounded">
-                                    }
-                                    else
-                                    {
-                                        <div class="h-16 w-12 rounded bg-outline/30 flex items-center justify-center text-on-surface/40">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                            </svg>
-                                        </div>
-                                    }
-                                </td>
-                                <td class="p-4 font-medium">@book.Title</td>
-                                <td class="p-4 text-on-surface/70">@book.Author</td>
-                                <td class="p-4 text-on-surface/70">@book.ISBN</td>
-                                <td class="p-4">
-                                    @{
-                                        var statusClasses = book.Status switch
-                                        {
-                                            Domain.Enums.BookStatus.Available => "bg-green-100 text-green-700",
-                                            Domain.Enums.BookStatus.Unavailable => "bg-red-100 text-red-700",
-                                            Domain.Enums.BookStatus.UnderMaintenance => "bg-yellow-100 text-yellow-800",
-                                            _ => "bg-gray-100 text-gray-600"
-                                        };
-                                    }
-                                    <span class="inline-block px-2 py-1 rounded text-xs font-semibold @statusClasses">
-                                        @book.Status
-                                    </span>
-                                </td>
-                                <td class="p-4">
-                                    <span class="text-sm font-semibold text-green-600">@book.AvailableCopies</span>
-                                    <span class="text-on-surface/60"> / @book.TotalCopies</span>
-                                </td>
-                                @if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
-                                {
-                                    <td class="p-4">
-                                        <div class="flex space-x-2">
-                                            <a asp-action="Details" asp-route-id="@book.Id"
-                                            class="whitespace-nowrap rounded-radius bg-transparent p-0.5 font-semibold text-primary outline-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 active:opacity-100 active:outline-offset-0 dark:text-primary-dark dark:outline-primary-dark"
-                                            title="View user details">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                                Details
-                                            </a>
-                                        </div>
-                                    </td>
-                                }
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="7" class="p-6 text-center text-on-surface/60">
-                                No books found.
-                                @(ViewBag.SearchTerm != null || ViewBag.CategoryId != null ? "Try different search criteria." : "")
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
+			<!-- Search Buttons -->
+			<div>
+				<button type="submit"
+						class="whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
+					Search
+				</button>
+			</div>
+		</form>
+	</div>
+	<!-- Books Table -->
+
+	<div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
+		<table class="w-full text-left text-sm text-on-surface">
+			<thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong">
+				<tr>
+					<th class="p-4">COVER</th>
+					<th class="p-4">TITLE</th>
+					<th class="p-4">AUTHOR</th>
+					<th class="p-4">ISBN</th>
+					<th class="p-4">STATUS</th>
+					<th class="p-4">COPIES</th>
+					<th class="p-4">ACTIONS</th>
+				</tr>
+			</thead>
+			<tbody class="divide-y divide-outline bg-surface">
+				@if (Model.Items.Any())
+				{
+					@foreach (var book in Model.Items)
+					{
+						<tr class="hover:bg-surface-alt/50">
+							<td class="p-4 whitespace-nowrap">
+								@if (!string.IsNullOrEmpty(book.CoverImageUrl))
+								{
+									<img src="@book.CoverImageUrl" alt="@book.Title" class="h-16 w-12 object-cover rounded">
+								}
+								else
+								{
+									<div class="h-16 w-12 rounded bg-outline/30 flex items-center justify-center text-on-surface/40">
+										<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+												  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+										</svg>
+									</div>
+								}
+							</td>
+							<td class="p-4 font-medium">@book.Title</td>
+							<td class="p-4 text-on-surface/70">@book.Author</td>
+							<td class="p-4 text-on-surface/70">@book.ISBN</td>
+							<td class="p-4">
+								@{
+									var statusClasses = book.Status switch
+									{
+										Domain.Enums.BookStatus.Available => "bg-green-100 text-green-700",
+										Domain.Enums.BookStatus.Unavailable => "bg-red-100 text-red-700",
+										Domain.Enums.BookStatus.UnderMaintenance => "bg-yellow-100 text-yellow-800",
+										_ => "bg-gray-100 text-gray-600"
+									};
+								}
+								<span class="inline-block px-2 py-1 rounded text-xs font-semibold @statusClasses">
+									@book.Status
+								</span>
+							</td>
+							<td class="p-4">
+								<span class="text-sm font-semibold text-green-600">@book.AvailableCopies</span>
+								<span class="text-on-surface/60"> / @book.TotalCopies</span>
+							</td>
+							<td class="p-4">
+								<div class="flex space-x-2">
+									<a asp-action="Details" asp-route-id="@book.Id"
+									   class="whitespace-nowrap rounded-radius bg-transparent p-0.5 font-semibold text-primary outline-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 active:opacity-100 active:outline-offset-0 dark:text-primary-dark dark:outline-primary-dark"
+									   title="View user details">
+										<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
+										</svg>
+										Details
+									</a>
+								</div>
+							</td>
+						</tr>
+					}
+				}
+				else
+				{
+					<tr>
+						<td colspan="7" class="p-6 text-center text-on-surface/60">
+							No books found.
+							@(ViewBag.SearchTerm != null || ViewBag.CategoryId != null ? "Try different search criteria." : "")
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
 
 
-    <!-- Pagination -->
-    @if (Model.Count > 0)
-    {
-        <div class="overflow-hidden w-full overflow-x-auto rounded-radius">
-            <div class="hidden sm:flex sm:items-center justify-center">
-                    <nav aria-label="pagination">
-                        <ul class="flex shrink-0 items-center gap-2 text-sm font-medium">
-                            @{
-                                var totalPages = (int)Math.Ceiling(Model.Count / (double)Model.PageSize);
-                                var startPage = Math.Max(1, Model.Page - 2);
-                                var endPage = Math.Min(totalPages, startPage + 4);
-                                startPage = Math.Max(1, endPage - 4);
+	<!-- Pagination -->
+	@if (Model.Count > 0)
+	{
+		<div class="mt-2">
+			<p class="text-sm text-gray-700">
+				Showing
+				<span class="font-medium">@((Model.Page - 1) * Model.PageSize + 1)</span>
+				to
+				<span class="font-medium">@(Math.Min(Model.Page * Model.PageSize, Model.Count))</span>
+				of
+				<span class="font-medium">@Model.Count</span>
+				results
+			</p>
+		</div>
 
-                                var routeData = new Dictionary<string, string>();
-                                if (ViewBag.SearchTerm != null) routeData["SearchTerm"] = ViewBag.SearchTerm;
-                                if (ViewBag.CategoryId != null) routeData["CategoryId"] = ViewBag.CategoryId.ToString();
-                            }
+		<div class="overflow-hidden w-full overflow-x-auto rounded-radius">
+			<div class="hidden sm:flex sm:items-center justify-center">
+				<nav aria-label="pagination">
+					<ul class="flex shrink-0 items-center gap-2 text-sm font-medium">
+						@{
+							var totalPages = (int)Math.Ceiling(Model.Count / (double)Model.PageSize);
+							var startPage = Math.Max(1, Model.Page - 2);
+							var endPage = Math.Min(totalPages, startPage + 4);
+							startPage = Math.Max(1, endPage - 4);
 
-                            <li>
-                                @if (Model.Page > 1)
-                                {
-                                    routeData["Page"] = (Model.Page - 1).ToString();
-                                    <a asp-action="Index" asp-all-route-data="@routeData" aria-label="previous page"
-                                       class="flex items-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-6">
-                                            <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
-                                        </svg>
-                                        Previous
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span class="flex items-center rounded-radius p-1 text-gray-400 cursor-not-allowed">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-6">
-                                            <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
-                                        </svg>
-                                        Previous
-                                    </span>
-                                }
-                            </li>
+							var routeData = new Dictionary<string, string>();
+							if (ViewBag.SearchTerm != null) routeData["SearchTerm"] = ViewBag.SearchTerm;
+							if (ViewBag.CategoryId != null) routeData["CategoryId"] = ViewBag.CategoryId.ToString();
+						}
 
-                            @for (var i = startPage; i <= endPage; i++)
-                            {
-                                <li>
-                                    @if (i == Model.Page)
-                                    {
-                                        <span aria-current="page"
-                                              class="flex size-6 items-center justify-center rounded-radius bg-primary p-1 font-bold text-on-primary dark:bg-primary-dark dark:text-on-primary-dark">
-                                            @i
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        routeData["Page"] = i.ToString();
-                                        <a asp-action="Index" asp-all-route-data="@routeData"
-                                           class="flex size-6 items-center justify-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark"
-                                           aria-label="page @i">
-                                            @i
-                                        </a>
-                                    }
-                                </li>
-                            }
+						<li>
+							@if (Model.Page > 1)
+							{
+								routeData["Page"] = (Model.Page - 1).ToString();
+								<a asp-action="Index" asp-all-route-data="@routeData" aria-label="previous page"
+								   class="flex items-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-6">
+										<path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+									</svg>
+									Previous
+								</a>
+							}
+							else
+							{
+								<span class="flex items-center rounded-radius p-1 text-gray-400 cursor-not-allowed">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-6">
+										<path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
+									</svg>
+									Previous
+								</span>
+							}
+						</li>
 
-                            <li>
-                                @if (Model.Page < totalPages)
-                                {
-                                    routeData["Page"] = (Model.Page + 1).ToString();
-                                    <a asp-action="Index" asp-all-route-data="@routeData" aria-label="next page"
-                                       class="flex items-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark">
-                                        Next
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-6">
-                                            <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-                                        </svg>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span class="flex items-center rounded-radius p-1 text-gray-400 cursor-not-allowed">
-                                        Next
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-6">
-                                            <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-                                        </svg>
-                                    </span>
-                                }
-                            </li>
-                        </ul>
-                    </nav>
-            </div>
-        </div>
-        }
+						@for (var i = startPage; i <= endPage; i++)
+						{
+							<li>
+								@if (i == Model.Page)
+								{
+									<span aria-current="page"
+										  class="flex size-6 items-center justify-center rounded-radius bg-primary p-1 font-bold text-on-primary dark:bg-primary-dark dark:text-on-primary-dark">
+										@i
+									</span>
+								}
+								else
+								{
+									routeData["Page"] = i.ToString();
+									<a asp-action="Index" asp-all-route-data="@routeData"
+									   class="flex size-6 items-center justify-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark"
+									   aria-label="page @i">
+										@i
+									</a>
+								}
+							</li>
+						}
+
+						<li>
+							@if (Model.Page < totalPages)
+							{
+								routeData["Page"] = (Model.Page + 1).ToString();
+								<a asp-action="Index" asp-all-route-data="@routeData" aria-label="next page"
+								   class="flex items-center rounded-radius p-1 text-on-surface hover:text-primary dark:text-on-surface-dark dark:hover:text-primary-dark">
+									Next
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-6">
+										<path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+									</svg>
+								</a>
+							}
+							else
+							{
+								<span class="flex items-center rounded-radius p-1 text-gray-400 cursor-not-allowed">
+									Next
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-6">
+										<path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+									</svg>
+								</span>
+							}
+						</li>
+					</ul>
+				</nav>
+			</div>
+		</div>
+	}
 </div>

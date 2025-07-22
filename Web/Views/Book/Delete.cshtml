@@ -138,8 +138,7 @@
                     <form asp-action="Delete" method="post">
                         <input type="hidden" name="id" value="@Model.Id" />
                         
-                        <div class="flex items-center justify-between">
-                            <a asp-action="Details" asp-route-id="@Model.Id" class="text-blue-600 hover:text-blue-800 font-semibold">Cancel</a>
+                        <div class="flex items-center justify-end">
                             <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                                 Confirm Delete
                             </button>

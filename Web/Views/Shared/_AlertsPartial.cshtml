@@ -1,7 +1,7 @@
 @if (TempData.TryGetValue("SuccessMessage", out var successMessage))
 {
     <!-- Success Alert -->
-    <div class="relative w-full overflow-hidden rounded-sm border border-green-500 bg-surface text-on-surface"
+    <div class="mb-4 relative w-full overflow-hidden rounded-radius border border-green-500 bg-surface text-on-surface"
         role="alert">
         <div class="flex w-full items-center gap-2 bg-success/10 p-4">
             <div class="bg-green-500/15 text-green-500 rounded-full p-1" aria-hidden="true">
@@ -21,7 +21,7 @@
 
 @if (TempData.TryGetValue("ErrorMessage", out var errorMessage))
 {
-    <div class="mb-4 relative w-full overflow-hidden rounded-sm border border-red-500 bg-surface text-on-surface"
+    <div class="mb-4 relative w-full overflow-hidden rounded-radius border border-red-500 bg-surface text-on-surface"
         role="alert">
         <div class="flex w-full items-center gap-2 bg-danger/10 p-4">
             <div class="bg-red-500/15 text-red-500 rounded-full p-1" aria-hidden="true">
@@ -42,7 +42,7 @@
 @if (TempData.TryGetValue("WarningMessage", out var warningMessage))
 {
     <!-- Warning Alert -->
-    <div class="relative w-full overflow-hidden rounded-sm border border-amber-500 bg-surface text-on-surface"
+    <div class="mb-4 relative w-full overflow-hidden rounded-radius border border-amber-500 bg-surface text-on-surface"
         role="alert">
         <div class="flex w-full items-center gap-2 bg-warning/10 p-4">
             <div class="bg-amber-500/15 text-amber-500 rounded-full p-1" aria-hidden="true">
@@ -63,7 +63,7 @@
 @if (TempData.TryGetValue("InfoMessage", out var infoMessage))
 {
     <!-- Info Alert -->
-    <div class="relative w-full overflow-hidden rounded-sm border border-sky-500 bg-surface text-on-surface"
+    <div class="mb-4 relative w-full overflow-hidden rounded-radius border border-sky-500 bg-surface text-on-surface"
         role="alert">
         <div class="flex w-full items-center gap-2 bg-info/10 p-4">
             <div class="bg-sky-500/15 text-sky-500 rounded-full p-1" aria-hidden="true">
@@ -83,7 +83,7 @@
 
 @if (!ViewData.ModelState.IsValid)
 {
-    <div class="mb-4 relative w-full overflow-hidden rounded-sm border border-red-500 bg-surface text-on-surface"
+    <div class="mb-4 relative w-full overflow-hidden rounded-radius border border-red-500 bg-surface text-on-surface"
         role="alert">
         <div class="flex w-full items-center gap-2 bg-danger/10 p-4">
             <div>

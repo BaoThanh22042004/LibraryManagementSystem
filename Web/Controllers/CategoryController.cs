@@ -265,7 +265,7 @@ namespace Web.Controllers
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "Admin,Librarian")]
-		public async Task<IActionResult> Edit(UpdateCategoryRequest model, IFormFile? CoverImageFile, bool RemoveCoverImage = false)
+		public async Task<IActionResult> Edit(UpdateCategoryRequest model, IFormFile? CoverImageFile)
 		{
 			try
 			{
@@ -289,9 +289,9 @@ namespace Web.Controllers
 					return View(model);
 				}
 
-				// Handle cover image upload/removal
-				if (RemoveCoverImage)
+				if (CoverImageFile != null && CoverImageFile.Length > 0)
 				{
+					// Handle cover image upload/removal
 					if (!string.IsNullOrEmpty(model.CoverImageUrl))
 					{
 						var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", model.CoverImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
@@ -301,9 +301,7 @@ namespace Web.Controllers
 						}
 					}
 					model.CoverImageUrl = null;
-				}
-				else if (CoverImageFile != null && CoverImageFile.Length > 0)
-				{
+
 					var ext = Path.GetExtension(CoverImageFile.FileName).ToLowerInvariant();
 					var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
 					if (!allowed.Contains(ext))
