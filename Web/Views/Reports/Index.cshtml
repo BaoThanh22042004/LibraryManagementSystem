@@ -4,16 +4,16 @@
 }
 
 <div class="max-w-3xl mx-auto px-4 py-8">
-    <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface rounded-radius">
+    <div class="p-6 mb-6 overflow-hidden border border-gray-700 bg-surface-alt text-on-surface rounded-radius">
         <h3 class="text-3xl text-center font-bold mb-6">Generate Report</h3>
 
         @await Html.PartialAsync("_AlertsPartial")
 
         <form asp-action="Generate" method="post" class="space-y-6">
-            <fieldset class="border border-outline rounded-radius p-4">
-                <legend class="text-sm font-medium">Report Type</legend>
+            <fieldset class="font-bold border border-gray-700 rounded-radius p-4">
+                <legend class="text-sm font-bold">Report Type</legend>
                 <select asp-for="ReportType"
-                        class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm">
+                        class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm">
                     <option value="">-- Select Report Type --</option>
                     @foreach (var type in Enum.GetValues(typeof(Domain.Enums.ReportType)))
                     {
@@ -23,10 +23,10 @@
                 <span asp-validation-for="ReportType" class="text-sm text-red-600 mt-1 block"></span>
             </fieldset>
 
-            <fieldset class="border border-outline rounded-radius p-4">
-                <legend class="text-sm font-medium">Format</legend>
+            <fieldset class="font-bold border border-gray-700 rounded-radius p-4">
+                <legend class="text-sm font-bold">Format</legend>
                 <select asp-for="Format"
-                        class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm">
+                        class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm">
                     <option value="">-- Select Format --</option>
                     @foreach (var format in Enum.GetValues(typeof(Domain.Enums.ReportFormat)))
                     {
@@ -37,54 +37,54 @@
             </fieldset>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <fieldset class="border border-outline rounded-radius p-4">
-                    <legend class="text-sm font-medium">From Date</legend>
+                <fieldset class="font-bold border border-gray-700 rounded-radius p-4">
+                    <legend class="text-sm font-bold">From Date</legend>
                     <input asp-for="FromDate"
                            type="date"
-                           class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm" />
+                           class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm" />
                     <span asp-validation-for="FromDate" class="text-sm text-red-600 mt-1 block"></span>
                 </fieldset>
 
-                <fieldset class="border border-outline rounded-radius p-4">
-                    <legend class="text-sm font-medium">To Date</legend>
+                <fieldset class="font-bold border border-gray-700 rounded-radius p-4">
+                    <legend class="text-sm font-bold">To Date</legend>
                     <input asp-for="ToDate"
                            type="date"
-                           class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm" />
+                           class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm" />
                     <span asp-validation-for="ToDate" class="text-sm text-red-600 mt-1 block"></span>
                 </fieldset>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <fieldset class="border border-outline rounded-radius p-4">
-                    <legend class="text-sm font-medium">Member ID (optional)</legend>
+                <fieldset class="font-bold border border-gray-700 rounded-radius p-4">
+                    <legend class="text-sm font-bold">Member ID (optional)</legend>
                     <input asp-for="MemberId"
                            type="number"
-                           class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm" />
+                           class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm" />
                     <span asp-validation-for="MemberId" class="text-sm text-red-600 mt-1 block"></span>
                 </fieldset>
 
-                <fieldset class="border border-outline rounded-radius p-4">
-                    <legend class="text-sm font-medium">Book ID (optional)</legend>
+                <fieldset class="font-bold border border-gray-700 rounded-radius p-4">
+                    <legend class="text-sm font-bold">Book ID (optional)</legend>
                     <input asp-for="BookId"
                            type="number"
-                           class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm" />
+                           class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm" />
                     <span asp-validation-for="BookId" class="text-sm text-red-600 mt-1 block"></span>
                 </fieldset>
             </div>
 
-            <fieldset class="border border-outline rounded-radius p-4">
-                <legend class="text-sm font-medium">Category ID (optional)</legend>
+            <fieldset class="font-bold border border-gray-700 rounded-radius p-4">
+                <legend class="text-sm font-bold">Category ID (optional)</legend>
                 <input asp-for="CategoryId"
                        type="number"
-                       class="w-full rounded-radius border border-outline bg-surface-alt px-2 py-2 text-sm" />
+                       class="w-full rounded-radius border border-gray-700 bg-surface-alt px-2 py-2 text-sm" />
                 <span asp-validation-for="CategoryId" class="text-sm text-red-600 mt-1 block"></span>
             </fieldset>
 
             <div class="flex items-center space-x-2">
                 <input asp-for="IncludeDetails"
                        type="checkbox"
-                       class="rounded text-primary border-gray-300 focus:ring-primary" />
-                <label asp-for="IncludeDetails" class="text-sm">Include Details</label>
+                       class="rounded text-primary border border-gray-700focus:ring-primary" />
+                <label asp-for="IncludeDetails" class="text-sm font-bold">Include Details</label>
             </div>
 
             <div class="pt-4">
