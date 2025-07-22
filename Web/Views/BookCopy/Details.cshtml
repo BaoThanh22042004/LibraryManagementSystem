@@ -1,273 +1,249 @@
 @model BookCopyDetailDto
 @{
-    ViewData["Title"] = "Copy Details";
+	ViewData["Title"] = "Copy Details";
 }
 
-<div class="mb-6">
-    <div class="flex justify-between items-center">
-        <div class="flex items-center">
-            <a asp-controller="Book" asp-action="Details" asp-route-id="@Model.BookId" class="text-blue-600 hover:text-blue-800 mr-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-            </a>
-            <h1 class="text-3xl font-bold">Book Copy Details</h1>
-        </div>
-        @if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
-        {
-            <div class="flex space-x-2">
-                <a asp-action="UpdateStatus" asp-route-id="@Model.Id" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Update Status
-                </a>
-                <a asp-action="Delete" asp-route-id="@Model.Id" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Delete
-                </a>
-            </div>
-        }
-    </div>
+<div class="flex justify-between items-center">
+
+	<div class="flex gap-4 items-center mb-6">
+		<a asp-controller="Book" asp-action="Details" asp-route-id="@Model.BookId" class="btn-outline-primary">
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
+		</a>
+		<h1 class="text-3xl font-bold">Book Copy Details</h1>
+	</div>
+
+	@if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
+	{
+		<div class="flex space-x-2">
+			<a asp-action="UpdateStatus" asp-route-id="@Model.Id" class="btn-secondary">
+				Update Status
+			</a>
+			<a asp-action="Delete" asp-route-id="@Model.Id" class="btn-danger">
+				Delete
+			</a>
+		</div>
+	}
 </div>
 
 @await Html.PartialAsync("_AlertsPartial")
 
-<div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
-    <div class="flex flex-col md:flex-row">
-        <!-- Book Information -->
-        <div class="p-6 md:w-1/3 border-b md:border-b-0 md:border-r border-gray-200">
-            <h2 class="text-xl font-semibold mb-4">Book Information</h2>
-            
-            <div class="flex flex-col items-center mb-6">
-                @if (!string.IsNullOrEmpty(Model.Book.CoverImageUrl))
-                {
-                    <img src="@Model.Book.CoverImageUrl" alt="@Model.Book.Title" class="w-full max-w-xs h-auto object-cover rounded-lg shadow-md mb-4">
-                }
-                else
-                {
-                    <div class="w-full h-48 bg-gray-200 rounded-lg shadow-md flex items-center justify-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                    </div>
-                }
-            </div>
+<div class="card mb-6">
+	<div class="flex flex-col md:flex-row">
+		<!-- Book Information -->
+		<div class="p-6 md:w-1/3 border-b md:border-b-0 md:border-r border-gray-200">
+			<h2 class="text-xl font-semibold mb-4">Book Information</h2>
 
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold">@Model.Book.Title</h3>
-                <p class="text-gray-700">by @Model.Book.Author</p>
-            </div>
+			<div class="flex flex-col items-center mb-6">
+				@if (!string.IsNullOrEmpty(Model.Book.CoverImageUrl))
+				{
+					<img src="@Model.Book.CoverImageUrl" alt="@Model.Book.Title" class="w-full max-w-xs h-auto object-cover rounded-lg shadow-md mb-4">
+				}
+				else
+				{
+					<div class="w-full h-48 bg-gray-200 rounded-lg shadow-md flex items-center justify-center mb-4">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+						</svg>
+					</div>
+				}
+			</div>
 
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-500">ISBN</h4>
-                    <p class="text-gray-700">@Model.Book.ISBN</p>
-                </div>
-                
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-500">Book Status</h4>
-                    <p class="text-gray-700">@Model.Book.Status</p>
-                </div>
-                
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-500">Total Copies</h4>
-                    <p class="text-gray-700">@Model.Book.TotalCopies</p>
-                </div>
-                
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-500">Available</h4>
-                    <p class="text-gray-700">@Model.Book.AvailableCopies</p>
-                </div>
-            </div>
-            
-            <div class="mt-4">
-                <a asp-controller="Book" asp-action="Details" asp-route-id="@Model.BookId" 
-                   class="text-blue-600 hover:text-blue-800 font-semibold">
-                    View Book Details
-                </a>
-            </div>
-        </div>
+			<div class="mb-6">
+				<h3 class="text-lg font-semibold">@Model.Book.Title</h3>
+				<p class="text-gray-700">by @Model.Book.Author</p>
+			</div>
 
-        <!-- Copy Details -->
-        <div class="p-6 md:w-2/3">
-            <h2 class="text-xl font-semibold mb-4">Copy Information</h2>
-            
-            <div class="mb-6">
-                <div class="bg-gray-100 p-4 rounded-lg mb-4">
-                    <div class="flex items-center">
-                        <span class="text-2xl font-bold mr-2">@Model.CopyNumber</span>
-                        @{
-                            var statusClasses = Model.Status switch
-                            {
-                                Domain.Enums.CopyStatus.Available => "bg-green-100 text-green-800",
-                                Domain.Enums.CopyStatus.Borrowed => "bg-blue-100 text-blue-800",
-                                Domain.Enums.CopyStatus.Reserved => "bg-purple-100 text-purple-800",
-                                Domain.Enums.CopyStatus.Lost => "bg-red-100 text-red-800",
-                                Domain.Enums.CopyStatus.Damaged => "bg-yellow-100 text-yellow-800",
-                                _ => "bg-gray-100 text-gray-800"
-                            };
-                        }
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @statusClasses">
-                            @Model.Status
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <dl>
-                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Created On</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.CreatedAt.ToString("MMM dd, yyyy")</dd>
-                            </div>
-                            
-                            @if (Model.UpdatedAt.HasValue)
-                            {
-                                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                    <dt class="text-sm font-medium text-gray-500">Last Updated</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.UpdatedAt.Value.ToString("MMM dd, yyyy")</dd>
-                                </div>
-                            }
-                            
-                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Active Loans</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                    @if (Model.HasActiveLoans)
-                                    {
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            Yes
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            No
-                                        </span>
-                                    }
-                                </dd>
-                            </div>
-                            
-                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt class="text-sm font-medium text-gray-500">Active Reservations</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                    @if (Model.HasActiveReservations)
-                                    {
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            Yes
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            No
-                                        </span>
-                                    }
-                                </dd>
-                            </div>
-                        </dl>
-                    </div>
-                    
-                    <div>
-                        @if (Model.Status == Domain.Enums.CopyStatus.Available)
-                        {
-                            <div class="bg-green-50 border-l-4 border-green-400 p-4">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-green-700">
-                                            This copy is available for loan.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        else if (Model.Status == Domain.Enums.CopyStatus.Borrowed)
-                        {
-                            <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-blue-700">
-                                            This copy is currently on loan and unavailable.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        else if (Model.Status == Domain.Enums.CopyStatus.Reserved)
-                        {
-                            <div class="bg-purple-50 border-l-4 border-purple-400 p-4">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-purple-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-purple-700">
-                                            This copy is reserved for a member.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        else if (Model.Status == Domain.Enums.CopyStatus.Lost)
-                        {
-                            <div class="bg-red-50 border-l-4 border-red-400 p-4">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-red-700">
-                                            This copy has been reported as lost.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        else if (Model.Status == Domain.Enums.CopyStatus.Damaged)
-                        {
-                            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-yellow-700">
-                                            This copy is damaged and needs repair or replacement.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-8 flex space-x-4 justify-end">
-                <a asp-controller="Book" asp-action="Details" asp-route-id="@Model.BookId" 
-                   class="text-blue-600 hover:text-blue-800 font-semibold">
-                    Back to Book
-                </a>
-                
-                @if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
-                {
-                    <a asp-action="UpdateStatus" asp-route-id="@Model.Id" 
-                       class="text-indigo-600 hover:text-indigo-800 font-semibold">
-                        Update Status
-                    </a>
-                }
-            </div>
-        </div>
-    </div>
+			<div class="grid grid-cols-2 gap-4 mb-4">
+				<div>
+					<h4 class="text-sm font-semibold text-gray-500">ISBN</h4>
+					<p class="text-gray-700">@Model.Book.ISBN</p>
+				</div>
+
+				<div>
+					<h4 class="text-sm font-semibold text-gray-500">Book Status</h4>
+					<p class="text-gray-700">@Model.Book.Status</p>
+				</div>
+
+				<div>
+					<h4 class="text-sm font-semibold text-gray-500">Total Copies</h4>
+					<p class="text-gray-700">@Model.Book.TotalCopies</p>
+				</div>
+
+				<div>
+					<h4 class="text-sm font-semibold text-gray-500">Available</h4>
+					<p class="text-gray-700">@Model.Book.AvailableCopies</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Copy Details -->
+		<div class="p-6 md:w-2/3">
+			<h2 class="text-xl font-semibold mb-4">Copy Information</h2>
+
+			<div class="mb-6">
+				<div class="bg-gray-100 p-4 rounded-lg mb-4">
+					<div class="flex items-center">
+						<span class="text-2xl font-bold mr-2">@Model.CopyNumber</span>
+						@{
+							var statusClasses = Model.Status switch
+							{
+								Domain.Enums.CopyStatus.Available => "bg-green-100 text-green-800",
+								Domain.Enums.CopyStatus.Borrowed => "bg-blue-100 text-blue-800",
+								Domain.Enums.CopyStatus.Reserved => "bg-purple-100 text-purple-800",
+								Domain.Enums.CopyStatus.Lost => "bg-red-100 text-red-800",
+								Domain.Enums.CopyStatus.Damaged => "bg-yellow-100 text-yellow-800",
+								_ => "bg-gray-100 text-gray-800"
+							};
+						}
+						<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @statusClasses">
+							@Model.Status
+						</span>
+					</div>
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div>
+						<dl>
+							<div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+								<dt class="text-sm font-medium text-gray-500">Created On</dt>
+								<dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.CreatedAt.ToString("MMM dd, yyyy")</dd>
+							</div>
+
+							@if (Model.UpdatedAt.HasValue)
+							{
+								<div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+									<dt class="text-sm font-medium text-gray-500">Last Updated</dt>
+									<dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.UpdatedAt.Value.ToString("MMM dd, yyyy")</dd>
+								</div>
+							}
+
+							<div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+								<dt class="text-sm font-medium text-gray-500">Active Loans</dt>
+								<dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+									@if (Model.HasActiveLoans)
+									{
+										<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+											Yes
+										</span>
+									}
+									else
+									{
+										<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+											No
+										</span>
+									}
+								</dd>
+							</div>
+
+							<div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+								<dt class="text-sm font-medium text-gray-500">Active Reservations</dt>
+								<dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+									@if (Model.HasActiveReservations)
+									{
+										<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+											Yes
+										</span>
+									}
+									else
+									{
+										<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+											No
+										</span>
+									}
+								</dd>
+							</div>
+						</dl>
+					</div>
+
+					<div>
+						@if (Model.Status == Domain.Enums.CopyStatus.Available)
+						{
+							<div class="bg-green-50 border-l-4 border-green-400 p-4">
+								<div class="flex">
+									<div class="flex-shrink-0">
+										<svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+											<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+										</svg>
+									</div>
+									<div class="ml-3">
+										<p class="text-sm text-green-700">
+											This copy is available for loan.
+										</p>
+									</div>
+								</div>
+							</div>
+						}
+						else if (Model.Status == Domain.Enums.CopyStatus.Borrowed)
+						{
+							<div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+								<div class="flex">
+									<div class="flex-shrink-0">
+										<svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+											<path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+										</svg>
+									</div>
+									<div class="ml-3">
+										<p class="text-sm text-blue-700">
+											This copy is currently on loan and unavailable.
+										</p>
+									</div>
+								</div>
+							</div>
+						}
+						else if (Model.Status == Domain.Enums.CopyStatus.Reserved)
+						{
+							<div class="bg-purple-50 border-l-4 border-purple-400 p-4">
+								<div class="flex">
+									<div class="flex-shrink-0">
+										<svg class="h-5 w-5 text-purple-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+											<path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+										</svg>
+									</div>
+									<div class="ml-3">
+										<p class="text-sm text-purple-700">
+											This copy is reserved for a member.
+										</p>
+									</div>
+								</div>
+							</div>
+						}
+						else if (Model.Status == Domain.Enums.CopyStatus.Lost)
+						{
+							<div class="bg-red-50 border-l-4 border-red-400 p-4">
+								<div class="flex">
+									<div class="flex-shrink-0">
+										<svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+											<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+										</svg>
+									</div>
+									<div class="ml-3">
+										<p class="text-sm text-red-700">
+											This copy has been reported as lost.
+										</p>
+									</div>
+								</div>
+							</div>
+						}
+						else if (Model.Status == Domain.Enums.CopyStatus.Damaged)
+						{
+							<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+								<div class="flex">
+									<div class="flex-shrink-0">
+										<svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+											<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+										</svg>
+									</div>
+									<div class="ml-3">
+										<p class="text-sm text-yellow-700">
+											This copy is damaged and needs repair or replacement.
+										</p>
+									</div>
+								</div>
+							</div>
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>

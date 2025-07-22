@@ -7,7 +7,7 @@
 		<h1 class="text-3xl font-bold">Book List</h1>
 		@if (User.IsInRole("Admin") || User.IsInRole("Librarian"))
 		{
-			<a asp-action="Create" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg">
+			<a asp-action="Create" class="btn-success">
 				Add New Book
 			</a>
 		}
@@ -16,20 +16,20 @@
 	@await Html.PartialAsync("_AlertsPartial")
 
 	<!-- Search Form -->
-	<div class="p-6 mb-6 rounded-radius overflow-hidden border border-outline bg-surface-alt text-on-surface">
+	<div class="p-6 mb-6 card">
 		<form asp-action="Index" method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
 
 			<!-- Search Input -->
 			<div>
-				<label class="block text-sm font-medium mb-1">Search</label>
+				<label class="label">Search</label>
 				<input type="text" id="SearchTerm" name="SearchTerm" value="@ViewBag.SearchTerm"
 					   placeholder="Search by title, author, or ISBN..."
-					   class="w-full rounded-radius border border-outline bg-surface px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-75" />
+					   class="w-full text-input" />
 			</div>
 
 			<!-- Category Filter -->
 			<div>
-				<label for="CategoryId" class="block text-sm font-medium mb-1">Category</label>
+				<label for="CategoryId" class="label">Category</label>
 				<div class="relative">
 					<select id="CategoryId" name="CategoryId"
 							class="peer w-full appearance-none rounded-radius border border-outline bg-surface px-4 py-2 text-sm text-on-surface transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-outline-strong disabled:cursor-not-allowed disabled:opacity-75">
@@ -55,7 +55,7 @@
 			<!-- Search Buttons -->
 			<div>
 				<button type="submit"
-						class="whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
+						class="btn-primary">
 					Search
 				</button>
 			</div>
@@ -63,7 +63,7 @@
 	</div>
 	<!-- Books Table -->
 
-	<div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
+	<div class="overflow-hidden w-full overflow-x-auto shadow-md rounded-radius border border-outline">
 		<table class="w-full text-left text-sm text-on-surface">
 			<thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong">
 				<tr>
