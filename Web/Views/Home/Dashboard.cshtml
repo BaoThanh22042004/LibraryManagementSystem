@@ -16,12 +16,7 @@
         Library <span class="text-primary">Dashboard</span>
         </h2>
     
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
-            @TempData["ErrorMessage"]
-        </div>
-    }
+    @await Html.PartialAsync("_AlertsPartial")
 
     <div class="flex items-center gap-2 mb-8">
         <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

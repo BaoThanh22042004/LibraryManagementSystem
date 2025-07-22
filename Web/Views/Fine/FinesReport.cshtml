@@ -35,10 +35,7 @@
         </div>
     </div>
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="mb-6 p-4 bg-red-100 text-red-800 border border-red-300 rounded-md">@TempData["ErrorMessage"]</div>
-    }
+    @await Html.PartialAsync("_AlertsPartial")
 
     <div class="bg-surface-alt rounded-lg shadow overflow-hidden">
         <div class="overflow-x-auto">
