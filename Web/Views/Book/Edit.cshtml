@@ -19,6 +19,7 @@
 <div class="bg-white shadow-md rounded-lg overflow-hidden p-6 mb-6">
     <form asp-action="Edit" method="post" enctype="multipart/form-data">
         <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="CoverImageUrl" />
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Left column - Basic Information -->
