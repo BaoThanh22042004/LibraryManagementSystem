@@ -8,14 +8,14 @@
 
 <div class="max-w-3xl mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
-        <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-primary text-primary hover:bg-primary hover:text-on-primary text-sm rounded-md transition dark:border-primary-dark dark:text-primary-dark dark:hover:bg-primary-dark dark:hover:text-on-primary-dark">
+        <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-primary text-primary hover:bg-primary hover:text-on-primary text-sm rounded-md transition">
             ← Back to List
         </a>
     </div>
 
     @await Html.PartialAsync("_AlertsPartial")
 
-    <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark rounded-radius">
+    <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface rounded-radius">
         <div class="text-white px-6 rounded-t-radius rounded-b-radius">
             <h5 class="text-2xl text-center font-bold">Create Reservation</h5>
         </div>
@@ -27,26 +27,26 @@
                 <div class="space-y-6">
                     <div>
                         <label asp-for="MemberId" class="block text-sm font-medium mb-1">Member ID<span class="text-red-600">*</span></label>
-                        <input asp-for="MemberId" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm placeholder:text-on-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" placeholder="Enter member ID" />
+                        <input asp-for="MemberId" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm placeholder:text-on-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="Enter member ID" />
                         <span asp-validation-for="MemberId" class="text-red-600 text-sm"></span>
                     </div>
 
                     <div>
                         <label asp-for="BookId" class="block text-sm font-medium mb-1">Book Copy ID<span class="text-red-600">*</span></label>
-                        <input asp-for="BookId" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm placeholder:text-on-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" placeholder="Enter book copy ID" />
+                        <input asp-for="BookId" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm placeholder:text-on-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="Enter book copy ID" />
                         <span asp-validation-for="BookId" class="text-red-600 text-sm"></span>
                     </div>
 
                     <div>
                         <label asp-for="Notes" class="block text-sm font-medium mb-1">Notes</label>
-                        <textarea asp-for="Notes" rows="5" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm placeholder:text-on-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark" placeholder="Enter notes here..."></textarea>
+                        <textarea asp-for="Notes" rows="5" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm placeholder:text-on-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="Enter notes here..."></textarea>
                         <span asp-validation-for="Notes" class="text-red-600 text-sm"></span>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
                 <div class="pt-4">
-                    <button type="submit" class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">
+                    <button type="submit" class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
                         Submit
                     </button>
                 </div>

@@ -6,11 +6,11 @@
     ViewData["Title"] = $"Outstanding Fines for {Model.MemberName}";
 }
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface dark:text-on-surface-dark">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface">
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
             <h1 class="text-3xl font-bold">@ViewData["Title"]</h1>
-            <p class="mt-2 text-sm text-on-surface-weak dark:text-on-surface-dark-weak">
+            <p class="mt-2 text-sm text-on-surface-weak">
                 A summary of all unpaid fines for member ID: @Model.MemberId.
             </p>
         </div>
@@ -37,10 +37,10 @@
     </div>
 
 
-    <div class="bg-surface-alt dark:bg-surface-dark-alt rounded-lg shadow overflow-hidden">
+    <div class="bg-surface-alt rounded-lg shadow overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-outline dark:divide-outline-dark">
-                <thead class="bg-surface dark:bg-surface-dark">
+            <table class="min-w-full divide-y divide-outline">
+                <thead class="bg-surface">
                     <tr>
                         <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6">Fine Info</th>
                         <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold">Amount</th>
@@ -49,7 +49,7 @@
                         <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-outline dark:divide-outline-dark">
+                <tbody class="divide-y divide-outline">
                     @if (Model.TotalOutstanding > 0)
                     {
                         <tr>

@@ -5,22 +5,22 @@
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-3xl font-bold">OverDue Report</h1>
     <a asp-action="DownloadOverdueReportCsv"
-       class="inline-flex items-center px-4 py-2 bg-primary border border-primary text-sm font-medium rounded-radius text-on-primary hover:opacity-75 dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:hover:opacity-75 transition">
+       class="inline-flex items-center px-4 py-2 bg-primary border border-primary text-sm font-medium rounded-radius text-on-primary hover:opacity-75 transition">
         Export CSV
     </a>
 </div>
 
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="mb-4 rounded-radius bg-red-100 px-4 py-3 text-red-800 dark:bg-red-200 dark:text-red-900">
+    <div class="mb-4 rounded-radius bg-red-100 px-4 py-3 text-red-800">
         @TempData["ErrorMessage"]
     </div>
 }
 
 <!-- Overdue Loans Table -->
-<div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark mb-6">
-    <table class="w-full text-left text-sm text-on-surface dark:text-on-surface-dark">
-        <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark-strong">
+<div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline mb-6">
+    <table class="w-full text-left text-sm text-on-surface">
+        <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong">
             <tr>
                 <th class="p-4">MEMBER</th>
                 <th class="p-4">CONTACT</th>
@@ -29,18 +29,18 @@
                 <th class="p-4">DAYS OVERDUE</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-outline dark:divide-outline-dark bg-surface dark:bg-surface-dark">
+        <tbody class="divide-y divide-outline bg-surface">
             @if (!Model.Items.Any())
             {
                 <tr>
-                    <td colspan="5" class="p-6 text-center text-on-surface/60 dark:text-on-surface-dark/60">
+                    <td colspan="5" class="p-6 text-center text-on-surface/60">
                         No overdue loans found.
                     </td>
                 </tr>
             }
             @foreach (var loan in Model.Items)
             {
-                <tr class="hover:bg-surface-alt/50 dark:hover:bg-surface-dark-alt/50">
+                <tr class="hover:bg-surface-alt/50">
                     <td class="p-4 whitespace-nowrap font-medium">@loan.MemberName</td>
                     <td class="p-4 whitespace-nowrap">
                         <div><span class="font-semibold">Email:</span> @loan.MemberEmail</div>

@@ -12,7 +12,7 @@
 
 @await Html.PartialAsync("_AlertsPartial")
 
-<div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark rounded-radius">
+<div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface rounded-radius">
     <div class="text-white px-6 rounded-t-radius rounded-b-radius">
         <h5 class="text-3xl text-center font-bold">Create Category</h5>
     </div>
@@ -25,7 +25,7 @@
             <div>
                 <label asp-for="Name" class="block text-sm font-medium mb-1">Category Name <span class="text-red-600">*</span></label>
                 <input asp-for="Name"
-                       class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                       class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                        placeholder="Enter category name"
                        data-val-remote-url="@Url.Action("NameExists")"
                        data-val-remote="A category with this name already exists."
@@ -37,7 +37,7 @@
             <div>
                 <label asp-for="Description" class="block text-sm font-medium mb-1">Description</label>
                 <textarea asp-for="Description" rows="4"
-                          class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:border-outline-dark dark:bg-surface-dark-alt/50 dark:focus-visible:outline-primary-dark"
+                          class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                           placeholder="Enter category description (optional)"></textarea>
                 <span asp-validation-for="Description" class="text-red-600 text-sm"></span>
             </div>
@@ -46,17 +46,17 @@
             <div>
                 <label class="block text-sm font-medium mb-1">Cover Image</label>
                 <input type="file" name="CoverImageFile" accept="image/*"
-                       class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-primary file:text-on-primary dark:border-outline-dark dark:bg-surface-dark-alt/50" />
+                       class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-primary file:text-on-primary" />
                 @if (ViewData.ModelState["CoverImageFile"]?.Errors.Count > 0)
                 {
                     <span class="text-red-600 text-sm">@ViewData.ModelState["CoverImageFile"]!.Errors[0].ErrorMessage</span>
                 }
-                <p class="text-sm text-gray-500 mt-1 dark:text-gray-400">Upload an image file (jpg, png, gif, webp) to represent this category. Optional.</p>
+                <p class="text-sm text-gray-500 mt-1">Upload an image file (jpg, png, gif, webp) to represent this category. Optional.</p>
             </div>
 
             <!-- Actions -->
                 <div class="pt-4">
-                    <button type="submit" class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed dark:bg-primary-dark dark:border-primary-dark dark:text-on-primary-dark dark:focus-visible:outline-primary-dark">
+                    <button type="submit" class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
                         Create
                     </button>
                 </div>

@@ -42,7 +42,7 @@
         </div>
     }
 
-    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
         <div class="px-6 py-4 flex justify-between items-center">
             <h2 class="text-lg font-semibold">Details</h2>
             <div class="flex items-center space-x-2">
@@ -60,45 +60,45 @@
                 </span>
             </div>
         </div>
-        <div class="p-6 bg-surface-alt dark:bg-surface-dark-alt border border-outline dark:border-outline-dark rounded-radius">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative text-sm text-on-surface dark:text-on-surface-dark">
+        <div class="p-6 bg-surface-alt border border-outline rounded-radius">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative text-sm text-on-surface">
                 <!-- Cột trái -->
                 <div class="space-y-4">
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">User ID</div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong">User ID</div>
                         <div class="mt-1">@Model.Id</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Email</div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Email</div>
                         <div class="mt-1">
-                            <a href="mailto:@Model.Email" class="text-primary hover:underline dark:text-primary-dark">@Model.Email</a>
+                            <a href="mailto:@Model.Email" class="text-primary hover:underline">@Model.Email</a>
                         </div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Address</div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Address</div>
                         <div class="mt-1">@(!string.IsNullOrEmpty(Model.Address) ? Model.Address : "Not provided")</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Created At</div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Created At</div>
                         <div class="mt-1">@Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm:ss")</div>
                     </div>
                 </div>
 
                 <!-- Line dọc chia giữa -->
-                <div class="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-outline dark:bg-outline-dark"></div>
+                <div class="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-outline"></div>
 
                 <!-- Cột phải -->
                 <div class="space-y-4 md:pl-8">
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Full Name</div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Full Name</div>
                         <div class="mt-1">@Model.FullName</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Phone</div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Phone</div>
                         <div class="mt-1">@(!string.IsNullOrEmpty(Model.Phone) ? Model.Phone : "Not provided")</div>
                     </div>
                     <div>
-                        <div class="text-xs font-semibold uppercase text-on-surface-strong dark:text-on-surface-dark-strong">Last Updated</div>
+                        <div class="text-xs font-semibold uppercase text-on-surface-strong">Last Updated</div>
                         <div class="mt-1">@((Model.UpdatedAt.HasValue) ? Model.UpdatedAt.Value.ToString("MMMM dd, yyyy HH:mm:ss") : "Never")</div>
                     </div>
                 </div>

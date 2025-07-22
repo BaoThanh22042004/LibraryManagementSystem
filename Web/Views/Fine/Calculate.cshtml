@@ -16,15 +16,15 @@
     };
 }
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface dark:text-on-surface-dark">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface">
     <div class="flex justify-between items-center mb-6">
         <div>
             <h1 class="text-3xl font-bold">@ViewData["Title"]</h1>
-            <p class="mt-1 text-sm text-on-surface-weak dark:text-on-surface-dark-weak">Calculate and create a new fine record for an overdue loan.</p>
+            <p class="mt-1 text-sm text-on-surface-weak">Calculate and create a new fine record for an overdue loan.</p>
         </div>
     </div>
 
-    <hr class="border-outline dark:border-outline-dark mb-8" />
+    <hr class="border-outline mb-8" />
 
     @if (loanDetails == null)
     {
@@ -40,7 +40,7 @@
     {
         <div class="flex flex-col lg:flex-row gap-8">
             <div class="lg:w-5/12">
-                <div class="bg-surface-alt dark:bg-surface-dark-alt shadow-md rounded-lg p-6 sticky top-8">
+                <div class="bg-surface-alt shadow-md rounded-lg p-6 sticky top-8">
                     <h2 class="text-xl font-semibold mb-4 flex justify-between items-center">
                         <span>Loan Information</span>
                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium @GetLoanStatusColorClass(loanDetails.Status)">
@@ -49,19 +49,19 @@
                     </h2>
                     <div class="space-y-3 text-sm">
                         <div class="flex justify-between">
-                            <span class="font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Member:</span>
+                            <span class="font-medium text-on-surface-weak">Member:</span>
                             <span>@loanDetails.MemberName</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Book Title:</span>
+                            <span class="font-medium text-on-surface-weak">Book Title:</span>
                             <span class="text-right">@loanDetails.BookTitle</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Loan Date:</span>
+                            <span class="font-medium text-on-surface-weak">Loan Date:</span>
                             <span>@loanDetails.LoanDate.ToString("dd MMM, yyyy")</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="font-medium text-on-surface-weak dark:text-on-surface-dark-weak">Due Date:</span>
+                            <span class="font-medium text-on-surface-weak">Due Date:</span>
                             <span class="font-bold text-red-500">@loanDetails.DueDate.ToString("dd MMM, yyyy")</span>
                         </div>
                     </div>
@@ -76,16 +76,16 @@
             </div>
 
             <div class="lg:w-7/12">
-                <div class="bg-surface-alt dark:bg-surface-dark-alt shadow-md rounded-lg p-6">
+                <div class="bg-surface-alt shadow-md rounded-lg p-6">
                     <h2 class="text-xl font-semibold mb-4">Fine Calculation Process</h2>
-                    <p class="text-sm text-on-surface-weak dark:text-on-surface-dark-weak mb-4">
+                    <p class="text-sm text-on-surface-weak mb-4">
                         You are about to automatically calculate the fine for the loan detailed on the left. The system will use:
                     </p>
                     <ul class="list-disc list-inside space-y-2 text-sm mb-6">
                         <li>Number of days overdue as of <strong>@DateTime.Now.ToString("dd MMM, yyyy")</strong>.</li>
                         <li>The library's pre-defined fine policies (e.g., daily fine rate).</li>
                     </ul>
-                    <hr class="border-outline dark:border-outline-dark mb-6" />
+                    <hr class="border-outline mb-6" />
 
                     <form asp-action="Calculate" method="post">
                         @Html.AntiForgeryToken()

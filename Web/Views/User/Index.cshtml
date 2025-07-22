@@ -31,7 +31,7 @@
     }
 
     <!-- Filter Section -->
-    <div class="p-6 mb-6 rounded-radius overflow-hidden border border-outline bg-surface-alt text-on-surface dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark">
+    <div class="p-6 mb-6 rounded-radius overflow-hidden border border-outline bg-surface-alt text-on-surface">
         <form asp-action="Index" method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <!-- Search -->
             <div>
@@ -85,7 +85,7 @@
     </div>
 
     <!-- User Table -->
-    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
         <div class="flex items-center justify-between px-4 py-3">
             <h2 class="text-lg font-semibold">User List</h2>
             <span class="text-sm">Total: @Model.Count users</span>
@@ -93,9 +93,9 @@
 
         @if (Model.Items.Any())
         {
-            <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline dark:border-outline-dark">
-                <table class="w-full text-left text-sm text-on-surface dark:text-on-surface-dark">
-                    <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong dark:border-outline-dark dark:bg-surface-dark-alt dark:text-on-surface-dark-strong">
+            <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline">
+                <table class="w-full text-left text-sm text-on-surface">
+                    <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong">
                         <tr>
                             <th class="p-4">ID</th>
                             <th class="p-4">NAME</th>
@@ -105,7 +105,7 @@
                             <th class="p-4">ACTIONS</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-outline dark:divide-outline-dark bg-surface dark:bg-surface-dark">
+                    <tbody class="divide-y divide-outline bg-surface">
                         @foreach (var user in Model.Items)
                         {
                             <tr>
