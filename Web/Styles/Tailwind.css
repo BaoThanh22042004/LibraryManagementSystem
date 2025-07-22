@@ -13,17 +13,6 @@
     --color-on-secondary: var(--color-slate-100);
     --color-outline: var(--color-slate-300);
     --color-outline-strong: var(--color-slate-800);
-    /* dark theme */
-    --color-surface-dark: var(--color-slate-900);
-    --color-surface-dark-alt: var(--color-slate-800);
-    --color-on-surface-dark: var(--color-slate-300);
-    --color-on-surface-dark-strong: var(--color-white);
-    --color-primary-dark: var(--color-blue-600);
-    --color-on-primary-dark: var(--color-slate-100);
-    --color-secondary-dark: var(--color-indigo-600);
-    --color-on-secondary-dark: var(--color-slate-100);
-    --color-outline-dark: var(--color-slate-700);
-    --color-outline-dark-strong: var(--color-slate-300);
     /* shared colors */
     --color-info: var(--color-sky-600);
     --color-on-info: var(--color-white);
@@ -51,6 +40,6 @@
     }
 
     body {
-        @apply bg-surface dark:bg-surface-dark text-on-surface-strong dark:text-on-surface-dark-strong font-inter antialiased md:subpixel-antialiased;
+        @apply bg-surface text-on-surface-strong font-inter antialiased md:subpixel-antialiased;
     }
 }
