@@ -844,16 +844,25 @@ namespace Web.Controllers
         {
             try
             {
+                var userDetailsResult = await _userService.GetUserDetailsByMemberIdAsync(memberId);
+                if (!userDetailsResult.IsSuccess)
+                {
+                    TempData["ErrorMessage"] = userDetailsResult.Error;
+                    return RedirectToAction("Index", "User");
+                }
+                var userDetails = userDetailsResult.Value;
+                ViewBag.MemberDetails = userDetails;
+
                 var result = await _fineService.GetOutstandingFinesAsync(memberId);
                 if (!result.IsSuccess)
                 {
                     TempData["ErrorMessage"] = result.Error;
-                    return RedirectToAction("Details", "User", new { id = memberId });
+                    return RedirectToAction("Details", "User", new { id = userDetails.Id });
                 }
-                // Audit log
+
                 if (User.TryGetUserId(out int staffId))
                 {
-                    await _auditService.CreateAuditLogAsync(new Application.DTOs.CreateAuditLogRequest
+                    await _auditService.CreateAuditLogAsync(new CreateAuditLogRequest
                     {
                         UserId = staffId,
                         ActionType = Domain.Enums.AuditActionType.Read,
@@ -863,11 +872,12 @@ namespace Web.Controllers
                         IsSuccess = true
                     });
                 }
+
                 return View("OutstandingFines", result.Value);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading outstanding fines");
+                _logger.LogError(ex, "Error loading outstanding fines for member {memberId}", memberId);
                 TempData["ErrorMessage"] = "Unable to load outstanding fines.";
                 return RedirectToAction("Index");
             }
