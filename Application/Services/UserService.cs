@@ -212,8 +212,67 @@ public class UserService : IUserService
 		}
 	}
 
-	/// <inheritdoc/>
-	public async Task<Result> UpdateUserAsync(UpdateUserRequest request)
+    /// <inheritdoc/>
+    public async Task<Result<UserDetailsDto>> GetUserDetailsByEmailAsync(string email)
+    {
+        try
+        {
+            // Get user with role-specific details
+            var userRepo = _unitOfWork.Repository<User>();
+            var user = await userRepo.GetAsync(u => u.Email == email);
+
+            if (user == null)
+            {
+                return Result.Failure<UserDetailsDto>("User not found");
+            }
+
+            // Get member or librarian details if needed
+            if (user.Role == UserRole.Member)
+            {
+                var memberRepo = _unitOfWork.Repository<Member>();
+                user.Member = await memberRepo.GetAsync(m => m.UserId == user.Id);
+            }
+            else if (user.Role == UserRole.Librarian)
+            {
+                var librarianRepo = _unitOfWork.Repository<Librarian>();
+                user.Librarian = await librarianRepo.GetAsync(l => l.UserId == user.Id);
+            }
+
+            // Map to response
+            var response = _mapper.Map<UserDetailsDto>(user);
+
+            // Get additional information for Member
+            if (user.Role == UserRole.Member && user.Member != null)
+            {
+                // Load loan and reservation counts
+                var loanRepo = _unitOfWork.Repository<Loan>();
+                var activeLoans = await loanRepo.CountAsync(l =>
+                    l.MemberId == user.Member.Id &&
+                    l.Status == LoanStatus.Active);
+
+                var reservationRepo = _unitOfWork.Repository<Reservation>();
+                var activeReservations = await reservationRepo.CountAsync(r =>
+                    r.MemberId == user.Member.Id &&
+                    r.Status == ReservationStatus.Active);
+
+                if (response.MemberDetails != null)
+                {
+                    response.MemberDetails.ActiveLoans = activeLoans;
+                    response.MemberDetails.ActiveReservations = activeReservations;
+                }
+            }
+
+            return Result.Success(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving user details for ID {Id}", email);
+            return Result.Failure<UserDetailsDto>("An error occurred while retrieving user details");
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result> UpdateUserAsync(UpdateUserRequest request)
 	{
 		try
 		{

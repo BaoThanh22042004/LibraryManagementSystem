@@ -10,73 +10,57 @@
 
 <div class="bg-white shadow-md rounded-lg overflow-hidden">
     <!-- Loans Table -->
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+    <div class="overflow-hidden w-full overflow-x-auto rounded-radius border border-outline mt-8">
+        <div class="flex items-center justify-between px-4 py-3">
+            <h2 class="text-lg font-semibold">Loan List</h2>
+            <span class="text-sm">Total: @Model.Count loans</span>
+        </div>
+        <table class="w-full text-left text-sm text-on-surface">
+            <thead class="border-b border-outline bg-surface-alt text-sm text-on-surface-strong">
                 <tr>
-                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Book Title
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Book Copy Id
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Loan Date
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Due Date
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Return Date
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                    </th>
-                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                    </th>
+                    <th class="p-4 text-center">BOOK TITLE</th>
+                    <th class="p-4 text-center">BOOK COPY ID</th>
+                    <th class="p-4 text-center">LOAN DATE</th>
+                    <th class="p-4 text-center">DUE DATE</th>
+                    <th class="p-4 text-center">RETURN DATE</th>
+                    <th class="p-4 text-center">STATUS</th>
+                    <th class="p-4 text-right">ACTIONS</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="divide-y divide-outline bg-surface">
                 @if (Model.Items.Any())
                 {
                     @foreach (var loan in Model.Items)
                     {
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 text-left whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900 ">@loan.BookTitle</div>
+                        <tr class="hover:bg-surface-alt/50">
+                            <td class="p-4 text-center">@loan.BookTitle</td>
+                            <td class="p-4 text-center text-on-surface/70">@loan.BookCopyId</td>
+                            <td class="p-4 text-center text-on-surface/70">@loan.LoanDate.ToString("yyyy-MM-dd")</td>
+                            <td class="p-4 text-center text-on-surface/70">@loan.DueDate.ToString("yyyy-MM-dd")</td>
+                            <td class="p-4 text-center text-on-surface/70">
+                                @(loan.ReturnDate?.ToString("yyyy-MM-dd") ?? "-")
                             </td>
-                            <td class="px-6 py-4 text-center whitespace-nowrap">
-                                <div class="text-sm text-gray-500">@loan.BookCopyId</div>
-                            </td>
-                            <td class="px-6 py-4 text-left whitespace-nowrap">
-                                <div class="text-sm text-gray-500">@loan.LoanDate</div>
-                            </td>
-                            <td class="px-6 py-4 text-right whitespace-nowrap">
-                                <div class="text-sm text-gray-500">@loan.DueDate</div>
-                            </td>
-                            <td class="px-6 py-4 text-right whitespace-nowrap">
-                                <div class="text-sm text-gray-500">@loan.ReturnDate</div>
-                            </td>
-                            <td class="px-6 py-4 text-center whitespace-nowrap">
+                            <td class="p-4 text-center">
                                 @{
                                     var statusClasses = loan.Status switch
                                     {
-                                        Domain.Enums.LoanStatus.Active => "bg-green-100 text-green-800",
+                                        Domain.Enums.LoanStatus.Active => "bg-green-100 text-green-700",
                                         Domain.Enums.LoanStatus.Returned => "bg-yellow-100 text-yellow-800",
-                                        Domain.Enums.LoanStatus.Overdue => "bg-red-100 text-red-800",
-                                        Domain.Enums.LoanStatus.Lost => "bg-red-100 text-gray-800",
-                                        _ => "bg-gray-100 text-gray-800"
+                                        Domain.Enums.LoanStatus.Overdue => "bg-red-100 text-red-700",
+                                        Domain.Enums.LoanStatus.Lost => "bg-gray-100 text-gray-700",
+                                        _ => "bg-gray-100 text-gray-600"
                                     };
                                 }
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @statusClasses">
+                                <span class="inline-block px-2 py-1 rounded text-xs font-semibold @statusClasses">
                                     @loan.Status
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                    <a asp-action="MyLoanDetails" asp-route-id="@loan.Id" class="text-blue-600 hover:text-blue-900">
-                                        Details
-                                    </a>                                                                      
+                            <td class="p-4 text-right">
+                                <a asp-action="MyLoanDetails" asp-route-id="@loan.Id"
+                                   class="whitespace-nowrap rounded-radius bg-transparent p-0.5 font-semibold text-primary outline-primary hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 active:opacity-100 active:outline-offset-0"
+                                   title="View details">
+                                    Details
+                                </a>
                             </td>
                         </tr>
                     }
@@ -84,8 +68,9 @@
                 else
                 {
                     <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                        <td colspan="8" class="p-6 text-center text-on-surface/60">
                             No loans found.
+                            @(ViewBag.SearchTerm != null ? "Try different search criteria." : "")
                         </td>
                     </tr>
                 }

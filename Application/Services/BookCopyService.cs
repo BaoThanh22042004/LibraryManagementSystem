@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using Application.Common;
 using Application.DTOs;
 using Application.Interfaces;
@@ -7,6 +6,8 @@ using Domain.Entities;
 using Domain.Enums;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
+using System.Linq.Expressions;
+using System.Net;
 
 namespace Application.Services;
 
@@ -353,6 +354,41 @@ public class BookCopyService : IBookCopyService
             return Result.Failure<IEnumerable<BookCopyBasicDto>>($"Failed to retrieve copies for book: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Gets a book copy by book CopyNumber
+    /// </summary>
+
+    public async Task<Result<BookCopyDetailDto>> GetBookCopyByCopyNumberAsync(string bookCopyNumber) 
+    {
+        try
+        {
+            // Retrieve copy with related data
+            var copy = await _unitOfWork.Repository<BookCopy>().GetAsync(
+                c => c.CopyNumber == bookCopyNumber,
+                c => c.Book,
+                c => c.Loans,
+                c => c.Reservations);
+
+            if (copy == null)
+            {
+                _logger.LogWarning("Get book copy details failed: Copy not found with Copy Number {bookCopyNumber}", bookCopyNumber);
+                return Result.Failure<BookCopyDetailDto>($"Book copy with ID {bookCopyNumber} not found.");
+            }
+
+            // Map to DTO
+            var bookCopyDto = _mapper.Map<BookCopyDetailDto>(copy);
+
+            _logger.LogInformation("Retrieved book copy details: {CopyId} - {CopyNumber}", copy.Id, copy.CopyNumber);
+            return Result.Success(bookCopyDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving book copy details: {Message}", ex.Message);
+            return Result.Failure<BookCopyDetailDto>($"Failed to retrieve book copy details: {ex.Message}");
+        }
+    }
+
 
     /// <summary>
     /// Generates a unique copy number for a book

@@ -48,11 +48,11 @@ public class LoanService : ILoanService
             await _unitOfWork.BeginTransactionAsync();
 
             var member = await _unitOfWork.Repository<Member>().GetAsync(
-                m => m.Id == request.MemberId,
+                m => m.User.Email == request.Email,
                 m => m.User, m => m.Loans);
 
             if (member == null)
-                return Result.Failure<LoanDetailDto>($"Member with ID {request.MemberId} not found.");
+                return Result.Failure<LoanDetailDto>($"Member with Email {request.Email} not found.");
 
             if (member.MembershipStatus != MembershipStatus.Active && !allowOverride)
                 return Result.Failure<LoanDetailDto>($"Member has inactive membership status: {member.MembershipStatus}.");
@@ -75,14 +75,14 @@ public class LoanService : ILoanService
                 return Result.Failure<LoanDetailDto>($"Book copy with ID {request.BookCopyId} is not available for loan. Current status: {bookCopy.Status}.");
 
 			var loan = _mapper.Map<Loan>(request);
-            loan.LoanDate = DateTime.UtcNow;
-            loan.DueDate = request.CustomDueDate ?? DateTime.UtcNow.AddDays(DefaultLoanPeriodDays);
+            loan.LoanDate = DateTime.Now;
+            loan.DueDate = request.CustomDueDate ?? DateTime.Now.AddDays(DefaultLoanPeriodDays);
             loan.Status = LoanStatus.Active;
 
             if ((loan.DueDate - loan.LoanDate).TotalDays > MaxLoanPeriodDays && !allowOverride)
                 return Result.Failure<LoanDetailDto>($"Maximum loan period is {MaxLoanPeriodDays} days.");
 
-            if (loan.DueDate <= DateTime.UtcNow && !allowOverride)
+            if (loan.DueDate <= DateTime.Now && !allowOverride)
                 return Result.Failure<LoanDetailDto>("Due date must be in the future.");
 
             bookCopy.Status = CopyStatus.Borrowed;
@@ -148,7 +148,7 @@ public class LoanService : ILoanService
             var bookCopy = loan.BookCopy;
 
             // Process the return
-            loan.ReturnDate = DateTime.UtcNow;
+            loan.ReturnDate = DateTime.Now;
             loan.Status = LoanStatus.Returned;
 
             // Calculate overdue days
@@ -173,7 +173,7 @@ public class LoanService : ILoanService
                     LoanId = loan.Id,
                     Type = FineType.Overdue,
                     Amount = daysOverdue * 0.50m, // $0.50 per day overdue
-                    FineDate = DateTime.UtcNow,
+                    FineDate = DateTime.Now,
                     Status = FineStatus.Pending,
                     Description = $"Overdue fine for {daysOverdue} days. Book: '{bookCopy.Book.Title}'"
                 };
@@ -198,7 +198,7 @@ public class LoanService : ILoanService
                     LoanId = loan.Id,
                     Type = fineType,
                     Amount = fineAmount,
-                    FineDate = DateTime.UtcNow,
+                    FineDate = DateTime.Now,
                     Status = FineStatus.Pending,
                     Description = $"{fineType} fine for book: '{bookCopy.Book.Title}'. {request.Notes}"
                 };
@@ -286,22 +286,22 @@ public class LoanService : ILoanService
             if (loan.Member.OutstandingFines > 0 && !allowOverride)
                 return Result.Failure<LoanDetailDto>($"Member has outstanding fines of {loan.Member.OutstandingFines:C}. Please clear fines before renewal.");
 
-            var hasActiveReservations = await _unitOfWork.Repository<Reservation>().ExistsAsync(
-                r => r.BookId == loan.BookCopy.BookId && r.Status == ReservationStatus.Active);
-            if (hasActiveReservations && !allowOverride)
-                return Result.Failure<LoanDetailDto>("Book has active reservations and cannot be renewed.");
+            //var hasActiveReservations = await _unitOfWork.Repository<Reservation>().ExistsAsync(
+            //    r => r.BookId == loan.BookCopy.BookId && r.Status == ReservationStatus.Active);
+            //if (hasActiveReservations && !allowOverride)
+            //    return Result.Failure<LoanDetailDto>("Book has active reservations and cannot be renewed.");
 
             if (request.NewDueDate.HasValue)
             {
-                if (request.NewDueDate.Value <= DateTime.UtcNow && !allowOverride)
+                if (request.NewDueDate.Value <= DateTime.Now && !allowOverride)
                     return Result.Failure<LoanDetailDto>("New due date must be in the future.");
-                if ((request.NewDueDate.Value - DateTime.UtcNow).TotalDays > MaxLoanPeriodDays && !allowOverride)
+                if ((request.NewDueDate.Value - DateTime.Now).TotalDays > MaxLoanPeriodDays && !allowOverride)
                     return Result.Failure<LoanDetailDto>($"Maximum extension period is {MaxLoanPeriodDays} days from current date.");
                 loan.DueDate = request.NewDueDate.Value;
             }
             else
             {
-                loan.DueDate = DateTime.UtcNow.AddDays(DefaultLoanPeriodDays);
+                loan.DueDate = DateTime.Now.AddDays(DefaultLoanPeriodDays);
             }
             loan.Status = LoanStatus.Active;
             _unitOfWork.Repository<Loan>().Update(loan);
@@ -472,7 +472,7 @@ public class LoanService : ILoanService
 
             // Get all active loans that are now overdue
             var overdueLoans = await _unitOfWork.Repository<Loan>().ListAsync(
-                l => l.Status == LoanStatus.Active && l.DueDate < DateTime.UtcNow,
+                l => l.Status == LoanStatus.Active && l.DueDate < DateTime.Now,
                 null,
                 false,
                 l => l.Member,
@@ -511,7 +511,7 @@ public class LoanService : ILoanService
     /// </summary>
     public async Task<Result<PagedResult<LoanBasicDto>>> GetOverdueLoansReportPagedAsync(PagedRequest request)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var pagedLoans = await _unitOfWork.LoanRepository.GetOverdueLoansPagedAsync(request, now);
         var dtos = pagedLoans.Items.Select(_mapper.Map<LoanBasicDto>).ToList();
         return Result.Success(new PagedResult<LoanBasicDto>(dtos, pagedLoans.Count, pagedLoans.Page, pagedLoans.PageSize));
@@ -522,7 +522,7 @@ public class LoanService : ILoanService
     /// </summary>
     public async Task<Result<List<OverdueLoanReportDto>>> GetOverdueLoansReportAsync()
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var loans = await _unitOfWork.LoanRepository.GetOverdueLoansAsync(now);
         var dtos = loans.Select(_mapper.Map<OverdueLoanReportDto>).ToList();
         return Result.Success(dtos);
@@ -595,9 +595,9 @@ public class LoanService : ILoanService
             overridden.Add("MaxActiveLoans");
         if (bookCopy.Status != CopyStatus.Available)
             overridden.Add("CopyStatus");
-        if (request.CustomDueDate.HasValue && (request.CustomDueDate.Value - DateTime.UtcNow).TotalDays > MaxLoanPeriodDays)
+        if (request.CustomDueDate.HasValue && (request.CustomDueDate.Value - DateTime.Now).TotalDays > MaxLoanPeriodDays)
             overridden.Add("MaxLoanPeriod");
-        if (request.CustomDueDate.HasValue && request.CustomDueDate.Value <= DateTime.UtcNow)
+        if (request.CustomDueDate.HasValue && request.CustomDueDate.Value <= DateTime.Now)
             overridden.Add("DueDateFuture");
         return overridden;
     }
@@ -612,9 +612,9 @@ public class LoanService : ILoanService
             overridden.Add("LoanStatus");
         if (loan.Member.OutstandingFines > 0)
             overridden.Add("OutstandingFines");
-        if (request.NewDueDate.HasValue && (request.NewDueDate.Value - DateTime.UtcNow).TotalDays > MaxLoanPeriodDays)
+        if (request.NewDueDate.HasValue && (request.NewDueDate.Value - DateTime.Now).TotalDays > MaxLoanPeriodDays)
             overridden.Add("MaxExtensionPeriod");
-        if (request.NewDueDate.HasValue && request.NewDueDate.Value <= DateTime.UtcNow)
+        if (request.NewDueDate.HasValue && request.NewDueDate.Value <= DateTime.Now)
             overridden.Add("DueDateFuture");
         return overridden;
     }

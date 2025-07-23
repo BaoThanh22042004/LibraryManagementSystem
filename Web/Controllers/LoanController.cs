@@ -152,9 +152,14 @@ namespace Web.Controllers
         /// </summary>
         [HttpGet]
         [Authorize(Roles = "Admin,Librarian")]
-        public IActionResult Checkout()
+        public IActionResult Checkout(int id)
         {
-            return View(new CreateLoanRequest());
+            var createLoan = new CreateLoanRequest
+            {
+                MemberId = id
+            };
+
+            return View(createLoan);
         }
 
 		/// <summary>
@@ -173,14 +178,30 @@ namespace Web.Controllers
 					return RedirectToAction("Login", "Auth");
 				}
 
-				var validationResult = await _createLoanValidator.ValidateAsync(model);
+                var bookCopy = await _bookCopyService.GetBookCopyByCopyNumberAsync(model.CopyNumber);
+
+                var bookCopyId = bookCopy.Value.Id;
+
+                model.BookCopyId = bookCopyId;
+
+                var user = await _userService.GetUserDetailsByEmailAsync(model.Email);
+
+                var memberId = user.Value.MemberDetails?.Id;
+
+                if (memberId != null) 
+                {
+                    model.MemberId = (int)memberId;
+                }               
+
+                var validationResult = await _createLoanValidator.ValidateAsync(model);
 				if (!validationResult.IsValid)
 				{
 					validationResult.AddToModelState(ModelState);
 					return View(model);
 				}
 
-				var result = await _loanService.CreateLoanAsync(model, allowOverride, overrideReason);
+                
+                var result = await _loanService.CreateLoanAsync(model, allowOverride, overrideReason);
 				if (!result.IsSuccess)
 				{
 					ModelState.AddModelError(string.Empty, result.Error);

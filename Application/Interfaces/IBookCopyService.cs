@@ -20,7 +20,9 @@ public interface IBookCopyService
     Task<Result<BookCopyDetailDto>> GetBookCopyByIdAsync(int id);
     
     Task<Result<IEnumerable<BookCopyBasicDto>>> GetCopiesByBookIdAsync(int bookId);
-    
+
+    Task<Result<BookCopyDetailDto>> GetBookCopyByCopyNumberAsync(string bookCopyNumber);
+
     Task<Result<string>> GenerateUniqueCopyNumberAsync(int bookId);
     
     Task<Result<bool>> CopyNumberExistsAsync(int bookId, string copyNumber);

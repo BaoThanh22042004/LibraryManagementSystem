@@ -3,55 +3,55 @@
     ViewData["Title"] = "Check Out";
 }
 <div class="max-w-4xl mx-auto px-4 py-8">
-<div class="flex justify-between items-center mb-6">
-    <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
-        ← Back to List
-    </a>
-</div>
- @await Html.PartialAsync("_AlertsPartial")
+    <div class="flex justify-between items-center mb-6">
+        <a asp-action="Index" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm rounded-md transition">
+            ← Back to List
+        </a>
+    </div>
+    @await Html.PartialAsync("_AlertsPartial")
 
-<div class="p-6 mb-7 overflow-hidden border border-outline bg-surface-alt text-on-surface rounded-radius">
-    <h2 class="text-2xl font-bold mb-4 text-center">Check Out Book</h2>
+    <div class="p-6 mb-7 overflow-hidden border border-outline bg-surface-alt text-on-surface rounded-radius">
+        <h2 class="text-2xl font-bold mb-4 text-center">Check Out Book</h2>
 
-    <form asp-action="CheckOut" method="post" class="space-y-6">
-        <div>
-            <label asp-for="MemberId" class="block text-sm font-medium mb-1">Member ID <span class="text-red-600">*</span></label>
-            <input asp-for="MemberId"
-                   class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                   placeholder="Enter member ID" />
-            <span asp-validation-for="MemberId" class="text-red-600 text-sm"></span>
-        </div>
+        <form asp-action="CheckOut" method="post" class="space-y-6">
+            <div>
+                <label asp-for="Email" class="block text-sm font-medium mb-1">Email<span class="text-red-600">*</span></label>
+                <input asp-for="Email"
+                       class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                       placeholder="Enter member email" />
+                <span asp-validation-for="Email" class="text-red-600 text-sm"></span>
+            </div>
 
-        <div>
-            <label asp-for="BookCopyId" class="block text-sm font-medium mb-1">Book Copy ID <span class="text-red-600">*</span></label>
-            <input asp-for="BookCopyId"
-                   class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                   placeholder="Enter book copy ID" />
-            <span asp-validation-for="BookCopyId" class="text-red-600 text-sm"></span>
-        </div>
+            <div>
+                <label asp-for="CopyNumber" class="block text-sm font-medium mb-1">Copy Number<span class="text-red-600">*</span></label>
+                <input asp-for="CopyNumber"
+                       class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                       placeholder="Enter book copy number" />
+                <span asp-validation-for="CopyNumber" class="text-red-600 text-sm"></span>
+            </div>
 
-        <div>
-            <label asp-for="CustomDueDate" class="block text-sm font-medium mb-1">Custom Due Date</label>
-            <input asp-for="CustomDueDate" type="datetime-local"
-                   class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                   placeholder="Enter custom due date" />
-            <span asp-validation-for="CustomDueDate" class="text-red-600 text-sm"></span>
-        </div>
+            <div>
+                <label asp-for="CustomDueDate" class="block text-sm font-medium mb-1">Due Date</label>
+                <input asp-for="CustomDueDate" type="datetime-local"
+                       class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                       placeholder="Enter custom due date" />
+                <span asp-validation-for="CustomDueDate" class="text-red-600 text-sm"></span>
+            </div>
 
-        <div>
-            <label asp-for="Notes" class="block text-sm font-medium mb-1">Notes</label>
-            <textarea asp-for="Notes" rows="4"
-                      class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                      placeholder="Enter notes here..."></textarea>
-            <span asp-validation-for="Notes" class="text-red-600 text-sm"></span>
-        </div>
+            <div>
+                <label asp-for="Notes" class="block text-sm font-medium mb-1">Notes</label>
+                <textarea asp-for="Notes" rows="4"
+                          class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                          placeholder="Enter notes here..."></textarea>
+                <span asp-validation-for="Notes" class="text-red-600 text-sm"></span>
+            </div>
 
-        <div>
-            <button type="submit"
-                    class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
-                Submit
-            </button>
-        </div>
+            <div>
+                <button type="submit"
+                        class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
+                    Submit
+                </button>
+            </div>
         </form>
     </div>
 </div>

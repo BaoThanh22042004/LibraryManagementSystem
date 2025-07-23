@@ -27,6 +27,7 @@ public interface IUserService
     Task<Result<MemberDeletionValidationDto>> CanDeleteMemberAsync(int memberId);
 
     Task<Result<UserDetailsDto>> GetUserDetailsByMemberIdAsync(int memberId);
+    Task<Result<UserDetailsDto>> GetUserDetailsByEmailAsync(string email);
 }
 
 public enum UserAction

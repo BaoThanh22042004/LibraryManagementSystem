@@ -50,7 +50,7 @@ public class LoanProfile : Profile
             .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.BookCopy.Book.Title))
             .ForMember(dest => dest.LoanDate, opt => opt.MapFrom(src => src.LoanDate))
             .ForMember(dest => dest.DueDate, opt => opt.MapFrom(src => src.DueDate))
-            .ForMember(dest => dest.DaysOverdue, opt => opt.MapFrom(src => src.Status == Domain.Enums.LoanStatus.Overdue ? (int)(DateTime.UtcNow - src.DueDate).TotalDays : 0))
+            .ForMember(dest => dest.DaysOverdue, opt => opt.MapFrom(src => src.Status == Domain.Enums.LoanStatus.Overdue ? (int)(DateTime.Now - src.DueDate).TotalDays : 0))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
     }
 }

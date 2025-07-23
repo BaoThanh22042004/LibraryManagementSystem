@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs;
 
@@ -13,10 +14,25 @@ public record CreateLoanRequest
     /// </summary>
     public int MemberId { get; set; }
 
+
+    [Required]
+    public string Email { get; set; } = string.Empty;
+
     /// <summary>
     /// The ID of the book copy being borrowed.
     /// </summary>
+    [Required]
     public int BookCopyId { get; set; }
+
+    /// <summary>
+    /// The title of the book (required)
+    /// </summary>
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The copy number
+    /// </summary>
+    public string CopyNumber { get; set; } = string.Empty;
 
     /// <summary>
     /// Optional custom due date. If not provided, the system will calculate
@@ -195,7 +211,7 @@ public record LoanBasicDto
             {
                 return (ReturnDate.Value > DueDate) ? (int)(ReturnDate.Value - DueDate).TotalDays : 0;
             }
-            return (DateTime.UtcNow > DueDate) ? (int)(DateTime.UtcNow - DueDate).TotalDays : 0;
+            return (DateTime.Now> DueDate) ? (int)(DateTime.Now - DueDate).TotalDays : 0;
         }
     }
 
