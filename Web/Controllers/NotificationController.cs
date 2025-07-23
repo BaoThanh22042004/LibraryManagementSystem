@@ -1,8 +1,10 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
+using Application.Services;
+using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Domain.Enums;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Web.Extensions;
 
 namespace Web.Controllers;
@@ -12,14 +14,15 @@ public class NotificationController : Controller
 {
     private readonly INotificationService _notificationService;
     private readonly IAuditService _auditService;
-    //private readonly IUserService _userService;
+    private readonly IUserService _userService;
 
-    public NotificationController(INotificationService notificationService, IAuditService auditService)
+    public NotificationController(INotificationService notificationService, IAuditService auditService, IUserService userService)
     {
         _notificationService = notificationService;
         _auditService = auditService;
+        _userService = userService;
     }
-
+  
     // GET: /Notification/MyNotifications
     [HttpGet("/Notification/MyNotifications")]
     public async Task<IActionResult> MyNotifications(bool unreadOnly = false, int page = 1, int pageSize = 10, string sortBy = "SentAt", string sortOrder = "desc")
@@ -77,13 +80,26 @@ public class NotificationController : Controller
         return View(result.Value); // View: Views/Notification/Details.cshtml
     }
 
-    // GET: /Notification/Create
     [Authorize(Roles = "Admin,Librarian")]
     [HttpGet]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
+        // Gọi service bất đồng bộ và await
+        var members = await _userService.GetAllMembersAsync();
+        var users = members
+            .Select(u => new SelectListItem
+            {
+                Value = u.Id.ToString(),
+                Text = u.Email
+            })
+            .ToList();
+
+        ViewBag.Users = users;
+
         return View();
     }
+
+
 
 
     // POST: /Notification/Create (Staff only)
@@ -145,7 +161,11 @@ public class NotificationController : Controller
             IsSuccess = result.IsSuccess,
             ErrorMessage = result.IsSuccess ? null : result.Error
         });
-        if (!result.IsSuccess) return BadRequest(result.Error);
+        if (!result.IsSuccess)
+        {
+            ModelState.AddModelError("", result.Error);
+            return View(dto);
+        }
         return RedirectToAction("Index");
     }
 

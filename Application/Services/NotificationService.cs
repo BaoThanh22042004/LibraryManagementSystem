@@ -58,7 +58,8 @@ public class NotificationService : INotificationService
             Subject = dto.Subject,
             Message = dto.Message,
             Status = NotificationStatus.Pending,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            SentAt = DateTime.UtcNow
         }).ToList();
         var repo = _unitOfWork.Repository<Notification>();
         await repo.AddRangeAsync(notifications);
@@ -181,11 +182,11 @@ public class NotificationService : INotificationService
         var notificationRepo = _unitOfWork.Repository<Notification>();
         var now = DateTime.UtcNow;
         var overdueLoans = await loanRepo.ListAsync(
-            l => l.Status == Domain.Enums.LoanStatus.Overdue && l.DueDate < now,
-            null,
-            false,
-            l => l.Member.User,
-            l => l.BookCopy.Book);
+        l => l.DueDate < now && l.ReturnDate == null,  // chưa trả và đã quá hạn
+        null,
+        false,
+        l => l.Member.User,
+        l => l.BookCopy.Book);
         int sentCount = 0;
         var errors = new List<string>();
         foreach (var loan in overdueLoans)
