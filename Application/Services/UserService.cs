@@ -670,10 +670,16 @@ public class UserService : IUserService
 			return Result.Failure<UserDetailsDto>("An error occurred while retrieving user details by member ID");
 		}
 	}
+    public async Task<List<UserBasicDto>> GetAllMembersAsync()
+    {
+        var userRepo = _unitOfWork.Repository<User>();
+        var members = await userRepo.ListAsync(u => u.Role == UserRole.Member && u.Status == UserStatus.Active);
+        return _mapper.Map<List<UserBasicDto>>(members);
+    }
 
-	#region Helper Methods
+    #region Helper Methods
 
-	private async Task<UserRole?> GetUserRoleAsync(int userId)
+    private async Task<UserRole?> GetUserRoleAsync(int userId)
 	{
 		var userRepo = _unitOfWork.Repository<User>();
 		var user = await userRepo.GetAsync(u => u.Id == userId);

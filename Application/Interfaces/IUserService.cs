@@ -28,6 +28,8 @@ public interface IUserService
 
     Task<Result<UserDetailsDto>> GetUserDetailsByMemberIdAsync(int memberId);
     Task<Result<UserDetailsDto>> GetUserDetailsByEmailAsync(string email);
+    Task<List<UserBasicDto>> GetAllMembersAsync();
+
 }
 
 public enum UserAction

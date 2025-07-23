@@ -1,6 +1,6 @@
-﻿@model Application.DTOs.NotificationCreateDto
+﻿@model Application.DTOs.NotificationBatchCreateDto
 @{
-    ViewData["Title"] = "Create Notification";
+    ViewData["Title"] = "Send Bulk Notifications";
 }
 
 <div class="max-w-2xl mx-auto px-4 py-10">
@@ -8,28 +8,18 @@
         ← Back to List
     </a>
     <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6 text-center">
-        Send Notification
+        Send Notifications
     </h2>
-    @{
-        var hasError = ViewData.ModelState.Values.Any(v => v.Errors.Count > 0);
-    }
-
-    @if (hasError)
-    {
-        <div class="bg-red-100 text-red-700 p-4 rounded mb-4">
-            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-            {
-                <div>@error.ErrorMessage</div>
-            }
-        </div>
-    }
-
-    <form asp-action="Create" method="post" class="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+    <form asp-action="CreateBulk" method="post" class="space-y-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <div>
-            <label asp-for="UserId" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">User ID</label>
-            <input asp-for="UserId" type="number"
-                   class="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-base" />
-            <span asp-validation-for="UserId" class="text-sm text-red-500"></span>
+            <label asp-for="UserIds" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">Recipients</label>
+            <select asp-for="UserIds"
+                    asp-items="ViewBag.Users"
+                    multiple
+                    class="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-base">
+            </select>
+            <span asp-validation-for="UserIds" class="text-sm text-red-500"></span>
+            <p class="text-sm text-gray-500 mt-1">Hold Ctrl (Windows) / Command (Mac) to select multiple users.</p>
         </div>
 
         <div>
@@ -64,7 +54,7 @@
         <div class="text-right">
             <button type="submit"
                     class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow">
-                Send Notification
+                Send Notifications
             </button>
         </div>
     </form>
