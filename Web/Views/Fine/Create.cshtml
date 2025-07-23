@@ -5,6 +5,8 @@
 @{
     ViewData["Title"] = "Create Manual Fine";
     var loanDetails = ViewBag.LoanDetails as LoanDetailDto;
+    var inputClass = "w-full rounded-md border border-outline bg-surface-alt px-4 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+    var readonlyClass = "cursor-not-allowed bg-gray-500/10";
 }
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-on-surface">
@@ -41,26 +43,36 @@
                     @if (loanDetails != null)
                     {
                         <input type="hidden" asp-for="LoanId" />
+                        <input type="hidden" asp-for="MemberId" />
+                        <input type="hidden" asp-for="Type" />
                     }
 
                     <div class="space-y-6">
                         <div>
-                            <label asp-for="MemberId" class="block text-sm font-medium mb-1">Member ID</label>
-                            <input asp-for="MemberId" type="text" pattern="\d*" inputmode="numeric"
-                                   class="w-full rounded-md border border-outline bg-surface-alt px-4 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary @(loanDetails != null ? "cursor-not-allowed bg-gray-500/10" : "")"
-                                   placeholder="Enter Member ID" readonly="@(loanDetails != null)" />
-                            <span asp-validation-for="MemberId" class="mt-1 text-sm text-red-500"></span>
-                            @if (loanDetails == null)
+                            <label class="block text-sm font-medium mb-1">Member Name</label>
+                            @if (loanDetails != null)
                             {
-                                <p class="mt-2 text-xs text-on-surface-weak">You can find the Member ID on the member's profile page.</p>
+                                <p class="@inputClass @readonlyClass">@loanDetails.MemberName</p>
+                                <input type="hidden" asp-for="MemberId" />
                             }
+                            else
+                            {
+                                @Html.DropDownListFor(
+                                m => m.MemberId,
+                                                        (SelectList)ViewBag.MemberList,
+                                                        "-- Select a Member --",
+                                                        new { @class = inputClass })
+                            <span asp-validation-for="MemberId" class="mt-1 text-sm text-red-500"></span>
+                            <p class="mt-2 text-xs text-on-surface-weak">Only active members are shown in the list.</p>
+                                                        }
                         </div>
 
                         <div>
+                            @* Logic disable cho FineType vẫn chính xác vì giá trị đã được gửi qua hidden field *@
                             <label asp-for="Type" class="block text-sm font-medium mb-1">Fine Type</label>
                             <div class="relative w-full">
                                 <select asp-for="Type" asp-items="Html.GetEnumSelectList<FineType>()"
-                                        class="peer w-full appearance-none rounded-md border border-outline bg-surface-alt px-4 py-2 text-sm transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary @(loanDetails != null ? "cursor-not-allowed bg-gray-500/10" : "")"
+                                        class="@inputClass @(loanDetails != null ? readonlyClass : "")"
                                         disabled="@(loanDetails != null)">
                                     <option value="">-- Select Type --</option>
                                 </select>
@@ -78,14 +90,14 @@
                                     <span class="text-on-surface-weak sm:text-sm">$</span>
                                 </div>
                                 <input asp-for="Amount" type="number" step="0.01"
-                                       class="block w-full rounded-md border border-outline bg-surface-alt pl-8 pr-4 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="0.00" />
+                                       class="@inputClass pl-8 pr-4" placeholder="0.00" />
                             </div>
                             <span asp-validation-for="Amount" class="mt-1 text-sm text-red-500"></span>
                         </div>
 
                         <div>
                             <label asp-for="Description" class="block text-sm font-medium mb-1">Description / Reason</label>
-                            <textarea asp-for="Description" rows="3" class="w-full rounded-md border border-outline bg-surface-alt px-4 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="e.g., Fine for a damaged book cover."></textarea>
+                            <textarea asp-for="Description" rows="3" class="@inputClass" placeholder="e.g., Fine for a damaged book cover."></textarea>
                             <span asp-validation-for="Description" class="mt-1 text-sm text-red-500"></span>
                         </div>
 
@@ -138,7 +150,7 @@
                             </div>
                         </div>
                         <div class="mt-6 p-3 bg-primary/10 text-primary-dark border border-primary/20 rounded-md text-sm">
-                            This fine will be linked to the loan above. The Member ID is locked.
+                            This fine will be linked to the loan above. The Member selection is locked.
                         </div>
                     </div>
                 }
@@ -170,7 +182,7 @@
     <script src="//unpkg.com/alpinejs" defer></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Script cho Override Section
+            // Script cho Override Section không thay đổi
             const allowOverrideCheckbox = document.getElementById('allowOverride');
             if (allowOverrideCheckbox) {
                 const overrideReasonGroup = document.getElementById('overrideReasonGroup');
@@ -181,17 +193,6 @@
                         overrideReasonGroup.style.display = 'none';
                         const reasonTextarea = document.getElementById('overrideReason');
                         if(reasonTextarea) reasonTextarea.value = '';
-                    }
-                });
-            }
-
-            // Script ép kiểu số cho Member ID
-            const memberIdInput = document.getElementById('MemberId');
-            if(memberIdInput) {
-                memberIdInput.addEventListener('input', function(event) {
-                    event.target.value = event.target.value.replace(/[^0-9]/g, '');
-                    if (event.target.value.length > 1 && event.target.value.startsWith('0')) {
-                       event.target.value = event.target.value.substring(1);
                     }
                 });
             }

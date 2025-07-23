@@ -22,6 +22,12 @@ public record CreateReservationRequest
     /// Optional notes about the reservation.
     /// </summary>
     public string? Notes { get; set; }
+
+    /// <summary>
+    /// UI-Only: Used to remember if the form was loaded for a specific book.
+    /// This tells the POST action how to render the view on failure.
+    /// </summary>
+    public bool IsSpecificBookMode { get; set; } = false;
 }
 
 /// <summary>

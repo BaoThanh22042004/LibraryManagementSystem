@@ -1,10 +1,9 @@
 ﻿@model CreateReservationRequest
 
 @{
-    ViewData["Title"] = "Add Reservation";
+    ViewData["Title"] = "Create Reservation";
+    var inputClass = "w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm placeholder:text-on-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 }
-
-@await Html.PartialAsync("_AlertsPartial")
 
 <div class="max-w-3xl mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
@@ -16,35 +15,54 @@
     @await Html.PartialAsync("_AlertsPartial")
 
     <div class="p-6 mb-6 overflow-hidden border border-outline bg-surface-alt text-on-surface rounded-radius">
-        <div class="text-white px-6 rounded-t-radius rounded-b-radius">
-            <h5 class="text-2xl text-center font-bold">Create Reservation</h5>
+        <div class="px-6 rounded-t-radius rounded-b-radius">
+            <h5 class="text-2xl text-center font-bold">
+                @if (Model.IsSpecificBookMode)
+                {
+                    <span>Reserve "@ViewBag.BookTitle" for Member</span>
+                }
+                else
+                {
+                    <span>Create a New Reservation</span>
+                }
+            </h5>
         </div>
 
         <div class="p-6">
             <form asp-action="Create" method="post" class="space-y-6">
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.IsSpecificBookMode)
                 <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm"></div>
 
                 <div class="space-y-6">
                     <div>
-                        <label asp-for="MemberId" class="block text-sm font-medium mb-1">Member ID<span class="text-red-600">*</span></label>
-                        <input asp-for="MemberId" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm placeholder:text-on-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="Enter member ID" />
+                        <label asp-for="MemberId" class="block text-sm font-medium mb-1">Member Name<span class="text-red-600">*</span></label>
+                        @Html.DropDownListFor(m => m.MemberId, (SelectList)ViewBag.MemberList, "Select a member", new { @class = inputClass })
                         <span asp-validation-for="MemberId" class="text-red-600 text-sm"></span>
                     </div>
 
                     <div>
-                        <label asp-for="BookId" class="block text-sm font-medium mb-1">Book Copy ID<span class="text-red-600">*</span></label>
-                        <input asp-for="BookId" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm placeholder:text-on-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="Enter book copy ID" />
-                        <span asp-validation-for="BookId" class="text-red-600 text-sm"></span>
+                        @if (Model.IsSpecificBookMode)
+                        {
+                            <label class="block text-sm font-medium mb-1">Book Title</label>
+                            <p class="@inputClass bg-gray-100">@ViewBag.BookTitle</p>
+                            @Html.HiddenFor(m => m.BookId)
+                        }
+                        else
+                        {
+                            <label asp-for="BookId" class="block text-sm font-medium mb-1">Book Title<span class="text-red-600">*</span></label>
+                            @Html.DropDownListFor(m => m.BookId, (SelectList)ViewBag.BookList, "Select a book", new { @class = inputClass })
+                            <span asp-validation-for="BookId" class="text-red-600 text-sm"></span>
+                        }
                     </div>
 
                     <div>
                         <label asp-for="Notes" class="block text-sm font-medium mb-1">Notes</label>
-                        <textarea asp-for="Notes" rows="5" class="w-full rounded-radius border border-outline bg-surface-alt px-3 py-2 text-sm placeholder:text-on-surface/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" placeholder="Enter notes here..."></textarea>
+                        <textarea asp-for="Notes" rows="5" class="@inputClass" placeholder="Enter optional notes here..."></textarea>
                         <span asp-validation-for="Notes" class="text-red-600 text-sm"></span>
                     </div>
                 </div>
 
-                <!-- Submit Button -->
                 <div class="pt-4">
                     <button type="submit" class="w-full whitespace-nowrap rounded-radius bg-primary border border-primary px-4 py-2 text-sm font-medium tracking-wide text-on-primary transition hover:opacity-75 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:opacity-100 active:outline-offset-0 disabled:opacity-75 disabled:cursor-not-allowed">
                         Submit

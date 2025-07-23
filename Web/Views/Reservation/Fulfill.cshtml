@@ -1,12 +1,21 @@
 ﻿@model FulfillReservationRequest
+@inject Application.Interfaces.IBookCopyService BookCopyService // Tùy chọn, để có thể gọi service nếu cần
 
 @{
     ViewData["Title"] = "Fulfill Reservation";
+    var reservation = ViewBag.ReservationDetails as ReservationDetailDto;
 }
 
 <div class="mb-6">
     <div class="flex items-center">
-        <h1 class="text-3xl font-bold">Fulfill Reservation</h1>
+        @if (reservation != null)
+        {
+            <h1 class="text-3xl font-bold">Fulfill Reservation for @reservation.MemberName</h1>
+        }
+        else
+        {
+            <h1 class="text-3xl font-bold">Fulfill Reservation</h1>
+        }
     </div>
 </div>
 
@@ -14,43 +23,57 @@
 
 <div class="bg-white shadow-md rounded-lg overflow-hidden p-6 mb-7">
     <form asp-action="Fulfill" method="post">
-        <input type="hidden" asp-for="@Model.ReservationId"/>
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ReservationId" />
+
+        @if (reservation != null)
+        {
+            @* THAY ĐỔI VIEW #1: Hiển thị thêm thông tin đặt trước để nhân viên dễ xác nhận *@
+            <div class="mb-6 border-b pb-4">
+                <h2 class="text-xl font-semibold mb-2">Reservation Details</h2>
+                <p><strong>Reservation ID:</strong> @reservation.Id</p>
+                <p><strong>Book Title:</strong> @reservation.BookTitle</p>
+                <p><strong>Member Name:</strong> @reservation.MemberName (@reservation.MemberEmail)</p>
+            </div>
+        }
+
         <div class="space-y-6">
             <div>
-                <label asp-for="ReservationId" class="block text-gray-700 text-base font-bold mb-2">Reservation Id</label>
-                <div class="w-full px-3 py-2 border border-gray-300 rounded-md">@Model.ReservationId</div>
-            </div>
-            <div>
-                <label asp-for="BookCopyId" class="block text-gray-700 text-base font-bold mb-2">Book Copy Id<span class="text-red-600">*</span></label>
-                <input asp-for="BookCopyId" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                       placeholder="Enter book copy id">
+                @* THAY ĐỔI VIEW #2: Thay thế Input BookCopyId bằng DropDownList *@
+                <label asp-for="BookCopyId" class="block text-gray-700 text-base font-bold mb-2">Available Book Copies<span class="text-red-600">*</span></label>
+                @Html.DropDownListFor(
+                m => m.BookCopyId,
+                                (SelectList)ViewBag.AvailableCopies,
+                                "Select an available copy",
+                                new { @class = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" })
                 <span asp-validation-for="BookCopyId" class="text-red-600 text-sm"></span>
             </div>
+
             <div>
                 <label asp-for="PickupDeadline" class="block text-gray-700 text-base font-bold mb-2">Pickup Deadline</label>
-                <input asp-for="PickupDeadline" type="datetime-local" value="@Model.PickupDeadline.ToString()" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                <input asp-for="PickupDeadline" type="datetime-local" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                 <span asp-validation-for="PickupDeadline" class="text-red-600 text-sm"></span>
             </div>
+
             <div>
                 <label asp-for="FulfillmentNotes" class="block text-gray-700 text-base font-bold mb-2">Notes</label>
-                <textarea asp-for="FulfillmentNotes" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Enter notes here..."></textarea>
+                <textarea asp-for="FulfillmentNotes" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter optional notes here..."></textarea>
                 <span asp-validation-for="FulfillmentNotes" class="text-red-600 text-sm"></span>
             </div>
+
             <div>
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Submit
+                    Fulfill Reservation
                 </button>
             </div>
         </div>
     </form>
 </div>
 
-<button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-    <a asp-action="Details" asp-route-id="@Model.ReservationId">
-        Back to Details
-    </a>
-</button>
+<a asp-action="Details" asp-route-id="@Model.ReservationId" class="bg-gray-200 hover:bg-gray-300 text-black font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+    Back to Details
+</a>
 
 @section Scripts {
     @{

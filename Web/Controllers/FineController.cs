@@ -5,6 +5,7 @@ using Domain.Enums;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Web.Extensions;
 
 namespace Web.Controllers
@@ -191,38 +192,77 @@ namespace Web.Controllers
             }
         }
 
+        private async Task PrepareFineCreateViewData(int? selectedMemberId = null, int? loanId = null)
+        {
+            var memberSearchRequest = new UserSearchRequest
+            {
+                Role = UserRole.Member,
+                Status = UserStatus.Active,
+                PageSize = int.MaxValue
+            };
+            var membersResult = await _userService.SearchUsersAsync(memberSearchRequest);
+            if (membersResult.IsSuccess && membersResult.Value.Items.Any())
+            {
+                ViewBag.MemberList = new SelectList(membersResult.Value.Items, "Id", "FullName", selectedMemberId);
+            }
+            else
+            {
+                _logger.LogWarning("Could not load active member list for fine creation.");
+                ViewBag.MemberList = new SelectList(Enumerable.Empty<SelectListItem>(), "Id", "FullName");
+            }
+
+            if (loanId.HasValue)
+            {
+                var loanResult = await _loanService.GetLoanByIdAsync(loanId.Value);
+                if (loanResult.IsSuccess)
+                {
+                    ViewBag.LoanDetails = loanResult.Value;
+                }
+            }
+        }
+
         /// <summary>
         /// Displays the create fine form.
-        /// For staff use only. Part of UC026 (Calculate Fine).
+        /// This version is updated to use a dropdown for member selection.
         /// </summary>
         [HttpGet]
         [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Create(int? memberId = null, int? loanId = null)
         {
             var model = new CreateFineRequest();
-            
-            if (memberId.HasValue)
-            {
-                model.MemberId = memberId.Value;
-            }
-            
+            int? userIdForDropdown = null;
+
             if (loanId.HasValue)
             {
                 model.LoanId = loanId.Value;
-                
-                // Get loan details to display
                 var loanResult = await _loanService.GetLoanByIdAsync(loanId.Value);
                 if (loanResult.IsSuccess)
                 {
                     ViewBag.LoanDetails = loanResult.Value;
                     model.MemberId = loanResult.Value.MemberId;
+
+                    var userResult = await _userService.GetUserDetailsByMemberIdAsync(loanResult.Value.MemberId);
+                    if (userResult.IsSuccess)
+                    {
+                        userIdForDropdown = userResult.Value.Id;
+                    }
                 }
             }
-            
-            // Set default fine type to Other (manual fine)
-            model.Type = FineType.Other;
+            else if (memberId.HasValue)
+            {
+                userIdForDropdown = memberId.Value;
+            }
+
+            await PrepareFineCreateViewData(userIdForDropdown, loanId);
+
+            model.Type = (loanId.HasValue) ? FineType.Overdue : FineType.Other;
             model.IsAutomaticCalculation = false;
-            
+
+            if (userIdForDropdown.HasValue && !loanId.HasValue)
+            {
+                model.MemberId = userIdForDropdown.Value;
+            }
+
             return View(model);
         }
 
@@ -242,34 +282,37 @@ namespace Web.Controllers
                     return RedirectToAction("Login", "Auth");
                 }
 
+                int userIdFromForm = model.MemberId;
+
+                if (!model.LoanId.HasValue)
+                {
+                    var userDetailsResult = await _userService.GetUserDetailsAsync(userIdFromForm);
+                    if (!userDetailsResult.IsSuccess || userDetailsResult.Value.MemberDetails == null)
+                    {
+                        TempData["ErrorMessage"] = "The selected user is not a valid member.";
+                        await PrepareFineCreateViewData(userIdFromForm, model.LoanId);
+                        return View(model);
+                    }
+                    model.MemberId = userDetailsResult.Value.MemberDetails.Id;
+                }
+
                 var validationResult = await _createFineValidator.ValidateAsync(model);
                 if (!validationResult.IsValid)
                 {
                     validationResult.AddToModelState(ModelState);
-                    if (model.LoanId.HasValue)
-                    {
-                        var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId.Value);
-                        if (loanResult.IsSuccess)
-                        {
-                            ViewBag.LoanDetails = loanResult.Value;
-                        }
-                    }
+                    TempData["ErrorMessage"] = "The request has validation errors.";
+
+                    await PrepareFineCreateViewData(userIdFromForm, model.LoanId);
                     return View(model);
                 }
 
-                // Pass override parameters to service
                 var result = await _fineService.CreateFineAsync(model, allowOverride, overrideReason);
                 if (!result.IsSuccess)
                 {
                     ModelState.AddModelError(string.Empty, result.Error);
-                    if (model.LoanId.HasValue)
-                    {
-                        var loanResult = await _loanService.GetLoanByIdAsync(model.LoanId.Value);
-                        if (loanResult.IsSuccess)
-                        {
-                            ViewBag.LoanDetails = loanResult.Value;
-                        }
-                    }
+                    TempData["ErrorMessage"] = result.Error;
+
+                    await PrepareFineCreateViewData(userIdFromForm, model.LoanId);
                     return View(model);
                 }
 
@@ -310,6 +353,7 @@ namespace Web.Controllers
             {
                 _logger.LogError(ex, "Error creating fine");
                 TempData["ErrorMessage"] = "An error occurred while creating the fine.";
+                await PrepareFineCreateViewData(model.MemberId, model.LoanId);
                 return View(model);
             }
         }
