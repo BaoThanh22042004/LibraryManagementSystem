@@ -6,6 +6,7 @@ using AutoMapper;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.Extensions.Logging;
+using System.Linq.Expressions;
 using System.Text.Json;
 
 namespace Application.Services;
@@ -403,27 +404,29 @@ public class UserService : IUserService
 	{
 		try
 		{
-			// Validate search permissions based on role
 			var userRepo = _unitOfWork.Repository<User>();
-			var query = userRepo.Query();
+
+			// Set up predicate for filtering
+			Expression<Func<User, bool>> predicate = u => true;
 
 			// Apply search filters
 			if (request.Role.HasValue)
 			{
-				query = query.Where(u => u.Role == request.Role.Value);
+				predicate = predicate.And(u => u.Role == request.Role.Value);
 			}
 
 			if (request.Status.HasValue)
 			{
-				query = query.Where(u => u.Status == request.Status.Value);
+				predicate = predicate.And(u => u.Status == request.Status.Value);
 			}
 
 			if (!string.IsNullOrWhiteSpace(request.SearchTerm))
 			{
-				query = query.Where(u =>
-					u.FullName.Contains(request.SearchTerm, StringComparison.CurrentCultureIgnoreCase) ||
-					u.Email.Contains(request.SearchTerm, StringComparison.CurrentCultureIgnoreCase) ||
-					(u.Phone != null && u.Phone.Contains(request.SearchTerm, StringComparison.CurrentCultureIgnoreCase)));
+				var searchTerm = request.SearchTerm.ToLower().Trim();
+				predicate = predicate.And(u =>
+					u.FullName.ToLower().Contains(searchTerm) ||
+					u.Email.ToLower().Contains(searchTerm) ||
+					(u.Phone != null && u.Phone.ToLower().Contains(searchTerm)));
 
 				// Note: The following complex conditions would be handled in the database query
 				// This is a simplified version for the repository pattern
@@ -432,8 +435,8 @@ public class UserService : IUserService
 			// Execute query with paging
 			var pagedResult = await userRepo.PagedListAsync(
 				request,
-				null, // predicate is applied directly in the query
-				query => query.OrderBy(u => u.Id),
+				predicate,
+				q => q.OrderBy(u => u.Id),
 				true); // asNoTracking
 
 			// Load member and librarian data for users
